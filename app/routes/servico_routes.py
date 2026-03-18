@@ -11,8 +11,6 @@ O que você precisa fazer neste arquivo:
 Não comece a codar ainda! Primeiro leia os comentários abaixo.
 """
 
-
-
 # ========== PASSO 1: IMPORTAÇÕES ==========
 # Você precisa importar:
 # - Blueprint: para organizar rotas
@@ -24,6 +22,9 @@ Não comece a codar ainda! Primeiro leia os comentários abaixo.
 # TODO: from flask import ...
 # TODO: from app import ...
 # TODO: from app.models import ...
+from flask import Blueprint, jsonify
+from app.models.servico import Servico
+from app import db
 
 # ========== PASSO 2: CRIAR BLUEPRINT ==========
 # Um blueprint precisa de um nome e um prefixo de URL
@@ -31,6 +32,7 @@ Não comece a codar ainda! Primeiro leia os comentários abaixo.
 # URL Prefix: '/api/servicos' (todas as rotas deste blueprint começam com isso)
 
 # TODO: servico_bp = Blueprint(...)
+servico_bp = Blueprint('servicos',__name__,'/api/servicos')
 
 # ========== PASSO 3: CRIAR ROTA GET ==========
 # Rota: /api/servicos  (GET)
@@ -41,7 +43,7 @@ Não comece a codar ainda! Primeiro leia os comentários abaixo.
 # @servico_bp.route('', methods=['GET'])
 # (vazio '' porque já tem '/api/servicos' no url_prefix)
 
-@servico_bp.route('', methods=['GET'])
+@servico_bp.route('/', methods=['GET'])
 def listar_servicos():
     """
     Endpoint para listar todos os serviços
@@ -50,33 +52,26 @@ def listar_servicos():
     1. Buscar todos os serviços do banco com Servico.query.all()
     2. Converter cada serviço em dicionário (para JSON)
     3. Retornar com jsonify()
-    
-    Resposta esperada:
-    {
-        "servicos": [
-            {"id": 1, "nome": "Corte", "preco": 50, ...},
-            {"id": 2, "nome": "Barba", "preco": 30, ...}
-        ]
-    }
     """
     
     try:
         # TODO: Buscar todos os serviços
-        # servicos = ???
+        servicos = Servico.query.all()
         
         # TODO: Converter para lista de dicionários
-        # servicos_dict = [
-        #     {
-        #         'id': s.id,
-        #         'nome': s.nome,
-        #         'preco': s.preco,
-        #         'duracao_minutos': s.duracao_minutos
-        #     }
-        #     for s in servicos
-        # ]
+        # Utilizando 'dict comphreension'
+        servicos_dict = [
+            {
+                'id': s.id,
+                'nome': s.nome,
+                'preco': s.preco,
+                'duracao_minutos': s.duracao_minutos
+            }
+            for s in servicos
+        ]
         
         # TODO: Retornar em JSON
-        # return jsonify({...})
+        return jsonify({'servicos': servicos_dict})
         
         pass
     
