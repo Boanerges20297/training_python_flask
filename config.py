@@ -16,10 +16,10 @@ class Config:
     
     # Chave secreta para sessões e cookies (importante!)
     # Em produção, use uma chave forte gerada aleatoriamente
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-key-mudar-em-producao'
+    SECRET_KEY = os.environ.get('vsmm04994mSKKFIeieio3kl') or 'dev-key-mudar-em-producao'
     
     # Tempo de sessão (quanto tempo fica logado sem atividade)
-    PERMANENT_SESSION_LIFETIME = timedelta(days=7)
+    PERMANENT_SESSION_LIFETIME = timedelta(days=3)
     
     # JSON - configurações para respostas JSON
     JSON_SORT_KEYS = False  # Não ordena as chaves (mais legível)

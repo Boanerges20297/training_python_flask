@@ -34,7 +34,6 @@ from app import db
 
 # TODO: servico_bp = Blueprint(...)
 servico_bp = Blueprint('servicos',__name__,url_prefix='/api/servicos')
-clientes_bp = Blueprint('clientes',__name__,url_prefix='/api/clientes')
 
 # ========== PASSO 3: CRIAR ROTA GET ==========
 # Rota: /api/servicos  (GET)
@@ -79,61 +78,88 @@ def listar_servicos():
     
     except Exception as e:
         return jsonify({'erro': str(e)}), 500
-
-@clientes_bp.route('/listar_clientes', methods=['GET'])
-def listar_clientes():
-    try:
-        clientes = Cliente.query.all()
-        clientes_dict = [
-            {
-                'id': c.id,
-                'nome': c.nome,
-                'telefone': c.telefone,
-                'email': c.email
-            }
-            for c in clientes
-        ]
-        # Retornar em JSON com chave 'clientes'
-        return jsonify({'clientes': clientes_dict})
-    except Exception as e:
-        return jsonify({'erro': 'Não foi possível listar os clientes: ' + str(e)}), 500
-
-@clientes_bp.route('/', methods=['POST'])
-def criar_cliente():
+    
+@servico_bp.route('/criar-servico', methods=['POST'])
+def criar_servico():
     dados = request.get_json()
     try:
-        dados_cliente = {
+        dados_servico = {
             'nome': dados.get('nome'),
-            'telefone': dados.get('telefone'),
-            'email': dados.get('email')
+            'preco': dados.get('preco'),
+            'duracao_minutos': dados.get('duracao_minutos')
         }
         # Validando dados obrigatórios
-        if dados['nome'] is None or dados['telefone'] is None or dados['email'] is None:
-            return jsonify({'erro': 'Campos nome, telefone e email são obrigatórios'}), 400
-        # Validando formato do email e unicidade
-        if Cliente.query.filter_by(email=dados['email']).first():
-            return jsonify({'erro': 'Email já cadastrado'}), 400
-        # Validando formato do email (simples)
-        if dados['email'] and '@' not in dados['email']:
-            return jsonify({'erro': 'Email inválido'}), 400
+        if (dados['nome'] is None or 
+            dados['preco'] is None or 
+            dados['duracao_minutos'] is None):
+            return jsonify({'erro': 'Campos nome, preco e duracao_minutos são obrigatórios'}), 400
         
-        # Criar cliente e salvar no banco
-        cliente = Cliente(**dados_cliente)
-        db.session.add(cliente)
+        # Criar serviço e salvar no banco
+        servico = Servico(**dados_servico)
+        db.session.add(servico)
         db.session.commit()
-        return jsonify({'cliente': {
-            'id': cliente.id,
-            'nome': cliente.nome,
-            'telefone': cliente.telefone,
-            'email': cliente.email,
-            'msg': 'Cliente criado com sucesso'
+        return jsonify({'servico': {
+            'id': servico.id,
+            'nome': servico.nome,
+            'preco': servico.preco,
+            'duracao_minutos': servico.duracao_minutos,
+            'msg': 'Serviço criado com sucesso'
         }}), 201
     except Exception as e:
-        return jsonify({'erro': 'Erro ao incluir cliente: ' + str(e)}), 500
-    
+        return jsonify({'erro': 'Erro ao criar serviço: ' + str(e)}), 500
 
-# ========== PRÓXIMOS PASSOS ==========
-# 1. Implemente a função acima
-# 2. Salve este arquivo
-# 3. Vá para run.py e registre este blueprint
-# 4. Teste com GET http://localhost:5000/api/servicos
+@servico_bp.route('/editar-servico/<int:id>', methods=['PUT'])
+def editar_servico(id):
+    try:
+        servico = Servico.query.get(id)
+        if not servico:
+            return jsonify({'erro': 'Serviço não encontrado'}), 404
+
+        dados_edicao = request.get_json()
+        if 'nome' in dados_edicao:
+            servico.nome = dados_edicao['nome']
+        if 'preco' in dados_edicao:
+            servico.preco = dados_edicao['preco']
+        if 'duracao_minutos' in dados_edicao:
+            servico.duracao_minutos = dados_edicao['duracao_minutos']
+        
+        db.session.commit()
+        return jsonify({'servico': {
+            'id': servico.id,
+            'nome': servico.nome,
+            'preco': servico.preco,
+            'duracao_minutos': servico.duracao_minutos,
+            'msg': 'Serviço editado com sucesso'
+        }}), 200
+    except Exception as e:
+        return jsonify({'erro': 'Erro ao editar serviço: ' + str(e)}), 500
+
+@servico_bp.route('/deletar-servico/<int:id>', methods=['DELETE'])
+def deletar_servico(id):
+    try:
+        servico = Servico.query.get(id)
+        if not servico:
+            return jsonify({'erro': 'Serviço não encontrado'}), 404
+        
+        db.session.delete(servico)
+        db.session.commit()
+        return jsonify({'msg': 'Serviço deletado com sucesso'}), 200
+    except Exception as e:
+        return jsonify({'erro': 'Erro ao deletar serviço: ' + str(e)}), 500
+    
+@servico_bp.route('/buscar-servico/<int:id>', methods=['GET'])
+def buscar_servico(id):
+    try:
+        servico = Servico.query.get(id)
+        if not servico:
+            return jsonify({'erro': 'Serviço não encontrado'}), 404
+        
+        servico_dict = {
+            'id': servico.id,
+            'nome': servico.nome,
+            'preco': servico.preco,
+            'duracao_minutos': servico.duracao_minutos
+        }
+        return jsonify({'servico': servico_dict}), 200
+    except Exception as e:
+        return jsonify({'erro': 'Erro ao buscar serviço: ' + str(e)}), 500

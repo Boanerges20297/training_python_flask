@@ -1,0 +1,127 @@
+from flask import Blueprint, jsonify, request
+from app.models.agendamento import Agendamento
+from app import db
+
+agendamento_bp = Blueprint('agendamento',__name__,url_prefix='/api/agendamento')
+
+@agendamento_bp.route('/criar-agendamento', methods=['POST'])
+def criar_agendamento():
+    dados = request.get_json()
+    try:
+        dados_agendamento = {
+            'cliente_id': dados.get('cliente_id'),
+            'barbeiro_id': dados.get('barbeiro_id'),
+            'servico_id': dados.get('servico_id'),
+            'data_agendamento': dados.get('data_agendamento'),
+            'observacoes': dados.get('observacoes')
+        }
+        # Validando dados obrigatórios
+        if (dados['cliente_id'] is None or 
+            dados['barbeiro_id'] is None or 
+            dados['servico_id'] is None or 
+            dados['data_agendamento'] is None):
+            return jsonify({'erro': 'Campos cliente_id, barbeiro_id, servico_id e data_agendamento são obrigatórios'}), 400
+        
+        # Criar agendamento e salvar no banco
+        agendamento = Agendamento(**dados_agendamento)
+        db.session.add(agendamento)
+        db.session.commit()
+        return jsonify({'agendamento': {
+            'id': agendamento.id,
+            'cliente_id': agendamento.cliente_id,
+            'barbeiro_id': agendamento.barbeiro_id,
+            'servico_id': agendamento.servico_id,
+            'data_agendamento': agendamento.data_agendamento,
+            'observacoes': agendamento.observacoes,
+            'msg': 'Agendamento criado com sucesso'
+        }}), 201
+    except Exception as e:
+        return jsonify({'erro': 'Erro ao criar agendamento: ' + str(e)}), 500
+    
+@agendamento_bp.route('/listar-agendamento', methods=['GET'])
+def listar_agendamento():
+    try:
+        agendamento = Agendamento.query.all()
+        agendamento_dict = [
+            {
+                'id': a.id,
+                'cliente_id': a.cliente_id,
+                'barbeiro_id': a.barbeiro_id,
+                'servico_id': a.servico_id,
+                'data_agendamento': a.data_agendamento,
+                'observacoes': a.observacoes
+            }
+            for a in agendamento
+        ]
+        # Retornar em JSON com chave 'agendamentos'
+        return jsonify({'agendamentos': agendamento_dict})
+    except Exception as e:
+        return jsonify({'erro': 'Não foi possível listar os agendamentos: ' + str(e)}), 500
+    
+@agendamento_bp.route('/editar-agendamento/<int:id>', methods=['PUT'])
+def editar_agendamento(id):
+    try:
+        agendamento = Agendamento.query.get(id)
+        if not agendamento:
+            return jsonify({'erro': 'Agendamento não encontrado'}), 404
+        
+        # Verificar quais campos foram enviados e atualizar somente esses
+        dados = request.get_json()
+        if 'cliente_id' in dados:
+            agendamento.cliente_id = dados['cliente_id']
+        if 'barbeiro_id' in dados:
+            agendamento.barbeiro_id = dados['barbeiro_id']
+        if 'servico_id' in dados:
+            agendamento.servico_id = dados['servico_id']
+        if 'data_agendamento' in dados:
+            agendamento.data_agendamento = dados['data_agendamento']
+        if 'observacoes' in dados:
+            agendamento.observacoes = dados['observacoes']
+
+        db.session.commit()
+        
+        return jsonify({'agendamento': {
+            'id': agendamento.id,
+            'cliente_id': agendamento.cliente_id,
+            'barbeiro_id': agendamento.barbeiro_id,
+            'servico_id': agendamento.servico_id,
+            'data_agendamento': agendamento.data_agendamento,
+            'observacoes': agendamento.observacoes,
+            'msg': 'Agendamento atualizado com sucesso'
+        }})
+    except Exception as e:
+        return jsonify({'erro': 'Erro ao editar agendamento: ' + str(e)}), 500
+
+@agendamento_bp.route('/deletar-agendamento/<int:id>', methods=['DELETE'])
+def deletar_agendamento(id):
+    try:
+        agendamento = Agendamento.query.get(id)
+        if not agendamento:
+            return jsonify({'erro': 'Agendamento não encontrado'}), 404
+        
+        db.session.delete(agendamento)
+        db.session.commit()
+        
+        return jsonify({'msg': 'Agendamento deletado com sucesso'})
+    except Exception as e:
+        return jsonify({'erro': 'Erro ao deletar agendamento: ' + str(e)}), 500
+    
+@agendamento_bp.route('/buscar-agendamento/<int:id>', methods=['GET'])
+def buscar_agendamento(id):
+    try:
+        agendamento = Agendamento.query.get(id)
+        if not agendamento:
+            return jsonify({'erro': 'Agendamento não encontrado'}), 404
+        
+        agendamento_dict = {
+            'id': agendamento.id,
+            'cliente_id': agendamento.cliente_id,
+            'barbeiro_id': agendamento.barbeiro_id,
+            'servico_id': agendamento.servico_id,
+            'data_agendamento': agendamento.data_agendamento,
+            'observacoes': agendamento.observacoes
+        }
+        
+        return jsonify({'agendamento': agendamento_dict})
+    except Exception as e:
+        return jsonify({'erro': 'Erro ao buscar agendamento: ' + str(e)}), 500
