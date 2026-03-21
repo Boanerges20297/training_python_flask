@@ -162,11 +162,11 @@ Agora deve retornar:
 ## 📋 Checklist
 
 - [ ] Li [TUTORIAL_APIS.md](./TUTORIAL_APIS.md)
-- [ ] Implementei [app/routes/servico_routes.py](./app/routes/servico_routes.py)
-- [ ] Registrei blueprint em [run.py](./run.py)
-- [ ] Testei GET /api/servicos
-- [ ] Criei dados de teste
-- [ ] Testei de novo e retornou dados
+- [ x ] Implementei [app/routes/servico_routes.py](./app/routes/servico_routes.py)
+- [ x ] Registrei blueprint em [run.py](./run.py)
+- [ x ] Testei GET /api/servicos
+- [ x ] Criei dados de teste
+- [ x ] Testei de novo e retornou dados
 
 ---
 

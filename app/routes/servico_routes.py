@@ -22,8 +22,9 @@ Não comece a codar ainda! Primeiro leia os comentários abaixo.
 # TODO: from flask import ...
 # TODO: from app import ...
 # TODO: from app.models import ...
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from app.models.servico import Servico
+from app.models.cliente import Cliente
 from app import db
 
 # ========== PASSO 2: CRIAR BLUEPRINT ==========
@@ -32,7 +33,8 @@ from app import db
 # URL Prefix: '/api/servicos' (todas as rotas deste blueprint começam com isso)
 
 # TODO: servico_bp = Blueprint(...)
-servico_bp = Blueprint('servicos',__name__,'/api/servicos')
+servico_bp = Blueprint('servicos',__name__,url_prefix='/api/servicos')
+clientes_bp = Blueprint('clientes',__name__,url_prefix='/api/clientes')
 
 # ========== PASSO 3: CRIAR ROTA GET ==========
 # Rota: /api/servicos  (GET)
@@ -51,7 +53,7 @@ def listar_servicos():
     Passos para implementar:
     1. Buscar todos os serviços do banco com Servico.query.all()
     2. Converter cada serviço em dicionário (para JSON)
-    3. Retornar com jsonify()
+    3. Retornar com jsonify() 
     """
     
     try:
@@ -78,6 +80,57 @@ def listar_servicos():
     except Exception as e:
         return jsonify({'erro': str(e)}), 500
 
+@clientes_bp.route('/listar_clientes', methods=['GET'])
+def listar_clientes():
+    try:
+        clientes = Cliente.query.all()
+        clientes_dict = [
+            {
+                'id': c.id,
+                'nome': c.nome,
+                'telefone': c.telefone,
+                'email': c.email
+            }
+            for c in clientes
+        ]
+        # Retornar em JSON com chave 'clientes'
+        return jsonify({'clientes': clientes_dict})
+    except Exception as e:
+        return jsonify({'erro': 'Não foi possível listar os clientes: ' + str(e)}), 500
+
+@clientes_bp.route('/', methods=['POST'])
+def criar_cliente():
+    dados = request.get_json()
+    try:
+        dados_cliente = {
+            'nome': dados.get('nome'),
+            'telefone': dados.get('telefone'),
+            'email': dados.get('email')
+        }
+        # Validando dados obrigatórios
+        if dados['nome'] is None or dados['telefone'] is None or dados['email'] is None:
+            return jsonify({'erro': 'Campos nome, telefone e email são obrigatórios'}), 400
+        # Validando formato do email e unicidade
+        if Cliente.query.filter_by(email=dados['email']).first():
+            return jsonify({'erro': 'Email já cadastrado'}), 400
+        # Validando formato do email (simples)
+        if dados['email'] and '@' not in dados['email']:
+            return jsonify({'erro': 'Email inválido'}), 400
+        
+        # Criar cliente e salvar no banco
+        cliente = Cliente(**dados_cliente)
+        db.session.add(cliente)
+        db.session.commit()
+        return jsonify({'cliente': {
+            'id': cliente.id,
+            'nome': cliente.nome,
+            'telefone': cliente.telefone,
+            'email': cliente.email,
+            'msg': 'Cliente criado com sucesso'
+        }}), 201
+    except Exception as e:
+        return jsonify({'erro': 'Erro ao incluir cliente: ' + str(e)}), 500
+    
 
 # ========== PRÓXIMOS PASSOS ==========
 # 1. Implemente a função acima
