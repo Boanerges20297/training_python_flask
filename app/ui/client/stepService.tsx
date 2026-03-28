@@ -26,7 +26,7 @@ const services: ServiceProps = {
         },
         {
             id: 3,
-            name: "Corte e barba",
+            name: "Pezinho",
             price: 40.00,
             duration: 50,
         },

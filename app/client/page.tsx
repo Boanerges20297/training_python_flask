@@ -43,17 +43,18 @@ export default function ClientPage() {
                 )}
                 {step === 3 && (
                     <StepDateTime
-                        selectedDate={data.selectedDate} selectedTime={data.selectedTime}
+                        selectedDate={data.selectedDate}
+                        selectedTime={data.selectedTime}
                         onToggle={(date, time) => {
                             updateData({
                                 ...data,
                                 selectedDate: date,
-                                selectedTime: time
+                                selectedTime: time,
                             });
                         }} />
                 )}
                 {step === 4 && (
-                    <StepConfirmation />
+                    <StepConfirmation data={data} />
                 )}
             </div>
             {/*Area para os botões de navegação */}
@@ -68,13 +69,11 @@ export default function ClientPage() {
                 {/*Se não haver dados da etapa atual, o botão de proximo deverá ficar desabilitado */}
                 <Button
                     onClick={
-                        step === 4 ? () => { console.log("Finalizado") } : () => { nextStep(); }
+                        step === 4 ? () => { console.log(data) } : () => { nextStep(); }
                     }
                     disabled={!isStepValid()}>
                     {step === 4 ? <span>Finalizar</span> : <span>Proximo</span>}
-                    {/* Icone de proximo */}
                 </Button>
-                {/* Avançar só deverá ser permitido quando o usuario selecionar pelo menos uma opção em cada etapa, se não tiver selecionado nada, o botão deverá ficar desabilitado */}
             </nav>
         </div>
     );

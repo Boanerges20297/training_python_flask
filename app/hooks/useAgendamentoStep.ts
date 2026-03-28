@@ -1,18 +1,12 @@
 /*Hook para controlar os steps do agendamento */
 
 import { useState } from "react";
-
-interface AgendamentoData {
-    selectedService: { id: number, name: string }[];
-    selectedDate: string;
-    selectedTime: string;
-    selectedBarber: number | null;
-}
+import { AgendamentoData } from "@/app/types/agendamento";
 
 export default function useAgendamentoStep() {
     const [data, setData] = useState<AgendamentoData>({
         selectedService: [],
-        selectedDate: "",
+        selectedDate: undefined,
         selectedTime: "",
         selectedBarber: null
     });
@@ -24,7 +18,7 @@ export default function useAgendamentoStep() {
             case 2:
                 return data.selectedBarber !== null;
             case 3:
-                return data.selectedDate !== "" && data.selectedTime !== "";
+                return data.selectedDate !== undefined && data.selectedTime !== "";
             case 4:
                 return true;
             default:
