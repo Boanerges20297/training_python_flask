@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost:5000/api';
 
-export interface Cliente {
+export type Cliente = {
   id: number;
   nome: string;
   email: string;
