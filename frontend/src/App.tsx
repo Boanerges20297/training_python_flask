@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getClientes, Cliente } from './api/api';
+import { getClientes } from './api/api';
+import type { Cliente } from './api/api';
 import { Users, Phone, Mail, Plus, Loader2, Database } from 'lucide-react';
 
 function App() {
