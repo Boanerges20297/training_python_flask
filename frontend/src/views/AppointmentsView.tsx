@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { getAgendamentos, Agendamento } from '../api/api';
+import { useEffect, useState } from 'react';
+import { getAgendamentos, type Agendamento } from '../api/api';
 import { Calendar, User, ShoppingBag, Clock, Plus, Loader2 } from 'lucide-react';
 
-const AppointmentsView: React.FC = () => {
+export default function AppointmentsView() {
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -78,6 +78,4 @@ const AppointmentsView: React.FC = () => {
       )}
     </section>
   );
-};
-
-export default AppointmentsView;
+}

@@ -1,16 +1,21 @@
-import React, { useEffect, useState } from 'react';
-import { getServicos, Servico } from '../api/api';
+import { useEffect, useState } from 'react';
+import { getServicos, type Servico } from '../api/api';
 import { Briefcase, DollarSign, Clock, Plus, Loader2 } from 'lucide-react';
 
-const ServicesView: React.FC = () => {
+export default function ServicesView() {
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getServicos().then(data => {
-      setServicos(data);
-      setLoading(false);
-    });
+    async function fetchData() {
+      try {
+        const data = await getServicos();
+        setServicos(data);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
   }, []);
 
   return (
@@ -75,4 +80,4 @@ const ServicesView: React.FC = () => {
   );
 };
 
-export default ServicesView;
+// export default ServicesView; (Removido para corrigir o erro de exportação duplicada)

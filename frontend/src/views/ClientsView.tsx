@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { getClientes, Cliente } from '../api/api';
+import { useEffect, useState } from 'react';
+import { getClientes, type Cliente } from '../api/api';
 import { Users, Phone, Mail, Plus, Loader2 } from 'lucide-react';
 
-const ClientsView: React.FC = () => {
+export default function ClientsView() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -73,6 +73,4 @@ const ClientsView: React.FC = () => {
       )}
     </section>
   );
-};
-
-export default ClientsView;
+}
