@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
-import { getAgendamentos, getClientes, getServicos, createAgendamento, type Agendamento, type Cliente, type Servico } from '../api/api';
-import { Calendar, User, ShoppingBag, Clock, Plus, Loader2, X, FileText, CheckCircle2 } from 'lucide-react';
+import { getAgendamentos } from '../api/appointments';
+import { getClientes } from '../api/clients';
+import { getServicos } from '../api/services';
+import type { Agendamento, Cliente, Servico } from '../types';
+import { Calendar, User, ShoppingBag, Clock, Plus, Loader2 } from 'lucide-react';
+import AppointmentModal from '../components/modals/AppointmentModal/AppointmentModal';
 
+// Componentes de Agendamentos, gerência de estados
 export default function AppointmentsView() {
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -9,17 +14,7 @@ export default function AppointmentsView() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Estados do formulário
-  const [formData, setFormData] = useState({ 
-    cliente_id: '', 
-    servico_id: '', 
-    data_agendamento: '', 
-    observacoes: '' 
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-
+  // Função para buscar dados
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -36,51 +31,14 @@ export default function AppointmentsView() {
     }
   };
 
+  // Hook para buscar dados
   useEffect(() => {
     fetchData();
   }, []);
 
+  // Função para abrir modal de novo agendamento
   const handleNewAppointment = () => {
-    setError(null);
-    setSuccess(false);
-    setFormData({ cliente_id: '', servico_id: '', data_agendamento: '', observacoes: '' });
     setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    if (isSubmitting) return;
-    setIsModalOpen(false);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      const payload = {
-        cliente_id: parseInt(formData.cliente_id),
-        servico_id: parseInt(formData.servico_id),
-        data_agendamento: formData.data_agendamento,
-        observacoes: formData.observacoes,
-        barbeiro_id: 1 // Usando ID padrão conforme simplificação
-      };
-
-      if (!payload.cliente_id || !payload.servico_id || !payload.data_agendamento) {
-        throw "Preencha todos os campos obrigatórios.";
-      }
-
-      await createAgendamento(payload as any);
-      setSuccess(true);
-      setTimeout(() => {
-        setIsModalOpen(false);
-        fetchData();
-      }, 1500);
-    } catch (err: any) {
-      setError(err);
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   // Helpers para mapear nomes na tabela
@@ -152,352 +110,14 @@ export default function AppointmentsView() {
         </div>
       )}
 
-      {/* Modal - Design Premium */}
-      {isModalOpen && (
-        <div className="modal-overlay" onClick={handleCloseModal}>
-          <div className="modal-content glass-premium" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '550px' }}>
-            <button 
-              className="modal-close-btn" 
-              onClick={handleCloseModal}
-              disabled={isSubmitting}
-            >
-              <X size={18} />
-            </button>
-
-            <div className="modal-header-modern">
-               <h2 className="modal-title-modern">Agendar Horário</h2>
-               <p className="modal-subtitle-modern">Escolha o cliente, o serviço e o horário.</p>
-            </div>
-
-            <div className="modal-body">
-              {success ? (
-                <div className="success-state">
-                  <div className="success-icon-wrapper" style={{ background: 'rgba(139, 92, 246, 0.1)' }}>
-                    <CheckCircle2 size={48} color="#8b5cf6" />
-                  </div>
-                  <h3 style={{ color: '#f8fafc', marginBottom: '0.5rem', fontSize: '1.25rem' }}>Agendado!</h3>
-                  <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>O horário foi reservado com sucesso.</p>
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit} className="modern-form">
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                    <div className="form-group-modern">
-                      <label>Cliente</label>
-                      <div className="input-group-modern">
-                        <User size={18} className="input-icon" />
-                        <select 
-                          required
-                          value={formData.cliente_id}
-                          onChange={(e) => setFormData({ ...formData, cliente_id: e.target.value })}
-                        >
-                          <option value="">Selecione...</option>
-                          {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="form-group-modern">
-                      <label>Serviço</label>
-                      <div className="input-group-modern">
-                        <ShoppingBag size={18} className="input-icon" />
-                        <select 
-                          required
-                          value={formData.servico_id}
-                          onChange={(e) => setFormData({ ...formData, servico_id: e.target.value })}
-                        >
-                          <option value="">Selecione...</option>
-                          {servicos.map(s => <option key={s.id} value={s.id}>{s.nome} - R$ {Number(s.preco).toFixed(2)}</option>)}
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="form-group-modern">
-                    <label>Data e Horário</label>
-                    <div className="input-group-modern">
-                      <Calendar size={18} className="input-icon" />
-                      <input 
-                        type="datetime-local" 
-                        required
-                        value={formData.data_agendamento}
-                        onChange={(e) => setFormData({ ...formData, data_agendamento: e.target.value })}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="form-group-modern">
-                    <label>Observações (Opcional)</label>
-                    <div className="input-group-modern">
-                      <FileText size={18} className="input-icon" style={{ top: '1rem', transform: 'none' }} />
-                      <textarea 
-                        rows={3}
-                        placeholder="Ex: Cabelo muito comprido, lavagem especial..."
-                        value={formData.observacoes}
-                        onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                        style={{ paddingLeft: '3rem' }}
-                      />
-                    </div>
-                  </div>
-
-                  {error && (
-                    <div className="error-message">
-                      {error}
-                    </div>
-                  )}
-
-                  <div className="modal-footer-modern">
-                    <button 
-                      type="button" 
-                      onClick={handleCloseModal} 
-                      className="btn-glass-secondary" 
-                      disabled={isSubmitting}
-                    >
-                      Cancelar
-                    </button>
-                    <button 
-                      type="submit" 
-                      className="btn-premium-primary" 
-                      style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)' }}
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? (
-                        <Loader2 size={18} className="animate-spin" />
-                      ) : (
-                        <>
-                          <Plus size={18} />
-                          <span>Confirmar Agendamento</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </form>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Estilos Adicionais */}
-      <style>{`
-        .glass-premium {
-          background: rgba(15, 23, 42, 0.8);
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
-          border-radius: 24px;
-          padding: 2.5rem;
-          width: 100%;
-          position: relative;
-          animation: scale-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .modal-overlay {
-          position: fixed;
-          inset: 0;
-          background: rgba(2, 6, 23, 0.85);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-          backdrop-filter: blur(5px);
-          animation: fade-in 0.2s ease-out;
-          padding: 1rem;
-        }
-
-        .modal-close-btn {
-          position: absolute;
-          top: 1.5rem;
-          right: 1.5rem;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          color: #94a3b8;
-          width: 36px;
-          height: 36px;
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .modal-close-btn:hover {
-          background: rgba(239, 68, 68, 0.1);
-          color: #ef4444;
-          border-color: rgba(239, 68, 68, 0.2);
-          transform: rotate(90deg);
-        }
-
-        .modal-header-modern {
-          margin-bottom: 2rem;
-        }
-
-        .modal-title-modern {
-          font-size: 1.5rem;
-          font-weight: 700;
-          color: #f8fafc;
-          margin: 0 0 0.5rem 0;
-        }
-
-        .modal-subtitle-modern {
-          font-size: 0.9rem;
-          color: #94a3b8;
-          margin: 0;
-        }
-
-        .modern-form {
-          display: flex;
-          flex-direction: column;
-          gap: 1.5rem;
-        }
-
-        .form-group-modern {
-          display: flex;
-          flex-direction: column;
-          gap: 0.6rem;
-        }
-
-        .form-group-modern label {
-          font-size: 0.8rem;
-          font-weight: 600;
-          color: #64748b;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-        }
-
-        .input-group-modern {
-          position: relative;
-          display: flex;
-          align-items: center;
-        }
-
-        .input-icon {
-          position: absolute;
-          left: 1rem;
-          color: #475569;
-          transition: all 0.2s;
-        }
-
-        .input-group-modern select,
-        .input-group-modern input,
-        .input-group-modern textarea {
-          width: 100%;
-          padding: 0.8rem 1rem 0.8rem 3rem;
-          background: rgba(2, 6, 23, 0.4);
-          border: 1px solid rgba(255, 255, 255, 0.05);
-          border-radius: 14px;
-          color: #f8fafc;
-          font-size: 0.95rem;
-          transition: all 0.2s;
-        }
-        
-        .input-group-modern select {
-          cursor: pointer;
-          appearance: none;
-        }
-
-        .input-group-modern input:focus,
-        .input-group-modern select:focus,
-        .input-group-modern textarea:focus {
-          outline: none;
-          border-color: #8b5cf6;
-          background: rgba(2, 6, 23, 0.6);
-          box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15);
-        }
-
-        .input-group-modern:focus-within .input-icon {
-          color: #8b5cf6;
-          transform: scale(1.1);
-        }
-
-        .error-message {
-          color: #f87171;
-          font-size: 0.85rem;
-          background: rgba(239, 68, 68, 0.1);
-          padding: 0.8rem;
-          border-radius: 10px;
-          border: 1px solid rgba(239, 68, 68, 0.2);
-        }
-
-        .modal-footer-modern {
-          display: flex;
-          gap: 1rem;
-          margin-top: 1rem;
-        }
-
-        .btn-glass-secondary {
-          flex: 1;
-          padding: 0.8rem;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          color: #94a3b8;
-          border-radius: 14px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .btn-glass-secondary:hover:not(:disabled) {
-          background: rgba(255, 255, 255, 0.08);
-          color: #f8fafc;
-        }
-
-        .btn-premium-primary {
-          flex: 2;
-          padding: 0.8rem;
-          border: none;
-          color: white;
-          border-radius: 14px;
-          font-weight: 600;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
-          transition: all 0.3s;
-        }
-
-        .btn-premium-primary:hover:not(:disabled) {
-          transform: translateY(-2px);
-          filter: brightness(1.1);
-        }
-
-        .success-state {
-          text-align: center;
-          padding: 2rem 0;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-        }
-
-        .success-icon-wrapper {
-          width: 80px;
-          height: 80px;
-          border-radius: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-bottom: 1.5rem;
-          animation: bounce-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        @keyframes bounce-in {
-          0% { transform: scale(0); }
-          50% { transform: scale(1.2); }
-          100% { transform: scale(1); }
-        }
-
-        @keyframes fade-in {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-
-        @keyframes scale-up {
-          from { transform: scale(0.95); opacity: 0; }
-          to { transform: scale(1); opacity: 1; }
-        }
-      `}</style>
+      {/* Componente Modal Refatorado */}
+      <AppointmentModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={fetchData}
+        clientes={clientes}
+        servicos={servicos}
+      />
     </section>
   );
 }

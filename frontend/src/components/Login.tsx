@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { login } from '../api/api';
+import { login } from '../api/auth';
 import { Lock, Mail, Loader2, Scissors } from 'lucide-react';
 
 interface LoginProps {

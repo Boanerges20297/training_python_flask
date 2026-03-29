@@ -7,9 +7,9 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 class Config:
     """Configurações gerais da aplicação"""
     
-    # SQLite - banco de dados local em arquivo
-    # sqlite:/// significa que está na mesma pasta do projeto
-    SQLALCHEMY_DATABASE_URI = f'sqlite:///{BASE_DIR}/barba_byte.db'
+    # SQLite - banco de dados local em arquivo no diretório instances
+    # Usamos o caminho absoluto para garantir que o Flask encontre o arquivo
+    SQLALCHEMY_DATABASE_URI = f'sqlite:///{os.path.join(BASE_DIR, "instances", "barba_byte.db")}'
     
     # Desabilita avisos desnecessários
     SQLALCHEMY_TRACK_MODIFICATIONS = False

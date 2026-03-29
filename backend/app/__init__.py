@@ -8,31 +8,41 @@ db = SQLAlchemy()
 def create_app():
     """
     FACTORY PATTERN - Cria e configura a aplicação Flask
-    
-    Esta função:
-    1. Cria a instância Flask
-    2. Carrega as configurações
-    3. Inicializa o banco de dados
-    4. Registra os blueprints (rotas)
     """
+    import os
     
     # 1. Criar a app Flask
-    app = Flask(__name__)
+    # Definimos explicitamente o caminho da pasta de instância para o diretório "instances"
+    app = Flask(__name__, instance_relative_config=True, instance_path=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'instances')))
+    
+    # 1.1 Garantir que a pasta de instância exista
+    try:
+        if not os.path.exists(app.instance_path):
+            os.makedirs(app.instance_path)
+    except OSError:
+        pass
     
     # 2. Carregar configurações do config.py
     from config import Config
     app.config.from_object(Config)
     
-    # 2.5 Habilitar CORS para permitir que o frontend fale com a API
+    # 2.5 Habilitar CORS
     from flask_cors import CORS
     CORS(app)
     
-    # 3. Inicializar banco de dados com a app
+    # 3. Inicializar banco de dados
     db.init_app(app)
     
-    # 4. Registrar blueprints (rotas)
-    # Vamos adicionar aqui quando criarmos os blueprints
-    # by exemplo: app.register_blueprint(cliente_bp)
+    # 4. Registrar blueprints (Rotas Modulares)
+    from app.routes.client_routes import clientes_bp
+    from app.routes.servico_routes import servico_bp
+    from app.routes.agendamento_routes import agendamento_bp
+    from app.routes.auth_routes import auth_bp
+    
+    app.register_blueprint(clientes_bp)
+    app.register_blueprint(servico_bp)
+    app.register_blueprint(agendamento_bp)
+    app.register_blueprint(auth_bp)
     
     # 5. Criar as tabelas no banco (quando a app inicia)
     with app.app_context():
@@ -45,7 +55,7 @@ def create_app():
         return jsonify({
             'status': 'online',
             'message': 'API Training Python Flask - Pronto para conexões',
-            'version': '1.0.0'
+            'version': '1.1.0 (Modular)'
         })
 
     return app
