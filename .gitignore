@@ -1,2 +1,23 @@
-.venv/
-requirements.txt
+# Python
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
+**/.venv/
+**/env/
+**/venv/
+**/.env
+**/.pytest_cache/
+
+# Node
+**/node_modules/
+**/dist/
+**/.vite/
+
+# Database
+**/*.db
+**/*.sqlite3
+
+# IDEs
+.vscode/
+.idea/
+.DS_Store
