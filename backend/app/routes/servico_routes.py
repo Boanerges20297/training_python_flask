@@ -54,11 +54,13 @@ def listar_servicos():
     2. Converter cada serviço em dicionário (para JSON)
     3. Retornar com jsonify() 
     """
+    #Vinicius - Paginação de serviços 31/03/2026
     page = request.args.get('page', default=1, type=int)
     per_page = request.args.get('per_page', default=10, type=int)
     
     try:
         # TODO: Buscar todos os serviços
+        #Vinicius - Paginação de serviços 31/03/2026
         servicos = Servico.query.paginate(page=page, per_page=per_page, error_out=False)
         
         # TODO: Converter para lista de dicionários
