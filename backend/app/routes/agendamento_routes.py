@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 from app.models.agendamento import Agendamento
 from app import db
+from datetime import datetime
 
 agendamento_bp = Blueprint('agendamento',__name__,url_prefix='/api/agendamento')
 
@@ -8,11 +9,11 @@ agendamento_bp = Blueprint('agendamento',__name__,url_prefix='/api/agendamento')
 def criar_agendamento():
     dados = request.get_json()
     try:
-        dados_agendamento = {
+        daos_agendamento = {
             'cliente_id': dados.get('cliente_id'),
             'barbeiro_id': dados.get('barbeiro_id'),
             'servico_id': dados.get('servico_id'),
-            'data_agendamento': dados.get('data_agendamento'),
+            'data_agendamento': datetime.fromisoformat(dados.get('data_agendamento')),
             'observacoes': dados.get('observacoes')
         }
         # Validando dados obrigatórios
@@ -22,6 +23,10 @@ def criar_agendamento():
             dados['data_agendamento'] is None):
             return jsonify({'erro': 'Campos cliente_id, barbeiro_id, servico_id e data_agendamento são obrigatórios'}), 400
         
+        #Vinicius - Conflito de Agendamentos 31/03/2026
+        if Agendamento.query.filter_by(data_agendamento=dados.get('data_agendamento'), barbeiro_id=dados.get('barbeiro_id')).first():
+            return jsonify({'erro': 'Horario indisponivel'}), 409
+            
         # Criar agendamento e salvar no banco
         agendamento = Agendamento(**dados_agendamento)
         db.session.add(agendamento)
@@ -40,8 +45,12 @@ def criar_agendamento():
     
 @agendamento_bp.route('/listar-agendamento', methods=['GET'])
 def listar_agendamento():
+    #Vinicius - Paginação de Agendamentos 31/03/2026
+    page = request.args.get('page', default=1, type=int)
+    per_page = request.args.get('per_page', default=10, type=int)
     try:
-        agendamento = Agendamento.query.all()
+        #Vinicius - Paginação de Agendamentos 31/03/2026
+        agendamento = Agendamento.query.paginate(page=page, per_page=per_page, error_out=False)
         agendamento_dict = [
             {
                 'id': a.id,
