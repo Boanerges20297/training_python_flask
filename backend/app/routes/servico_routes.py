@@ -98,6 +98,8 @@ def criar_servico():
             dados['duracao_minutos'] is None):
             return jsonify({'erro': 'Campos nome, preco e duracao_minutos são obrigatórios'}), 400
 
+        #Vinicius - 31/03/2026
+        #Verificar se o serviço já existe
         if Servico.query.filter_by(nome=dados.get('nome').lower()).first():
             return jsonify({'erro': 'Serviço já cadastrado'}), 409
         
