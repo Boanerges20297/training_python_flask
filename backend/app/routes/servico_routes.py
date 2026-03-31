@@ -97,6 +97,9 @@ def criar_servico():
             dados['preco'] is None or 
             dados['duracao_minutos'] is None):
             return jsonify({'erro': 'Campos nome, preco e duracao_minutos são obrigatórios'}), 400
+
+        if Servico.query.filter_by(nome=dados.get('nome').lower()).first():
+            return jsonify({'erro': 'Serviço já cadastrado'}), 409
         
         # Criar serviço e salvar no banco
         servico = Servico(**dados_servico)
