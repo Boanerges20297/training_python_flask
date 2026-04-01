@@ -54,6 +54,7 @@ def criar_agendamento():
         ).first():
             return jsonify({'erro': 'Horario indisponivel'}), 409
 
+
         #Criar agendamento e salvar no banco
         agendamento = Agendamento(**dados_agendamento)
         db.session.add(agendamento)
