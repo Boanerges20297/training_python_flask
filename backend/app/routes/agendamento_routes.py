@@ -1,7 +1,8 @@
 from flask import Blueprint, jsonify, request
 from app.models.agendamento import Agendamento
+from app.models.servico import Servico
 from app import db
-from datetime import datetime
+from datetime import datetime, timedelta
 
 agendamento_bp = Blueprint('agendamento',__name__,url_prefix='/api/agendamento')
 
@@ -31,7 +32,7 @@ def criar_agendamento():
         
         #Vinicius - 31/03/2026
         #Se a data de inicio for menor que a data atual, retornar erro
-        data_inicio = dados.get('data_agendamento')
+        data_inicio = dados_agendamento['data_agendamento']
         if data_inicio < datetime.utcnow():
             return jsonify({'erro': 'Data do agendamento deve ser maior que a data atual'}), 400
 
