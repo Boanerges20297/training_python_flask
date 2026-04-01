@@ -82,25 +82,30 @@ def listar_servicos():
     
     except Exception as e:
         return jsonify({'erro': str(e)}), 500
-    
+
+
 @servico_bp.route('/criar-servico', methods=['POST'])
 def criar_servico():
     dados = request.get_json()
+    #Vinicius - 01/04/2026
+    #Adicinado barbeiro_id como campo obrigatório
     try:
         dados_servico = {
-            'nome': dados.get('nome'),
+            'nome': dados.get('nome').lower(),
             'preco': dados.get('preco'),
-            'duracao_minutos': dados.get('duracao_minutos')
+            'duracao_minutos': dados.get('duracao_minutos'),
+            'barbeiro_id': dados.get('barbeiro_id')
         }
         # Validando dados obrigatórios
         if (dados['nome'] is None or 
             dados['preco'] is None or 
-            dados['duracao_minutos'] is None):
-            return jsonify({'erro': 'Campos nome, preco e duracao_minutos são obrigatórios'}), 400
-
+            dados['duracao_minutos'] is None or
+            dados['barbeiro_id'] is None):
+            return jsonify({'erro': 'Campos nome, preco, duracao_minutos e barbeiro_id são obrigatórios'}), 400
+        
         #Vinicius - 31/03/2026
         #Verificar se o serviço já existe
-        if Servico.query.filter_by(nome=dados.get('nome').lower()).first():
+        if Servico.query.filter_by(nome=dados_servico.get('nome').lower()).first():
             return jsonify({'erro': 'Serviço já cadastrado'}), 409
         
         # Criar serviço e salvar no banco
