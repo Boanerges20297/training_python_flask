@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { getClientes } from '../api/clients';
 import type { Cliente } from '../types';
-import { Users, Phone, Mail, Plus, Loader2 } from 'lucide-react';
+import { Users, Phone, Mail, Plus, Loader2, Trash2 } from 'lucide-react';
 import ClientModal from '../components/modals/ClientModal/ClientModal';
+import ConfirmDialog from '../components/ConfirmDialog'; // Importando o novo ConfirmDialog que por enquanto não está sendo utilizado
 
 export default function ClientsView() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -71,7 +72,6 @@ export default function ClientsView() {
                         {cliente.email}
                       </div>
                     </td>
-                    <td><span className="badge">#{cliente.id}</span></td>
                   </tr>
                 ))
               ) : (
