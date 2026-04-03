@@ -23,3 +23,20 @@ class Config:
     
     # JSON - configurações para respostas JSON
     JSON_SORT_KEYS = False  # Não ordena as chaves (mais legível)
+
+    #Vinicius - 02/04/2026  
+    # Modo desenvolvimento
+    DEBUG = True
+
+    #Vinicius - 02/04/2026  
+    #Configuração do Rate Limiter
+    #Variavel para habilitar/desabilitar o rate limiter
+    RATELIMIT_ENABLED = True
+    #Variavel para configurar o storage do rate limiter
+    RATELIMIT_STORAGE_URL = "memory://"
+    #Variavel para configurar o limite padrão de requisições por minuto
+    RATELIMIT_DEFAULT_LIMIT = "3 per minute"
+    #Variavel para configurar a estratégia do rate limiter
+    RATELIMIT_STRATEGY = "fixed-window"
+    #Variavel para configurar se os headers do rate limiter devem ser habilitados
+    RATELIMIT_HEADERS_ENABLED = True
