@@ -30,11 +30,12 @@ def criar_cliente():
         dados_cliente = {
             'nome': dados.get('nome'),
             'telefone': dados.get('telefone'),
-            'email': dados.get('email')
+            'email': dados.get('email'),
+            'senha': dados.get('senha')
         }
         # Validando dados obrigatórios
-        if dados['nome'] is None or dados['telefone'] is None or dados['email'] is None:
-            return jsonify({'erro': 'Campos nome, telefone e email são obrigatórios'}), 400
+        if dados['nome'] is None or dados['telefone'] is None or dados['email'] is None or dados['senha'] is None:
+            return jsonify({'erro': 'Campos nome, telefone, email e senha são obrigatórios'}), 400
         # Validando formato do email e unicidade
         if Cliente.query.filter_by(email=dados['email']).first():
             return jsonify({'erro': 'Email já cadastrado'}), 400
