@@ -4,6 +4,7 @@ from app.models.servico import Servico
 from app import db
 from datetime import datetime, timedelta
 from app.schemas.agendamento_schema import AgendamentoSchema
+from pydantic import ValidationError
 
 agendamento_bp = Blueprint('agendamento',__name__,url_prefix='/api/agendamento')
 
@@ -37,7 +38,7 @@ def criar_agendamento():
             'msg': 'Agendamento criado com sucesso'
         }}), 201
 
-    except ValueError as e:
+    except ValidationError as e:
         return jsonify({'erro': 'Erro ao criar agendamento: ' + str(e)}), 400
     except Exception as e:
         return jsonify({'erro': 'Erro ao criar agendamento: ' + str(e)}), 500
@@ -72,19 +73,20 @@ def editar_agendamento(id):
         agendamento = Agendamento.query.get(id)
         if not agendamento:
             return jsonify({'erro': 'Agendamento não encontrado'}), 404
+
+        dados = AgendamentoSchema(**request.get_json())
         
         # Verificar quais campos foram enviados e atualizar somente esses
-        dados = request.get_json()
         if 'cliente_id' in dados:
-            agendamento.cliente_id = dados['cliente_id']
+            agendamento.cliente_id = dados.cliente_id
         if 'barbeiro_id' in dados:
-            agendamento.barbeiro_id = dados['barbeiro_id']
+            agendamento.barbeiro_id = dados.barbeiro_id
         if 'servico_id' in dados:
-            agendamento.servico_id = dados['servico_id']
+            agendamento.servico_id = dados.servico_id
         if 'data_agendamento' in dados:
-            agendamento.data_agendamento = dados['data_agendamento']
+            agendamento.data_agendamento = dados.data_agendamento
         if 'observacoes' in dados:
-            agendamento.observacoes = dados['observacoes']
+            agendamento.observacoes = dados.observacoes
 
         db.session.commit()
         
@@ -97,6 +99,8 @@ def editar_agendamento(id):
             'observacoes': agendamento.observacoes,
             'msg': 'Agendamento atualizado com sucesso'
         }})
+    except ValidationError as e:
+        return jsonify({'erro': 'Erro ao editar agendamento: ' + str(e)}), 400
     except Exception as e:
         return jsonify({'erro': 'Erro ao editar agendamento: ' + str(e)}), 500
 

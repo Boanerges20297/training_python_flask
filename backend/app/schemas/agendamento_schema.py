@@ -1,6 +1,6 @@
 #Vinicius - 03/04/2026
 
-from pydantic import BaseModel, Field, field_validator, FutureDatetime
+from pydantic import BaseModel, Field, field_validator, FutureDatetime, ValidationError
 from datetime import datetime
 
 #  # Colunas
@@ -36,7 +36,8 @@ class AgendamentoSchema(BaseModel):
     observacoes: str = Field(description="Observações do agendamento")
 
     model_config = {
-        "extra": "forbid"
+        "extra": "forbid",
+        "str_lowercase": True
     }
 
     @field_validator('data_agendamento')
@@ -44,15 +45,21 @@ class AgendamentoSchema(BaseModel):
         #Vinicius - 03/04/2026
         #Se a data de inicio for maior que o horario de fechamento, retornar erro
         if value.hour < HORARIO_INICIO or value.hour >= HORARIO_FECHAMENTO:
-            raise ValueError('Barbearia fechada neste horario')
+            raise ValidationError('Barbearia fechada neste horario')
         
         return value
 
     @field_validator('status')
     def status_validator(cls, value):
         if value not in ['pendente', 'confirmado', 'cancelado', 'concluido']:
-            raise ValueError('Status inválido')
+            raise ValidationError('Status inválido')
         return value
+
+    #Validador para todos os campos str terem letras minusculas
+    @field_validator('observacoes', mode='before')
+    @classmethod
+    def str_validator(cls, value):
+        return value.lower()
     
     
 

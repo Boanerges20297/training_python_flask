@@ -26,6 +26,8 @@ from flask import Blueprint, jsonify, request
 from app.models.servico import Servico
 from app.models.cliente import Cliente
 from app import db
+from app.schemas.servico_schema import ServicoSchema
+from pydantic import ValidationError
 
 # ========== PASSO 2: CRIAR BLUEPRINT ==========
 # Um blueprint precisa de um nome e um prefixo de URL
@@ -86,30 +88,17 @@ def listar_servicos():
 
 @servico_bp.route('/criar-servico', methods=['POST'])
 def criar_servico():
-    dados = request.get_json()
     #Vinicius - 01/04/2026
     #Adicinado barbeiro_id como campo obrigatório
     try:
-        dados_servico = {
-            'nome': dados.get('nome').lower(),
-            'preco': dados.get('preco'),
-            'duracao_minutos': dados.get('duracao_minutos'),
-            'barbeiro_id': dados.get('barbeiro_id')
-        }
-        # Validando dados obrigatórios
-        if (dados['nome'] is None or 
-            dados['preco'] is None or 
-            dados['duracao_minutos'] is None or
-            dados['barbeiro_id'] is None):
-            return jsonify({'erro': 'Campos nome, preco, duracao_minutos e barbeiro_id são obrigatórios'}), 400
-        
+        data = ServicoSchema(**request.get_json())    
         #Vinicius - 31/03/2026
         #Verificar se o serviço já existe
-        if Servico.query.filter_by(nome=dados_servico.get('nome').lower()).first():
+        if Servico.query.filter_by(nome=data.nome).first():
             return jsonify({'erro': 'Serviço já cadastrado'}), 409
         
         # Criar serviço e salvar no banco
-        servico = Servico(**dados_servico)
+        servico = Servico(**data.model_dump())
         db.session.add(servico)
         db.session.commit()
         return jsonify({'servico': {
@@ -119,6 +108,8 @@ def criar_servico():
             'duracao_minutos': servico.duracao_minutos,
             'msg': 'Serviço criado com sucesso'
         }}), 201
+    except ValidationError as e:
+        return jsonify({'erro': 'Erro ao criar serviço: ' + str(e)}), 400
     except Exception as e:
         return jsonify({'erro': 'Erro ao criar serviço: ' + str(e)}), 500
 
@@ -129,13 +120,11 @@ def editar_servico(id):
         if not servico:
             return jsonify({'erro': 'Serviço não encontrado'}), 404
 
-        dados_edicao = request.get_json()
-        if 'nome' in dados_edicao:
-            servico.nome = dados_edicao['nome']
-        if 'preco' in dados_edicao:
-            servico.preco = dados_edicao['preco']
-        if 'duracao_minutos' in dados_edicao:
-            servico.duracao_minutos = dados_edicao['duracao_minutos']
+        dados = ServicoSchema(**request.get_json())
+
+        servico.nome = dados.nome
+        servico.preco = dados.preco
+        servico.duracao_minutos = dados.duracao_minutos
         
         db.session.commit()
         return jsonify({'servico': {
