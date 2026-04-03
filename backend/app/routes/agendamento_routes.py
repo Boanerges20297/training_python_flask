@@ -3,60 +3,28 @@ from app.models.agendamento import Agendamento
 from app.models.servico import Servico
 from app import db
 from datetime import datetime, timedelta
+from app.schemas.agendamento_schema import AgendamentoSchema
 
 agendamento_bp = Blueprint('agendamento',__name__,url_prefix='/api/agendamento')
 
 @agendamento_bp.route('/criar-agendamento', methods=['POST'])
 def criar_agendamento():
     dados = request.get_json()
-    #Vinicius - 31/03/2026
-    #Horario de funcionamento
-    horario_inicio = 8
-    horario_fechamento = 20
-
+    
     try:
-        dados_agendamento = {
-            'cliente_id': dados.get('cliente_id'),
-            'barbeiro_id': dados.get('barbeiro_id'),
-            'servico_id': dados.get('servico_id'),
-            'data_agendamento': datetime.fromisoformat(dados.get('data_agendamento')),
-            'observacoes': dados.get('observacoes')
-        }
-
-        # Validando dados obrigatórios
-        if (dados['cliente_id'] is None or 
-            dados['barbeiro_id'] is None or 
-            dados['servico_id'] is None or 
-            dados['data_agendamento'] is None):
-            return jsonify({'erro': 'Campos cliente_id, barbeiro_id, servico_id e data_agendamento são obrigatórios'}), 400
-        
-        #Vinicius - 31/03/2026
-        #Se a data de inicio for menor que a data atual, retornar erro
-        data_inicio = dados_agendamento['data_agendamento']
-        if data_inicio < datetime.utcnow():
-            return jsonify({'erro': 'Data do agendamento deve ser maior que a data atual'}), 400
-
-        #Se a data de inicio for maior que o horario de fechamento, retornar erro
-        if data_inicio.hour >= horario_fechamento:
-            return jsonify({'erro': 'Barbearia fechada neste horario'}), 400
-        
-        #Se a data de inicio for menor que o horario de abertura, retornar erro
-        if data_inicio.hour < horario_inicio:
-            return jsonify({'erro': 'Barbearia fechada neste horario'}), 400
-        
+        data = AgendamentoSchema(**dados) 
         #Se existir um agendamento entre a data de inicio e fim do serviço, retornar erro
-        duracao_servico = Servico.query.get(dados.get('servico_id')).duracao_minutos
-        data_fim = data_inicio + timedelta(minutes=duracao_servico)
+        duracao_servico = Servico.query.get(data.servico_id).duracao_minutos
+        data_fim = data.data_agendamento + timedelta(minutes=duracao_servico)
         if Agendamento.query.filter(
-            Agendamento.barbeiro_id == dados.get('barbeiro_id'),
-            Agendamento.data_agendamento >= data_inicio,
+            Agendamento.barbeiro_id == data.barbeiro_id,
+            Agendamento.data_agendamento >= data.data_agendamento,
             Agendamento.data_agendamento < data_fim
         ).first():
             return jsonify({'erro': 'Horario indisponivel'}), 409
 
-
         #Criar agendamento e salvar no banco
-        agendamento = Agendamento(**dados_agendamento)
+        agendamento = Agendamento(**data.model_dump())
         db.session.add(agendamento)
         db.session.commit()
         return jsonify({'agendamento': {
@@ -68,6 +36,9 @@ def criar_agendamento():
             'observacoes': agendamento.observacoes,
             'msg': 'Agendamento criado com sucesso'
         }}), 201
+
+    except ValueError as e:
+        return jsonify({'erro': 'Erro ao criar agendamento: ' + str(e)}), 400
     except Exception as e:
         return jsonify({'erro': 'Erro ao criar agendamento: ' + str(e)}), 500
     
