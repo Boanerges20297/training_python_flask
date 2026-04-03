@@ -16,6 +16,7 @@ def login():
 
     admin = Admin.query.filter_by(email=email).first()
 
+    # Referencia qual função em Admin? função não encontrada verificar_senha
     if admin and admin.verificar_senha(senha):
         if not admin.ativo:
             return jsonify({'erro': 'Conta desativada'}), 403

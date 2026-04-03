@@ -21,5 +21,7 @@ class Admin(HashSenhaMixin,db.Model):
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
     ultimo_login = db.Column(db.DateTime)  # Último acesso
     
+    #Função para verificar senha foi excluída, Porquê?
+    
     def __repr__(self):
         return f'<Admin {self.email}>'
