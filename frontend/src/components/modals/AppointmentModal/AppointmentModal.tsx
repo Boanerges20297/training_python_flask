@@ -4,6 +4,7 @@ import type { Cliente, Servico } from '../../../types';
 import { User, ShoppingBag, Calendar, FileText, Loader2, CheckCircle2, Plus } from 'lucide-react';
 import Modal from '../../Modal';
 import './AppointmentModal.css';
+import { useToast } from '../../Toast';
 
 interface AppointmentModalProps {
   isOpen: boolean;
@@ -30,6 +31,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const { showToast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,12 +53,15 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
 
       await createAgendamento(payload as any);
       setSuccess(true);
+      showToast('Agendamento salvo com sucesso!', 'success');
       setTimeout(() => {
         onSuccess();
         onClose();
       }, 1500);
     } catch (err: any) {
-      setError(err);
+      const msg = err.response?.data?.message || err || 'Erro ao agendar horário.';
+      setError(msg);
+      showToast(msg, 'error');
     } finally {
       setIsSubmitting(false);
     }

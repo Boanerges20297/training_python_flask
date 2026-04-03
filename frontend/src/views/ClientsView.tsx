@@ -1,20 +1,24 @@
 import { useEffect, useState } from 'react';
 import { getClientes } from '../api/clients';
 import type { Cliente } from '../types';
-import { Users, Phone, Mail, Plus, Loader2, Trash2 } from 'lucide-react';
+import { Users, Phone, Mail, Plus, Loader2, Trash2, Bell } from 'lucide-react';
 import ClientModal from '../components/modals/ClientModal/ClientModal';
-import ConfirmDialog from '../components/ConfirmDialog'; // Importando o novo ConfirmDialog que por enquanto não está sendo utilizado
+import ConfirmDialog from '../components/ConfirmDialog'; // Importando o novo ConfirmDialog que por enquanto não está sendo utilizado, necessita botão p/ aparecer.
+import { useToast } from '../components/Toast';
 
 export default function ClientsView() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { showToast } = useToast();
 
   const fetchClientes = async () => {
     setLoading(true);
     try {
       const data = await getClientes();
       setClientes(data);
+    } catch (e) {
+      showToast('Erro ao carregar clientes do servidor.', 'error');
     } finally {
       setLoading(false);
     }
@@ -35,9 +39,11 @@ export default function ClientsView() {
           <Users size={20} color="#3b82f6" />
           <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#f8fafc' }}>Clientes Cadastrados</h2>
         </div>
-        <button onClick={handleNewClient} className="btn-primary" style={{ fontSize: '0.875rem' }}>
-          <Plus size={16} /> Novo Cliente
-        </button>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <button onClick={handleNewClient} className="btn-primary" style={{ fontSize: '0.875rem' }}>
+            <Plus size={16} /> Novo Cliente
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -72,6 +78,7 @@ export default function ClientsView() {
                         {cliente.email}
                       </div>
                     </td>
+                    <td>{cliente.id}</td>
                   </tr>
                 ))
               ) : (

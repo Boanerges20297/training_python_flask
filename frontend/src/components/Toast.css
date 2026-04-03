@@ -1,0 +1,123 @@
+/* # Gabriel (Dev 1) - Estilos minimalistas e elegantes e neutros para Toasts */
+
+.toast-container {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  display: flex;
+  flex-direction: column-reverse; 
+  gap: 0.75rem;
+  z-index: 9999;
+}
+
+.toast-message {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.05); 
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  padding: 0.8rem 1.25rem;
+  min-width: 280px;
+  max-width: 380px;
+  overflow: hidden;
+  transition: transform 0.3s ease;
+  z-index: 1;
+}
+
+.toast-progress-frame {
+  position: absolute;
+  inset: 0; 
+  pointer-events: none;
+  border-style: solid;
+  border-width: 1px 1px 1px 5px; 
+  border-radius: 8px;
+  z-index: -1; 
+  animation: shrinkBorder 2.8s linear forwards;
+}
+
+.animate-slide-in {
+  opacity: 0;
+  animation: slideInRight 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-out {
+  animation: slideOutRight 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.toast-success { color: #34d399; }
+.toast-success .toast-progress-frame { border-color: #10b981; }
+
+.toast-error { color: #f87171; }
+.toast-error .toast-progress-frame { border-color: rgb(239, 68, 68); }
+
+.toast-warning { color: #fbbf24; }
+.toast-warning .toast-progress-frame { border-color: rgb(245, 159, 11); }
+
+.toast-info { color: #60a5fa; }
+.toast-info .toast-progress-frame { border-color: rgb(59, 131, 246); }
+
+.toast-icon {
+  margin-right: 1rem;
+  display: flex;
+  align-items: center;
+  color: inherit;
+}
+
+.toast-text {
+  margin: 0;
+  color: #f1f5f9;
+  font-size: 0.875rem;
+  font-weight: 400;
+  flex: 1;
+  line-height: 1.4;
+}
+
+.toast-close-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  margin-left: 1rem;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  z-index: 20;
+}
+
+.toast-close-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+@keyframes shrinkBorder {
+  from { clip-path: inset(0 0 0 0); } 
+  to { clip-path: inset(0 100% 0 0); } 
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%) scale(0.9) rotate(9deg); 
+  }
+}

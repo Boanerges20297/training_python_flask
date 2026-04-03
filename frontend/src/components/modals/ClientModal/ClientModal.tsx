@@ -3,6 +3,7 @@ import { createCliente } from '../../../api/clients';
 import { User, Phone, Mail, Loader2, CheckCircle2, Plus } from 'lucide-react';
 import Modal from '../../Modal';
 import './ClientModal.css';
+import { useToast } from '../../Toast';
 
 interface ClientModalProps {
   isOpen: boolean;
@@ -17,6 +18,8 @@ const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, onSuccess })
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const { showToast } = useToast();
+
 
   // Máscara de Telefone: (00) 00000-0000
   const formatPhone = (value: string) => {
@@ -59,12 +62,15 @@ const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, onSuccess })
     try {
       await createCliente(formData);
       setSuccess(true);
+      showToast('Cliente cadastrado com sucesso!', 'success');
       setTimeout(() => {
         onSuccess();
         onClose();
       }, 1500);
     } catch (err: any) {
-      setError(err);
+      const msg = err.response?.data?.message || 'Erro ao cadastrar cliente. Tente novamente.';
+      setError(msg);
+      showToast(msg, 'error');
     } finally {
       setIsSubmitting(false);
     }
