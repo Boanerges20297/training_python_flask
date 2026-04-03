@@ -1,7 +1,7 @@
 from app import db
 from datetime import datetime
 from app.models.mixins import HashSenhaMixin
-
+#josue minima alteracao
 class Cliente(HashSenhaMixin, db.Model):
     """Modelo de Cliente - pessoa que marca agendamentos"""
 

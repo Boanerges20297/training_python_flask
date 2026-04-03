@@ -1,3 +1,4 @@
+#josue inicio
 from abc import ABC, abstractmethod
 from app import db
 #aqui fazemos os commit's dos clientes e barbeiros
@@ -18,3 +19,4 @@ class BaseSeeder(ABC):
         except Exception as e:
             db.session.rollback()
             print(f'Erro ao inserir dados: {e}')
+#josue fim

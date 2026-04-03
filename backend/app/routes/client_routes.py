@@ -1,3 +1,4 @@
+#josue inicio
 from flask import Blueprint, jsonify, request
 from app.models.cliente import Cliente
 from app import db
@@ -6,6 +7,8 @@ from app.utils.decorators import admin_required
 clientes_bp = Blueprint('clientes',__name__,url_prefix='/api/clientes')
 
 @clientes_bp.route('/', methods=['GET'])
+#josue inicio
+#esse trecho fiquei um pouco confuso no comesso mas fui conseguindo captar a logica
 def listar_clientes():
     try:
         # Capturar parâmetros de paginação (com valores padrão)
@@ -40,7 +43,7 @@ def listar_clientes():
         return jsonify({'clientes': clientes_dict,'total':clientes_paginados.total,'pagina':clientes_paginados.page,'pagina_atual':clientes_paginados.page,'per_page':clientes_paginados.per_page,'tem_proxima':clientes_paginados.has_next,'tem_pagina_anterior':clientes_paginados.has_prev})
     except Exception as e:
         return jsonify({'erro': 'Não foi possível listar os clientes: ' + str(e)}), 500
-
+#josue fim
 @clientes_bp.route('/criar-cliente', methods=['POST'])
 def criar_cliente():
     dados = request.get_json()

@@ -1,3 +1,4 @@
+#josue inicio
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from app import create_app,db
@@ -24,3 +25,4 @@ with app.app_context():
     except Exception as e:
         print(f'Erro ao inserir dados: {e}')
         db.session.rollback()
+#josue fim

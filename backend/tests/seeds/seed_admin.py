@@ -1,3 +1,4 @@
+#josue inicio
 from tests.seeds.base import BaseSeeder
 from app import create_app, db
 from app.models.admin import Admin
@@ -19,4 +20,4 @@ class AdminSeeder(BaseSeeder):
                 senha='123123'
             )
         ]
-
+#josue fim

@@ -1,3 +1,5 @@
+#parece confuso mas a metodologia esta em andamento com (poo) para seguir o  reaproveitamento de codigo tornando-o mais limpo e organizado(no meu penssamento)*josue
+#esse codigo ainda nao foi refatorado(provavelmente sera)
 import sys
 from pathlib import Path
 

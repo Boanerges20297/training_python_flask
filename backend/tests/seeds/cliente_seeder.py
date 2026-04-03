@@ -1,3 +1,4 @@
+#josue inicio
 from app import db
 from app.models import Cliente
 from tests.seeds.base import BaseSeeder
@@ -20,3 +21,4 @@ class ClientSeeder(BaseSeeder):
             )   
 
         ]
+#josue fim
