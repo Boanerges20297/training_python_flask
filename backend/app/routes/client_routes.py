@@ -8,7 +8,25 @@ clientes_bp = Blueprint('clientes',__name__,url_prefix='/api/clientes')
 @clientes_bp.route('/', methods=['GET'])
 def listar_clientes():
     try:
-        clientes = Cliente.query.all()
+        # Capturar parâmetros de paginação (com valores padrão)
+        pagina = request.args.get('pagina', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
+        # Capturar parâmetros de busca
+        nome  = request.args.get('nome', type=str)
+        email = request.args.get('email', type=str)
+        telefone = request.args.get('telefone', type=str)
+
+        query = Cliente.query
+#interessante ---- o ilike faz a busca case insensitive
+        if nome:
+            query = query.filter(Cliente.nome.ilike(f'%{nome}%'))
+        if email:
+            query = query.filter(Cliente.email.ilike(f'%{email}%'))
+        if telefone:
+            query = query.filter(Cliente.telefone.ilike(f'%{telefone}%'))
+
+        clientes_paginados = query.paginate(page=pagina, per_page=per_page, error_out=False)
+       
         clientes_dict = [
             {
                 'id': c.id,
@@ -16,10 +34,10 @@ def listar_clientes():
                 'telefone': c.telefone,
                 'email': c.email
             }
-            for c in clientes
+            for c in clientes_paginados.items
         ]
         # Retornar em JSON com chave 'clientes'
-        return jsonify({'clientes': clientes_dict})
+        return jsonify({'clientes': clientes_dict,'total':clientes_paginados.total,'pagina':clientes_paginados.page,'pagina_atual':clientes_paginados.page,'per_page':clientes_paginados.per_page,'tem_proxima':clientes_paginados.has_next,'tem_pagina_anterior':clientes_paginados.has_prev})
     except Exception as e:
         return jsonify({'erro': 'Não foi possível listar os clientes: ' + str(e)}), 500
 
