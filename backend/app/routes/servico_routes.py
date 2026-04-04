@@ -73,11 +73,24 @@ def listar_servicos():
                 'preco': s.preco,
                 'duracao_minutos': s.duracao_minutos
             }
-            for s in servicos
+            #Vinicius - 04/04/2026
+            #Adicionado .items para que o list comprehension funcione corretamente
+            for s in servicos.items
         ]
         
         # TODO: Retornar em JSON
-        return jsonify({'servicos': servicos_dict})
+        return jsonify({
+            #Vinicius - 04/04/2026
+            #Adicionado nova resposta para a rota contendo mais informações sobre a paginação
+            'servicos': servicos_dict, 
+            'total': servicos.total, 
+            'per_page': servicos.per_page,
+            'items_nessa_pagina': len(servicos_dict),
+            'pagina': servicos.page,
+            'total_paginas': servicos.pages,
+            'tem_proxima': servicos.has_next,
+            'tem_pagina_anterior': servicos.has_prev
+        })
         
         pass
     
@@ -105,7 +118,7 @@ def criar_servico():
             return jsonify({'erro': 'Campos nome, preco, duracao_minutos e barbeiro_id são obrigatórios'}), 400
         
         #Vinicius - 31/03/2026
-        #Verificar se o serviço já existe para evitar criação de serviços repetidos
+        #Verificar se o serviço já existe para evitar criação de repetidos
         if Servico.query.filter_by(nome=dados_servico.get('nome').lower()).first():
             return jsonify({'erro': 'Serviço já cadastrado'}), 409
         

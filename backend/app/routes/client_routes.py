@@ -50,9 +50,11 @@ def listar_clientes():
         #Caso seja passado nome, retorna uma lista com outros dados de paginação, pois nome não é unico
         if nome:
             query = query.filter(Cliente.nome.ilike(f'%{nome}%'))
+        
+        #Vinicius - 04/04/2026
+        #Troca do nome da variavel para 'clientes' para melhor identificação
+        clientes = query.paginate(page=pagina, per_page=per_page, error_out=False)
 
-        paginacao = query.paginate(page=pagina, per_page=per_page, error_out=False)
-       
         clientes_dict = [
             {
                 'id': c.id,
@@ -60,10 +62,20 @@ def listar_clientes():
                 'telefone': c.telefone,
                 'email': c.email
             }
-            for c in clientes_paginados.items
+            for c in clientes.items
         ]
         # Retornar em JSON com chave 'clientes'
-        return jsonify({'clientes': clientes_dict,'total':clientes_paginados.total,'pagina':clientes_paginados.page,'pagina_atual':clientes_paginados.page,'per_page':clientes_paginados.per_page,'tem_proxima':clientes_paginados.has_next,'tem_pagina_anterior':clientes_paginados.has_prev})
+        return jsonify({
+            'clientes': clientes_dict,
+            #Vinicius - 04/04/2026
+            #Adicionado formatação para melhor visualização dos dados de paginação e variaveis total e items_nessa_pagina para deixar a resposta mais completa
+            'total':clientes.total,
+            'items_nessa_pagina': len(clientes_dict),
+            'pagina':clientes.page,
+            'per_page':clientes.per_page,
+            'tem_proxima':clientes.has_next,
+            'tem_pagina_anterior':clientes.has_prev
+        })
     except Exception as e:
         return jsonify({'erro': 'Não foi possível listar os clientes: ' + str(e)}), 500
 #josue fim

@@ -80,7 +80,7 @@ def listar_agendamento():
     per_page = request.args.get('per_page', default=10, type=int)
     try:
         #Vinicius - Paginação de Agendamentos 31/03/2026
-        agendamento = Agendamento.query.paginate(page=page, per_page=per_page, error_out=False)
+        agendamentos = Agendamento.query.paginate(page=page, per_page=per_page, error_out=False)
         agendamento_dict = [
             {
                 'id': a.id,
@@ -90,10 +90,20 @@ def listar_agendamento():
                 'data_agendamento': a.data_agendamento,
                 'observacoes': a.observacoes
             }
-            for a in agendamento
+            for a in agendamentos.items
         ]
         # Retornar em JSON com chave 'agendamentos'
-        return jsonify({'agendamentos': agendamento_dict})
+        #Vinicius - 04/04/2026
+        #Adicionado formatação para melhor visualização dos dados de paginação e variaveis total e items_nessa_pagina para deixar a resposta mais completa
+        return jsonify({
+            'agendamentos': agendamento_dict,
+            'total':agendamentos.total,
+            'items_nessa_pagina': len(agendamento_dict),
+            'pagina':agendamentos.page,
+            'per_page':agendamentos.per_page,
+            'tem_proxima':agendamentos.has_next,
+            'tem_pagina_anterior':agendamentos.has_prev
+        })
     except Exception as e:
         return jsonify({'erro': 'Não foi possível listar os agendamentos: ' + str(e)}), 500
     
