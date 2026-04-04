@@ -74,7 +74,7 @@ def listar_servicos():
                 'duracao_minutos': s.duracao_minutos
             }
             #Vinicius - 04/04/2026
-            #Adicionado .items para que o list comprehension funcione corretamente
+            #Adicionado o .items para que o list comprehension receba os itens da paginação
             for s in servicos.items
         ]
         

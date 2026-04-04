@@ -80,6 +80,8 @@ def listar_agendamento():
     per_page = request.args.get('per_page', default=10, type=int)
     try:
         #Vinicius - Paginação de Agendamentos 31/03/2026
+        #Vinicius - 04/04/2026
+        #Troca do nome da variavel para 'agendamentos' para melhor identificação
         agendamentos = Agendamento.query.paginate(page=page, per_page=per_page, error_out=False)
         agendamento_dict = [
             {
@@ -90,6 +92,8 @@ def listar_agendamento():
                 'data_agendamento': a.data_agendamento,
                 'observacoes': a.observacoes
             }
+            #Vinicius - 04/04/2026
+            #Adicionado o .items para que o list comprehension receba os itens da paginação
             for a in agendamentos.items
         ]
         # Retornar em JSON com chave 'agendamentos'

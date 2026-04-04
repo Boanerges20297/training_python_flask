@@ -62,6 +62,8 @@ def listar_clientes():
                 'telefone': c.telefone,
                 'email': c.email
             }
+            #Vinicius - 04/04/2026
+            #Adicionado o .items para que o list comprehension receba os itens da paginação
             for c in clientes.items
         ]
         # Retornar em JSON com chave 'clientes'
