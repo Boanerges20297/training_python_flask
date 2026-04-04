@@ -1,20 +1,29 @@
 from flask import Blueprint, jsonify, request
 from app.models.agendamento import Agendamento
+from app.models.servico import Servico
 from app import db
+from datetime import datetime, timedelta
 
 agendamento_bp = Blueprint('agendamento',__name__,url_prefix='/api/agendamento')
 
 @agendamento_bp.route('/criar-agendamento', methods=['POST'])
 def criar_agendamento():
     dados = request.get_json()
+    #Vinicius - 31/03/2026
+    #Horario de funcionamento da barbearia
+    horario_inicio = 8
+    horario_fechamento = 20
+
     try:
         dados_agendamento = {
             'cliente_id': dados.get('cliente_id'),
             'barbeiro_id': dados.get('barbeiro_id'),
             'servico_id': dados.get('servico_id'),
-            'data_agendamento': dados.get('data_agendamento'),
+            #Adicionado conversão para datetime, para efetuar validações e para que o banco de dados receba no formato correto
+            'data_agendamento': datetime.fromisoformat(dados.get('data_agendamento')),
             'observacoes': dados.get('observacoes')
         }
+
         # Validando dados obrigatórios
         if (dados['cliente_id'] is None or 
             dados['barbeiro_id'] is None or 
@@ -22,7 +31,32 @@ def criar_agendamento():
             dados['data_agendamento'] is None):
             return jsonify({'erro': 'Campos cliente_id, barbeiro_id, servico_id e data_agendamento são obrigatórios'}), 400
         
-        # Criar agendamento e salvar no banco
+        #Vinicius - 31/03/2026
+        #Se a data de inicio for menor que a data atual, retornar erro, isso evita agendamentos para o passado
+        data_inicio = dados_agendamento['data_agendamento']
+        if data_inicio < datetime.utcnow():
+            return jsonify({'erro': 'Data do agendamento deve ser maior que a data atual'}), 400
+
+        #Se a data de inicio for maior que o horario de fechamento, retornar erro, isso evita agendamentos fora do horario de funcionamento
+        if data_inicio.hour >= horario_fechamento:
+            return jsonify({'erro': 'Barbearia fechada neste horario'}), 400
+        
+        #Se a data de inicio for menor que o horario de abertura, retornar erro, isso evita agendamentos fora do horario de funcionamento
+        if data_inicio.hour < horario_inicio:
+            return jsonify({'erro': 'Barbearia fechada neste horario'}), 400
+        
+        #Se existir um agendamento entre a data de inicio e fim do serviço, retornar erro, isso evita conflitos de agendamento
+        duracao_servico = Servico.query.get(dados.get('servico_id')).duracao_minutos
+        data_fim = data_inicio + timedelta(minutes=duracao_servico)
+        if Agendamento.query.filter(
+            Agendamento.barbeiro_id == dados.get('barbeiro_id'),
+            Agendamento.data_agendamento >= data_inicio,
+            Agendamento.data_agendamento < data_fim
+        ).first():
+            return jsonify({'erro': 'Horario indisponivel'}), 409
+
+
+        #Criar agendamento e salvar no banco
         agendamento = Agendamento(**dados_agendamento)
         db.session.add(agendamento)
         db.session.commit()
@@ -40,8 +74,13 @@ def criar_agendamento():
     
 @agendamento_bp.route('/listar-agendamento', methods=['GET'])
 def listar_agendamento():
+    #Vinicius - Paginação de Agendamentos 31/03/2026
+    #Adicionado paginação para evitar sobrecarga do sistema com buscas execivas no banco de dados
+    page = request.args.get('page', default=1, type=int)
+    per_page = request.args.get('per_page', default=10, type=int)
     try:
-        agendamento = Agendamento.query.all()
+        #Vinicius - Paginação de Agendamentos 31/03/2026
+        agendamento = Agendamento.query.paginate(page=page, per_page=per_page, error_out=False)
         agendamento_dict = [
             {
                 'id': a.id,

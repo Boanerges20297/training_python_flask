@@ -21,14 +21,37 @@ def listar_clientes():
 
         query = Cliente.query
 #interessante ---- o ilike faz a busca case insensitive
+        #Vinicius - 04/04/2026
+        """Modificando o uso de argumentos de nome, email e telefone
+        1- O uso de ilike com wildcards em campos UNIQUES anula os beneficios de ter um campo unico e um indice no banco
+        2- Agora há dois tipos de respostas possiveis dependendo do argumento passado, se for passado email ou telefone, 
+        retorna um objeto, se for passado nome ou nenhum argumento, retorna uma lista
+        Isso evita que caso seja passado o email ou telefone, caia na função de paginate e o banco tente paginar algo que
+        já iria retornar um unico cliente
+        """
+        #Caso seja passado telefone e email, retorna um objeto, pois são campos unicos
+        if telefone or email:
+            if telefone:
+                query = query.filter_by(telefone=telefone)
+            if email:
+                query = query.filter_by(email=email)
+            
+            cliente = query.first()
+            if not cliente:
+                return jsonify({'erro': 'Cliente não encontrado'}), 404
+            
+            return jsonify({'cliente': {
+                'id': cliente.id,
+                'nome': cliente.nome,
+                'telefone': cliente.telefone,
+                'email': cliente.email
+            }}), 200
+
+        #Caso seja passado nome, retorna uma lista com outros dados de paginação, pois nome não é unico
         if nome:
             query = query.filter(Cliente.nome.ilike(f'%{nome}%'))
-        if email:
-            query = query.filter(Cliente.email.ilike(f'%{email}%'))
-        if telefone:
-            query = query.filter(Cliente.telefone.ilike(f'%{telefone}%'))
 
-        clientes_paginados = query.paginate(page=pagina, per_page=per_page, error_out=False)
+        paginacao = query.paginate(page=pagina, per_page=per_page, error_out=False)
        
         clientes_dict = [
             {
@@ -55,6 +78,8 @@ def criar_cliente():
             'senha': dados.get('senha')
         }
         # Validando dados obrigatórios
+        #Vinicius
+        #Adicionado pelo Josue, nova verificação para campos obrigatorios, senha agora é obrigatoria
         if dados['nome'] is None or dados['telefone'] is None or dados['email'] is None or dados['senha'] is None:
             return jsonify({'erro': 'Campos nome, telefone, email e senha são obrigatórios'}), 400
         # Validando formato do email e unicidade
@@ -66,6 +91,9 @@ def criar_cliente():
         
         # Criar cliente e salvar no banco
         cliente = Cliente(**dados_cliente)
+        #Vinicius - 04/04/2026
+        #Utilizando o metodo do mixin para hashear a senha em texto simples antes de efetuar o commit no banco
+        cliente.senha = dados['senha']
         db.session.add(cliente)
         db.session.commit()
         return jsonify({'cliente': {

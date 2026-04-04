@@ -13,7 +13,8 @@ class Cliente(HashSenhaMixin, db.Model):
     telefone = db.Column(db.String(20), unique=True, nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
-    senha_hash = db.Column(db.String(256), nullable=False)
+    #Vinicius
+    #Senha hash removida para ser gerenciada pelo Mixin
     # Relacionamentos (vamos usar depois)
     agendamentos = db.relationship('Agendamento', backref='cliente', lazy=True)
 

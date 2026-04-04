@@ -17,6 +17,8 @@ def login():
     admin = Admin.query.filter_by(email=email).first()
 
     # Referencia qual função em Admin? função não encontrada verificar_senha
+    #Vinicius - 04/04/2026
+    #Referência à função herdada do mixin (HashSenhaMixin) no modelo Admin
     if admin and admin.verificar_senha(senha):
         if not admin.ativo:
             return jsonify({'erro': 'Conta desativada'}), 403
