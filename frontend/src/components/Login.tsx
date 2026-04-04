@@ -19,6 +19,8 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
 
     try {
       const data = await login(email, senha);
+      // Gabriel (Dev 1) - Persistência simples e eficaz: Armazena o usuário apenas para a sessão atual
+      sessionStorage.setItem('barba_user', JSON.stringify(data.usuario));
       onLoginSuccess(data.usuario);
     } catch (err: any) {
       setError(err.toString());

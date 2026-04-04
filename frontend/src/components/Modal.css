@@ -1,0 +1,110 @@
+/* # Gabriel (Dev 1) - Estilos do Modal Premium */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.7); 
+  backdrop-filter: blur(8px);       
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Base do conteúdo do modal */
+.modal-content-premium {
+  background: rgba(30, 41, 59, 0.7); 
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 90%;
+  border-radius: 1.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.3s ease;
+}
+
+/* Tamanhos */
+.modal-content-premium.md { max-width: 500px; }
+.modal-content-premium.lg { max-width: 650px; }
+
+/* Variantes de Cores (Gradientes sutis no topo) */
+.modal-content-premium.blue {
+  background-image: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(30, 41, 59, 0.7) 100%);
+  border-top: 2px solid rgba(59, 130, 246, 0.3);
+}
+
+.modal-content-premium.purple {
+  background-image: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(30, 41, 59, 0.7) 100%);
+  border-top: 2px solid rgba(139, 92, 246, 0.3);
+}
+
+.modal-content-premium.green {
+  background-image: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(30, 41, 59, 0.7) 100%);
+  border-top: 2px solid rgba(16, 185, 129, 0.3);
+}
+
+.modal-header-refined {
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.modal-header-refined h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #fff;
+  background: linear-gradient(to right, #fff, #94a3b8);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.modal-subtitle-text {
+  margin: 0;
+  color: #6c7177;
+  font-size: 0.755rem;
+}
+
+/* Botão de Fechar com Animação Premium */
+.close-btn-premium {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.close-btn-premium:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border-color: #ef4444;
+  transform: rotate(90deg) scale(1.1); /* Animação de rotação */
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+}
+
+.modal-body-refined {
+  padding: 1.5rem 2rem;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
