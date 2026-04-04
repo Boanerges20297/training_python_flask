@@ -73,8 +73,10 @@ def editar_agendamento(id):
         agendamento = Agendamento.query.get(id)
         if not agendamento:
             return jsonify({'erro': 'Agendamento não encontrado'}), 404
-
-        dados = AgendamentoSchema(**request.get_json())
+        if not config.VALIDATE_PAYLOAD:
+            dados = request.get_json()
+        else:
+            dados = AgendamentoSchema(**request.get_json())
         
         # Verificar quais campos foram enviados e atualizar somente esses
         if 'cliente_id' in dados:

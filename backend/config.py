@@ -40,3 +40,6 @@ class Config:
     RATELIMIT_STRATEGY = "fixed-window"
     #Variavel para configurar se os headers do rate limiter devem ser habilitados
     RATELIMIT_HEADERS_ENABLED = True
+
+    #Desabilitar verificação de payload:
+    VALIDATE_PAYLOAD = False

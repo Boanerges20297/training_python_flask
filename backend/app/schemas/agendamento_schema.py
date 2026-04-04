@@ -41,6 +41,7 @@ class AgendamentoSchema(BaseModel):
     }
 
     @field_validator('data_agendamento')
+    @classmethod
     def data_agendamento_validator(cls, value):
         #Vinicius - 03/04/2026
         #Se a data de inicio for maior que o horario de fechamento, retornar erro
@@ -50,6 +51,7 @@ class AgendamentoSchema(BaseModel):
         return value
 
     @field_validator('status')
+    @classmethod
     def status_validator(cls, value):
         if value not in ['pendente', 'confirmado', 'cancelado', 'concluido']:
             raise ValidationError('Status inválido')
