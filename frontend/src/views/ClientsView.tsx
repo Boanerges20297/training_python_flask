@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { getClientes } from '../api/clients';
+import { getClientes, deleteCliente } from '../api/clients';
 import type { Cliente } from '../types';
-import { Users, Phone, Mail, Plus, Loader2, Trash2, Bell } from 'lucide-react';
+import { Users, Phone, Mail, Plus, Loader2, Trash2, Edit2 } from 'lucide-react';
 import ClientModal from '../components/modals/ClientModal/ClientModal';
 import ConfirmDialog from '../components/ConfirmDialog'; // Importando o novo ConfirmDialog que por enquanto não está sendo utilizado, necessita botão p/ aparecer.
 import { useToast } from '../components/Toast';
@@ -10,6 +10,9 @@ export default function ClientsView() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [clienteParaEditar, setClienteParaEditar] = useState<Cliente | null>(null);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [clientToDelete, setClientToDelete] = useState<number | null>(null);
   const { showToast } = useToast();
 
   const fetchClientes = async () => {
@@ -29,7 +32,37 @@ export default function ClientsView() {
   }, []);
 
   const handleNewClient = () => {
+    setClienteParaEditar(null);
     setIsModalOpen(true);
+  };
+
+  const handleEditClick = (cliente: Cliente) => {
+    setClienteParaEditar(cliente);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteClick = (id: number) => {
+    setClientToDelete(id);
+    setIsConfirmOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (clientToDelete !== null) {
+      const success = await deleteCliente(clientToDelete);
+      if (success) {
+        showToast('Cliente excluído com sucesso.', 'success');
+        fetchClientes();
+      } else {
+        showToast('Erro ao excluir cliente.', 'error');
+      }
+      setIsConfirmOpen(false);
+      setClientToDelete(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setIsConfirmOpen(false);
+    setClientToDelete(null);
   };
 
   return (
@@ -59,6 +92,7 @@ export default function ClientsView() {
                 <th>Contato</th>
                 <th>Email</th>
                 <th>ID</th>
+                <th style={{ textAlign: 'right' }}>Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -78,7 +112,25 @@ export default function ClientsView() {
                         {cliente.email}
                       </div>
                     </td>
-                    <td>{cliente.id}</td>
+                    <td><span className="badge">#{cliente.id}</span></td>
+                    <td style={{ textAlign: 'right' }}>
+                      {/* # Ian (Dev 2)
+                      Botões criados para as ações de Editar e Excluir cliente */}
+                      <button
+                        onClick={() => handleEditClick(cliente)}
+                        title="Editar"
+                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#60a5fa', padding: '0.25rem' }}
+                      >
+                        <Edit2 size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteClick(cliente.id!)}
+                        title="Excluir"
+                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#ef4444', padding: '0.25rem', marginLeft: '0.5rem' }}
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </td>
                   </tr>
                 ))
               ) : (
@@ -95,10 +147,24 @@ export default function ClientsView() {
       )}
 
       {/* Componente Modal Refatorado */}
-      <ClientModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onSuccess={fetchClientes} 
+      <ClientModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setClienteParaEditar(null);
+        }}
+        onSuccess={fetchClientes}
+        clienteParaEditar={clienteParaEditar}
+      />
+
+      <ConfirmDialog
+        isOpen={isConfirmOpen}
+        title="Excluir Cliente"
+        message="Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+        type="danger"
       />
     </section>
   );
