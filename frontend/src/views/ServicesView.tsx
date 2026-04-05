@@ -3,17 +3,21 @@ import { getServicos } from '../api/services';
 import type { Servico } from '../types';
 import { Briefcase, DollarSign, Clock, Plus, Loader2 } from 'lucide-react';
 import ServiceModal from '../components/modals/ServiceModal/ServiceModal';
+import { useToast } from '../components/Toast';
 
 export default function ServicesView() {
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { showToast } = useToast();
 
   const fetchServicos = async () => {
     setLoading(true);
     try {
       const data = await getServicos();
       setServicos(data);
+    } catch (e) {
+      showToast('Erro ao carregar serviços.', 'error');
     } finally {
       setLoading(false);
     }

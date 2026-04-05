@@ -5,6 +5,7 @@ import { getServicos } from '../api/services';
 import type { Agendamento, Cliente, Servico } from '../types';
 import { Calendar, User, ShoppingBag, Clock, Plus, Loader2 } from 'lucide-react';
 import AppointmentModal from '../components/modals/AppointmentModal/AppointmentModal';
+import { useToast } from '../components/Toast';
 
 // Componentes de Agendamentos, gerência de estados
 export default function AppointmentsView() {
@@ -13,6 +14,7 @@ export default function AppointmentsView() {
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { showToast } = useToast();
 
   // Função para buscar dados
   const fetchData = async () => {
@@ -26,6 +28,8 @@ export default function AppointmentsView() {
       setAgendamentos(agData);
       setClientes(clData);
       setServicos(svData);
+    } catch (e) {
+      showToast('Erro ao carregar agenda.', 'error');
     } finally {
       setLoading(false);
     }

@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { createCliente, updateCliente } from '../../../api/clients';
 import type { Cliente } from '../../../types';
-import { User, Phone, Mail, Loader2, CheckCircle2, Plus, Edit2 } from 'lucide-react';
+import { User, Phone, Mail, Loader2, CheckCircle2, Plus, Edit2, Lock } from 'lucide-react';
 import Modal from '../../Modal';
 import './ClientModal.css';
-import { useToast } from '../../Toast';
 
 interface ClientModalProps {
   isOpen: boolean;
@@ -16,11 +15,10 @@ interface ClientModalProps {
 // # Gabriel (Dev 1)
 // Refatorado para usar o Modal genérico e evitar código repetido.
 const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, onSuccess, clienteParaEditar }) => {
-  const [formData, setFormData] = useState({ nome: '', email: '', telefone: '' });
+  const [formData, setFormData] = useState({ nome: '', email: '', telefone: '', senha: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const { showToast } = useToast();
 
   // # Ian (Dev 2)
   // Preenche o formulário com os dados do cliente ao abrir para edição.
@@ -31,9 +29,10 @@ const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, onSuccess, c
           nome: clienteParaEditar.nome,
           email: clienteParaEditar.email,
           telefone: clienteParaEditar.telefone,
+          senha: '', // # Gabriel (Dev 1) - Senha não é editada aqui por segurança
         });
       } else {
-        setFormData({ nome: '', email: '', telefone: '' });
+        setFormData({ nome: '', email: '', telefone: '', senha: '' });
       }
       setSuccess(false);
       setError(null);
@@ -75,27 +74,35 @@ const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, onSuccess, c
       return;
     }
 
+    if (!clienteParaEditar && !formData.senha) {  // # Gabriel (Dev 1) - Validação de senha para novo cliente
+      setError("A senha é obrigatória para o cadastro.");
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
 
     try {
       if (clienteParaEditar) {
-        const successEdit = await updateCliente(clienteParaEditar.id, formData);
+        const successEdit = await updateCliente(clienteParaEditar.id, {
+          nome: formData.nome,
+          email: formData.email,
+          telefone: formData.telefone
+        });
         if (!successEdit) throw new Error("Erro ao atualizar cliente.");
       } else {
         await createCliente(formData);
       }
 
       setSuccess(true);
-      showToast(clienteParaEditar ? 'Cliente atualizado com sucesso!' : 'Cliente cadastrado com sucesso!', 'success');
       setTimeout(() => {
         onSuccess();
         onClose();
       }, 1500);
     } catch (err: any) {
-      const msg = err.message || err.response?.data?.message || 'Erro ao processar solicitação. Tente novamente.';
+      const msg = err.message || err.response?.data?.erro || 'Erro ao processar solicitação. Tente novamente.';
       setError(msg);
-      showToast(msg, 'error');
+      // Hierarquia de Notificações: Erros no modal NÃO dispara Toast (já está no error-message)
     } finally {
       setIsSubmitting(false);
     }
@@ -131,6 +138,7 @@ const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, onSuccess, c
                   type="text"
                   placeholder="Ex: João Silva"
                   required
+                  maxLength={100}
                   value={formData.nome}
                   onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                   autoFocus
@@ -147,6 +155,7 @@ const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, onSuccess, c
                     type="tel"
                     placeholder="(00) 00000-0000"
                     required
+                    maxLength={15}
                     value={formData.telefone}
                     onChange={handlePhoneChange}
                   />
@@ -161,12 +170,32 @@ const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, onSuccess, c
                     type="email"
                     placeholder="email@exemplo.com"
                     required
+                    maxLength={100}
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   />
                 </div>
               </div>
             </div>
+
+            {/* # Gabriel (Dev 1) - O campo de senha só aparece quando um novo cliente está sendo criado */}
+            {!clienteParaEditar && (
+               <div className="form-group-modern">
+               <label>Senha de Acesso</label>
+               <div className="input-group-modern">
+                 <Lock size={18} className="input-icon" />
+                 <input
+                   type="password"
+                   placeholder="Mínimo 6 caracteres"
+                   required
+                   minLength={6}
+                   maxLength={20}
+                   value={formData.senha}
+                   onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
+                 />
+               </div>
+             </div>
+            )}
 
             {error && (
               <div className="error-message">

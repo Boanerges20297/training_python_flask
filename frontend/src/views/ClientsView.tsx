@@ -87,12 +87,12 @@ export default function ClientsView() {
         <div className="table-container">
           <table>
             <thead>
-              <tr>
+              <tr style={{ textAlign: 'center' }}>
                 <th>Nome</th>
                 <th>Contato</th>
                 <th>Email</th>
                 <th>ID</th>
-                <th style={{ textAlign: 'right' }}>Ações</th>
+                <th>Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -113,7 +113,7 @@ export default function ClientsView() {
                       </div>
                     </td>
                     <td><span className="badge">#{cliente.id}</span></td>
-                    <td style={{ textAlign: 'right' }}>
+                    <td style={{ textAlign: 'center' }}>
                       {/* # Ian (Dev 2)
                       Botões criados para as ações de Editar e Excluir cliente */}
                       <button
@@ -135,7 +135,7 @@ export default function ClientsView() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={4} style={{ textAlign: 'center', padding: '4rem', color: '#64748b' }}>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '4rem', color: '#64748b' }}>
                     <div style={{ opacity: 0.5, marginBottom: '1rem' }}><Users size={48} style={{ margin: '0 auto' }} /></div>
                     Nenhum cliente encontrado no sistema.
                   </td>
