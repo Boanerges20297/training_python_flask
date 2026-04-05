@@ -19,3 +19,22 @@ export async function createAgendamento(agendamento: Omit<Agendamento, 'id'>): P
     throw error.response?.data?.erro || 'Erro ao criar agendamento';
   }
 }
+export async function updateAgendamento(id: number, agendamento: Partial<Agendamento>): Promise<boolean> {
+  try {
+    await api.put(`/agendamento/editar-agendamento/${id}`, agendamento);
+    return true;
+  } catch (error) {
+    console.error("Erro ao atualizar agendamento:", error);
+    return false;
+  }
+}
+
+export async function deleteAgendamento(id: number): Promise<boolean> {
+  try {
+    await api.delete(`/agendamento/deletar-agendamento/${id}`);
+    return true;
+  } catch (error) {
+    console.error("Erro ao deletar agendamento:", error);
+    return false;
+  }
+}

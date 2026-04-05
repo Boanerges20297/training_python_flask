@@ -57,6 +57,7 @@ def listar_servicos():
     3. Retornar com jsonify() 
     """
     #Vinicius - Paginação de serviços 31/03/2026
+    #Paginação de serviços para evitar sobrecarga do sistema com buscas execivas no banco de dados
     page = request.args.get('page', default=1, type=int)
     per_page = request.args.get('per_page', default=10, type=int)
     
@@ -74,11 +75,24 @@ def listar_servicos():
                 'preco': s.preco,
                 'duracao_minutos': s.duracao_minutos
             }
-            for s in servicos
+            #Vinicius - 04/04/2026
+            #Adicionado o .items para que o list comprehension receba os itens da paginação
+            for s in servicos.items
         ]
         
         # TODO: Retornar em JSON
-        return jsonify({'servicos': servicos_dict})
+        return jsonify({
+            #Vinicius - 04/04/2026
+            #Adicionado nova resposta para a rota contendo mais informações sobre a paginação
+            'servicos': servicos_dict, 
+            'total': servicos.total, 
+            'per_page': servicos.per_page,
+            'items_nessa_pagina': len(servicos_dict),
+            'pagina': servicos.page,
+            'total_paginas': servicos.pages,
+            'tem_proxima': servicos.has_next,
+            'tem_pagina_anterior': servicos.has_prev
+        })
         
         pass
     
@@ -89,8 +103,10 @@ def listar_servicos():
 @servico_bp.route('/criar-servico', methods=['POST'])
 def criar_servico():
     #Vinicius - 01/04/2026
-    #Adicinado barbeiro_id como campo obrigatório
+    #Adicinado barbeiro_id como campo obrigatório, para acompanhar o model Servico
     try:
+        #Vinicius - 05/04/2026
+        #Adicionado validação de payload para garantir que os dados enviados estejam corretos
         data = ServicoSchema(**request.get_json())    
         #Vinicius - 31/03/2026
         #Verificar se o serviço já existe

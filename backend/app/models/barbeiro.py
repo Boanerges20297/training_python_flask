@@ -1,7 +1,8 @@
 from app import db
 from datetime import datetime
-
-class Barbeiro(db.Model):
+from app.models.mixins import HashSenhaMixin
+#josue minima alteracao
+class Barbeiro(HashSenhaMixin, db.Model):
     """Modelo de Barbeiro - profissional que oferece serviços"""
     
     __tablename__ = 'barbeiros'
@@ -14,7 +15,8 @@ class Barbeiro(db.Model):
     telefone = db.Column(db.String(20), nullable=False)
     data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
     ativo = db.Column(db.Boolean, default=True)  # Se está trabalhando
-    
+    #Vinicius
+    #Senha hash removida para ser gerenciada pelo Mixin
     # Relacionamentos
     agendamentos = db.relationship('Agendamento', backref='barbeiro', lazy=True)
     servicos = db.relationship('Servico', backref='barbeiro', lazy=True)

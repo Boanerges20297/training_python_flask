@@ -19,3 +19,22 @@ export async function createServico(servico: Omit<Servico, 'id'>): Promise<Servi
     throw error.response?.data?.erro || 'Erro ao criar serviço';
   }
 }
+export async function updateServico(id: number, servico: Partial<Servico>): Promise<boolean> {
+  try {
+    await api.put(`/servicos/editar-servico/${id}`, servico);
+    return true;
+  } catch (error) {
+    console.error("Erro ao atualizar serviço:", error);
+    return false;
+  }
+}
+
+export async function deleteServico(id: number): Promise<boolean> {
+  try {
+    await api.delete(`/servicos/deletar-servico/${id}`);
+    return true;
+  } catch (error) {
+    console.error("Erro ao deletar serviço:", error);
+    return false;
+  }
+}

@@ -10,13 +10,14 @@ agendamento_bp = Blueprint('agendamento',__name__,url_prefix='/api/agendamento')
 
 @agendamento_bp.route('/criar-agendamento', methods=['POST'])
 def criar_agendamento():
-    dados = request.get_json()
-    
     try:
-        data = AgendamentoSchema(**dados) 
+        #Vinicius - 05/04/2026
+        #Adicionado validação de payload para garantir que os dados enviados estejam corretos
+        data = AgendamentoSchema(**request.get_json()) 
         #Se existir um agendamento entre a data de inicio e fim do serviço, retornar erro
         duracao_servico = Servico.query.get(data.servico_id).duracao_minutos
         data_fim = data.data_agendamento + timedelta(minutes=duracao_servico)
+
         if Agendamento.query.filter(
             Agendamento.barbeiro_id == data.barbeiro_id,
             Agendamento.data_agendamento >= data.data_agendamento,
@@ -46,11 +47,14 @@ def criar_agendamento():
 @agendamento_bp.route('/listar-agendamento', methods=['GET'])
 def listar_agendamento():
     #Vinicius - Paginação de Agendamentos 31/03/2026
+    #Adicionado paginação para evitar sobrecarga do sistema com buscas execivas no banco de dados
     page = request.args.get('page', default=1, type=int)
     per_page = request.args.get('per_page', default=10, type=int)
     try:
         #Vinicius - Paginação de Agendamentos 31/03/2026
-        agendamento = Agendamento.query.paginate(page=page, per_page=per_page, error_out=False)
+        #Vinicius - 04/04/2026
+        #Troca do nome da variavel para 'agendamentos' para melhor identificação
+        agendamentos = Agendamento.query.paginate(page=page, per_page=per_page, error_out=False)
         agendamento_dict = [
             {
                 'id': a.id,
@@ -60,10 +64,22 @@ def listar_agendamento():
                 'data_agendamento': a.data_agendamento,
                 'observacoes': a.observacoes
             }
-            for a in agendamento
+            #Vinicius - 04/04/2026
+            #Adicionado o .items para que o list comprehension receba os itens da paginação
+            for a in agendamentos.items
         ]
         # Retornar em JSON com chave 'agendamentos'
-        return jsonify({'agendamentos': agendamento_dict})
+        #Vinicius - 04/04/2026
+        #Adicionado formatação para melhor visualização dos dados de paginação e variaveis total e items_nessa_pagina para deixar a resposta mais completa
+        return jsonify({
+            'agendamentos': agendamento_dict,
+            'total':agendamentos.total,
+            'items_nessa_pagina': len(agendamento_dict),
+            'pagina':agendamentos.page,
+            'per_page':agendamentos.per_page,
+            'tem_proxima':agendamentos.has_next,
+            'tem_pagina_anterior':agendamentos.has_prev
+        })
     except Exception as e:
         return jsonify({'erro': 'Não foi possível listar os agendamentos: ' + str(e)}), 500
     

@@ -1,3 +1,4 @@
+#josue inicio
 from flask import Blueprint, jsonify, request
 from app.models.cliente import Cliente
 from app import db
@@ -6,9 +7,54 @@ from app.utils.decorators import admin_required
 clientes_bp = Blueprint('clientes',__name__,url_prefix='/api/clientes')
 
 @clientes_bp.route('/', methods=['GET'])
+#josue inicio
+#esse trecho fiquei um pouco confuso no comesso mas fui conseguindo captar a logica
 def listar_clientes():
     try:
-        clientes = Cliente.query.all()
+        # Capturar parâmetros de paginação (com valores padrão)
+        pagina = request.args.get('pagina', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
+        # Capturar parâmetros de busca
+        nome  = request.args.get('nome', type=str)
+        email = request.args.get('email', type=str)
+        telefone = request.args.get('telefone', type=str)
+
+        query = Cliente.query
+#interessante ---- o ilike faz a busca case insensitive
+        #Vinicius - 04/04/2026
+        """Modificando o uso de argumentos de nome, email e telefone
+        1- O uso de ilike com wildcards em campos UNIQUES anula os beneficios de ter um campo unico e um indice no banco
+        2- Agora há dois tipos de respostas possiveis dependendo do argumento passado, se for passado email ou telefone, 
+        retorna um objeto, se for passado nome ou nenhum argumento, retorna uma lista
+        Isso evita que caso seja passado o email ou telefone, caia na função de paginate e o banco tente paginar algo que
+        já iria retornar um unico cliente
+        """
+        #Caso seja passado telefone e email, retorna um objeto, pois são campos unicos
+        if telefone or email:
+            if telefone:
+                query = query.filter_by(telefone=telefone)
+            if email:
+                query = query.filter_by(email=email)
+            
+            cliente = query.first()
+            if not cliente:
+                return jsonify({'erro': 'Cliente não encontrado'}), 404
+            
+            return jsonify({'cliente': {
+                'id': cliente.id,
+                'nome': cliente.nome,
+                'telefone': cliente.telefone,
+                'email': cliente.email
+            }}), 200
+
+        #Caso seja passado nome, retorna uma lista com outros dados de paginação, pois nome não é unico
+        if nome:
+            query = query.filter(Cliente.nome.ilike(f'%{nome}%'))
+        
+        #Vinicius - 04/04/2026
+        #Troca do nome da variavel para 'clientes' para melhor identificação
+        clientes = query.paginate(page=pagina, per_page=per_page, error_out=False)
+
         clientes_dict = [
             {
                 'id': c.id,
@@ -16,13 +62,25 @@ def listar_clientes():
                 'telefone': c.telefone,
                 'email': c.email
             }
-            for c in clientes
+            #Vinicius - 04/04/2026
+            #Adicionado o .items para que o list comprehension receba os itens da paginação
+            for c in clientes.items
         ]
         # Retornar em JSON com chave 'clientes'
-        return jsonify({'clientes': clientes_dict})
+        return jsonify({
+            'clientes': clientes_dict,
+            #Vinicius - 04/04/2026
+            #Adicionado formatação para melhor visualização dos dados de paginação e variaveis total e items_nessa_pagina para deixar a resposta mais completa
+            'total':clientes.total,
+            'items_nessa_pagina': len(clientes_dict),
+            'pagina':clientes.page,
+            'per_page':clientes.per_page,
+            'tem_proxima':clientes.has_next,
+            'tem_pagina_anterior':clientes.has_prev
+        })
     except Exception as e:
         return jsonify({'erro': 'Não foi possível listar os clientes: ' + str(e)}), 500
-
+#josue fim
 @clientes_bp.route('/criar-cliente', methods=['POST'])
 def criar_cliente():
     dados = request.get_json()
@@ -30,11 +88,14 @@ def criar_cliente():
         dados_cliente = {
             'nome': dados.get('nome'),
             'telefone': dados.get('telefone'),
-            'email': dados.get('email')
+            'email': dados.get('email'),
+            'senha': dados.get('senha')
         }
         # Validando dados obrigatórios
-        if dados['nome'] is None or dados['telefone'] is None or dados['email'] is None:
-            return jsonify({'erro': 'Campos nome, telefone e email são obrigatórios'}), 400
+        #Vinicius
+        #Adicionado pelo Josue, nova verificação para campos obrigatorios, senha agora é obrigatoria
+        if dados['nome'] is None or dados['telefone'] is None or dados['email'] is None or dados['senha'] is None:
+            return jsonify({'erro': 'Campos nome, telefone, email e senha são obrigatórios'}), 400
         # Validando formato do email e unicidade
         if Cliente.query.filter_by(email=dados['email']).first():
             return jsonify({'erro': 'Email já cadastrado'}), 400
@@ -44,6 +105,9 @@ def criar_cliente():
         
         # Criar cliente e salvar no banco
         cliente = Cliente(**dados_cliente)
+        #Vinicius - 04/04/2026
+        #Utilizando o metodo do mixin para hashear a senha em texto simples antes de efetuar o commit no banco
+        cliente.senha = dados['senha']
         db.session.add(cliente)
         db.session.commit()
         return jsonify({'cliente': {

@@ -9,11 +9,16 @@ import AppointmentsView from './views/AppointmentsView';
 type Tab = 'clientes' | 'servicos' | 'agendamentos';
 
 function App() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<any>(() => {
+    // # Gabriel (Dev 1) - Recuperação de sessão para o F5 não dar logout
+    const savedUser = sessionStorage.getItem('barba_user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
   const [activeTab, setActiveTab] = useState<Tab>('clientes');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const handleLogout = () => {
+    sessionStorage.removeItem('barba_user');
     setUser(null);
   };
 

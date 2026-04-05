@@ -3,26 +3,6 @@
 from pydantic import BaseModel, Field, field_validator, FutureDatetime, ValidationError
 from datetime import datetime
 
-#  # Colunas
-#     id = db.Column(db.Integer, primary_key=True)
-    
-#     # Chaves estrangeiras
-#     cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=False)
-#     barbeiro_id = db.Column(db.Integer, db.ForeignKey('barbeiros.id'), nullable=False)
-#     servico_id = db.Column(db.Integer, db.ForeignKey('servicos.id'), nullable=False)
-    
-#     # Data e hora do agendamento
-#     data_agendamento = db.Column(db.DateTime, nullable=False)  # Quando será feito
-#     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)  # Quando foi marcado
-    
-#     # Status do agendamento
-#     status = db.Column(db.String(20), default=STATUS_PENDENTE)  # pendente, confirmado, cancelado, concluido
-    
-#     # Observações (por exemplo: "Alergia a certos produtos")
-#     observacoes = db.Column(db.Text)
-    
-#     def __repr__(self):
-
 HORARIO_INICIO = 8
 HORARIO_FECHAMENTO = 20
 

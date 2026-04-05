@@ -1,8 +1,8 @@
 from app import db
 from datetime import datetime
-from werkzeug.security import generate_password_hash, check_password_hash
-
-class Admin(db.Model):
+from app.models.mixins import HashSenhaMixin
+#josue minima alteracao
+class Admin(HashSenhaMixin,db.Model):
     """Modelo de Admin - usuários que gerenciam a barbearia"""
     
     __tablename__ = 'admins'
@@ -20,13 +20,8 @@ class Admin(db.Model):
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
     ultimo_login = db.Column(db.DateTime)  # Último acesso
     
-    def set_senha(self, senha):
-        """Define a senha (é hasheada automaticamente)"""
-        self.senha_hash = generate_password_hash(senha)
-    
-    def verificar_senha(self, senha):
-        """Compara senha digitada com a hasheada no banco"""
-        return check_password_hash(self.senha_hash, senha)
+    #Função para verificar senha foi excluída, Porquê?
+    #Vinicius - Foi migrada para o mixins.py para ser reutilizada em outros modelos
     
     def __repr__(self):
         return f'<Admin {self.email}>'
