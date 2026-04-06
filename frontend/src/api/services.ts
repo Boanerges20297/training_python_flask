@@ -1,3 +1,4 @@
+// Gabriel (Dev 1) - API de serviços
 import api from './config';
 import type { Servico } from '../types';
 

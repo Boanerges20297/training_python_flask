@@ -1,8 +1,8 @@
-import { Database, LogOut, User, Users, Briefcase, Calendar, ChevronLeft, Menu } from 'lucide-react';
+import { Database, LogOut, User, Users, Scissors, Briefcase, Calendar, ChevronLeft, Menu } from 'lucide-react';
 
 interface SidebarProps {
-  activeTab: 'clientes' | 'servicos' | 'agendamentos';
-  onTabChange: (tab: 'clientes' | 'servicos' | 'agendamentos') => void;
+  activeTab: 'clientes' | 'servicos' | 'agendamentos' | 'barbeiros';
+  onTabChange: (tab: 'clientes' | 'servicos' | 'agendamentos' | 'barbeiros') => void;
   isCollapsed: boolean;
   onToggle: () => void;
   user: any;
@@ -39,6 +39,13 @@ export default function Sidebar({
         >
           <Users size={20} /> {!isCollapsed && <span>Clientes</span>}
         </button>
+        <button 
+          className={`nav-item ${activeTab === 'barbeiros' ? 'active' : ''}`}
+          onClick={() => onTabChange('barbeiros')}
+          title="Barbeiros"
+        >
+          <Scissors size={20} /> {!isCollapsed && <span>Barbeiros</span>}
+        </button> 
         <button 
           className={`nav-item ${activeTab === 'servicos' ? 'active' : ''}`}
           onClick={() => onTabChange('servicos')}

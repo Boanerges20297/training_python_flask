@@ -34,18 +34,23 @@
 
 /* Variantes de Cores (Gradientes sutis no topo) */
 .modal-content-premium.blue {
-  background-image: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(30, 41, 59, 0.7) 100%);
+  background-image: linear-gradient(135deg, rgba(59, 131, 246, 0.202) 0%, rgba(30, 41, 59, 0.7) 100%);
   border-top: 2px solid rgba(59, 130, 246, 0.3);
 }
 
 .modal-content-premium.purple {
-  background-image: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(30, 41, 59, 0.7) 100%);
+  background-image: linear-gradient(135deg, rgba(138, 92, 246, 0.202) 0%, rgba(30, 41, 59, 0.7) 100%);
   border-top: 2px solid rgba(139, 92, 246, 0.3);
 }
 
 .modal-content-premium.green {
-  background-image: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(30, 41, 59, 0.7) 100%);
+  background-image: linear-gradient(135deg, rgba(16, 185, 129, 0.202) 0%, rgba(30, 41, 59, 0.7) 100%);
   border-top: 2px solid rgba(16, 185, 129, 0.3);
+}
+
+.modal-content-premium.amber {
+  background-image: linear-gradient(135deg, rgba(245, 158, 11, 0.202) 0%, rgba(30, 41, 59, 0.7) 100%);
+  border-top: 2px solid rgba(245, 158, 11, 0.3);
 }
 
 .modal-header-refined {

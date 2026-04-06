@@ -5,8 +5,9 @@ import Header from './components/Header';
 import ClientsView from './views/ClientsView';
 import ServicesView from './views/ServicesView';
 import AppointmentsView from './views/AppointmentsView';
+import BarbersView from './views/BarbersView';
 
-type Tab = 'clientes' | 'servicos' | 'agendamentos';
+type Tab = 'clientes' | 'servicos' | 'agendamentos' | 'barbeiros';
 
 function App() {
   const [user, setUser] = useState<any>(() => {
@@ -30,7 +31,8 @@ function App() {
   const tabNames: Record<Tab, string> = {
     clientes: 'Clientes',
     servicos: 'Serviços',
-    agendamentos: 'Agendamentos'
+    agendamentos: 'Agendamentos',
+    barbeiros: 'Barbeiros'
   };
 
   return (
@@ -51,6 +53,7 @@ function App() {
           {activeTab === 'clientes' && <ClientsView />}
           {activeTab === 'servicos' && <ServicesView />}
           {activeTab === 'agendamentos' && <AppointmentsView />}
+          {activeTab === 'barbeiros' && <BarbersView />}
         </div>
       </main>
     </div>

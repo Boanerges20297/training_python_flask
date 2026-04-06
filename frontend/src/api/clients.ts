@@ -1,3 +1,4 @@
+// Gabriel (Dev 1) - API de clientes
 import api from './config';
 import type { Cliente } from '../types';
 

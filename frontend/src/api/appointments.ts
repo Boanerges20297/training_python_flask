@@ -1,3 +1,4 @@
+// Gabriel (Dev 1) - API de agendamentos
 import api from './config';
 import type { Agendamento } from '../types';
 

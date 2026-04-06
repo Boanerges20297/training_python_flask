@@ -72,11 +72,9 @@ export default function ClientsView() {
           <Users size={20} color="#3b82f6" />
           <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#f8fafc' }}>Clientes Cadastrados</h2>
         </div>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <button onClick={handleNewClient} className="btn-primary" style={{ fontSize: '0.875rem' }}>
-            <Plus size={16} /> Novo Cliente
-          </button>
-        </div>
+        <button onClick={handleNewClient} className="btn-primary" style={{ fontSize: '0.875rem' }}>
+          <Plus size={16} /> Novo Cliente
+        </button>
       </div>
 
       {loading ? (
@@ -98,16 +96,16 @@ export default function ClientsView() {
             <tbody>
               {clientes.length > 0 ? (
                 clientes.map((cliente) => (
-                  <tr key={cliente.id} className="fade-in">
+                  <tr key={cliente.id} className="fade-in" style={{ textAlign: 'center' }}>
                     <td style={{ fontWeight: 600 }}>{cliente.nome}</td>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
                         <Phone size={14} color="#60a5fa" />
                         {cliente.telefone}
                       </div>
                     </td>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
                         <Mail size={14} color="#60a5fa" />
                         {cliente.email}
                       </div>
