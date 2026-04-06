@@ -1,5 +1,6 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_jwt_extended import JWTManager
 
 # Inicializa o banco de dados (vai ser usado pelos modelos)
 # Criamos aqui, fora de qualquer função, para importar nos modelos
@@ -26,6 +27,13 @@ def create_app():
     from config import Config
     app.config.from_object(Config)
     
+    # felipe inicio
+    # 2.1 configurar secret key do jwt
+    jwt = JWTManager()
+    jwt.init_app(app)
+    app.config['JWT_SECRET_KEY'] = Config.JWT_SECRET_KEY
+    # felipe fim
+
     # 2.5 Habilitar CORS
     from flask_cors import CORS
     CORS(app)
