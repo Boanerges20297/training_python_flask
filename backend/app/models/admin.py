@@ -15,13 +15,13 @@ class Admin(HashSenhaMixin,db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
-    senha_hash = db.Column(db.String(255), nullable=False)  # Senha SEMPRE hasheada!
     role = db.Column(db.String(20), default=ROLE_GERENTE)  # admin ou gerente
     ativo = db.Column(db.Boolean, default=True)
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
     ultimo_login = db.Column(db.DateTime)  # Último acesso
     
     #Função para verificar senha foi excluída, Porquê?
+    #Vinicius - Foi migrada para o mixins.py para ser reutilizada em outros modelos
     
     def __repr__(self):
         return f'<Admin {self.email}>'

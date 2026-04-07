@@ -15,8 +15,8 @@ class Barbeiro(HashSenhaMixin, db.Model):
     telefone = db.Column(db.String(20), nullable=False)
     data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
     ativo = db.Column(db.Boolean, default=True)  # Se está trabalhando
-    senha_hash = db.Column(db.String(256), nullable=False)
-    
+    #Vinicius
+    #Senha hash removida para ser gerenciada pelo Mixin
     # Relacionamentos
     agendamentos = db.relationship('Agendamento', backref='barbeiro', lazy=True)
     servicos = db.relationship('Servico', backref='barbeiro', lazy=True)

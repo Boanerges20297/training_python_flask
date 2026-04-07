@@ -4,6 +4,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 class HashSenhaMixin:
     """Mixin para adicionar senha hash aos modelos"""
+    #Vinicius - 04/04/2026
+    #Senha hash adicionada para ser responsabilidade do mixin
+    senha_hash = db.Column(db.String(256), nullable=False)
     
     @property
     def senha(self):

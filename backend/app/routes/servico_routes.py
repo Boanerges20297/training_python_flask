@@ -54,10 +54,15 @@ def listar_servicos():
     2. Converter cada serviço em dicionário (para JSON)
     3. Retornar com jsonify() 
     """
+    #Vinicius - Paginação de serviços 31/03/2026
+    #Paginação de serviços para evitar sobrecarga do sistema com buscas execivas no banco de dados
+    page = request.args.get('page', default=1, type=int)
+    per_page = request.args.get('per_page', default=10, type=int)
     
     try:
         # TODO: Buscar todos os serviços
-        servicos = Servico.query.all()
+        #Vinicius - Paginação de serviços 31/03/2026
+        servicos = Servico.query.paginate(page=page, per_page=per_page, error_out=False)
         
         # TODO: Converter para lista de dicionários
         # Utilizando 'dict comphreension'
@@ -68,31 +73,54 @@ def listar_servicos():
                 'preco': s.preco,
                 'duracao_minutos': s.duracao_minutos
             }
-            for s in servicos
+            #Vinicius - 04/04/2026
+            #Adicionado o .items para que o list comprehension receba os itens da paginação
+            for s in servicos.items
         ]
         
         # TODO: Retornar em JSON
-        return jsonify({'servicos': servicos_dict})
+        return jsonify({
+            #Vinicius - 04/04/2026
+            #Adicionado nova resposta para a rota contendo mais informações sobre a paginação
+            'servicos': servicos_dict, 
+            'total': servicos.total, 
+            'per_page': servicos.per_page,
+            'items_nessa_pagina': len(servicos_dict),
+            'pagina': servicos.page,
+            'total_paginas': servicos.pages,
+            'tem_proxima': servicos.has_next,
+            'tem_pagina_anterior': servicos.has_prev
+        })
         
         pass
     
     except Exception as e:
         return jsonify({'erro': str(e)}), 500
-    
+
+
 @servico_bp.route('/criar-servico', methods=['POST'])
 def criar_servico():
     dados = request.get_json()
+    #Vinicius - 01/04/2026
+    #Adicinado barbeiro_id como campo obrigatório, para acompanhar o model Servico
     try:
         dados_servico = {
-            'nome': dados.get('nome'),
+            'nome': dados.get('nome').lower(),
             'preco': dados.get('preco'),
-            'duracao_minutos': dados.get('duracao_minutos')
+            'duracao_minutos': dados.get('duracao_minutos'),
+            'barbeiro_id': dados.get('barbeiro_id')
         }
         # Validando dados obrigatórios
         if (dados['nome'] is None or 
             dados['preco'] is None or 
-            dados['duracao_minutos'] is None):
-            return jsonify({'erro': 'Campos nome, preco e duracao_minutos são obrigatórios'}), 400
+            dados['duracao_minutos'] is None or
+            dados['barbeiro_id'] is None):
+            return jsonify({'erro': 'Campos nome, preco, duracao_minutos e barbeiro_id são obrigatórios'}), 400
+        
+        #Vinicius - 31/03/2026
+        #Verificar se o serviço já existe para evitar criação de repetidos
+        if Servico.query.filter_by(nome=dados_servico.get('nome').lower()).first():
+            return jsonify({'erro': 'Serviço já cadastrado'}), 409
         
         # Criar serviço e salvar no banco
         servico = Servico(**dados_servico)
