@@ -4,7 +4,9 @@ import sys
 from pathlib import Path
 
 # Adiciona a pasta raiz ao path do Python
-sys.path.insert(0, str(Path(__file__).parent.parent))
+#Vinicius - 05/04/2026
+#Adicionado mais um parent para que o arquivo consiga ver a pasta raiz
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 # Agora pode importar app
 from app import create_app, db

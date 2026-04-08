@@ -1,6 +1,8 @@
 from flask import Blueprint, jsonify, request
 from app.models.agendamento import Agendamento
 from app.models.servico import Servico
+from app.models.cliente import Cliente
+from app.models.barbeiro import Barbeiro
 from app import db
 from datetime import datetime, timedelta
 from app.schemas.agendamento_schema import AgendamentoSchema
@@ -15,6 +17,19 @@ def criar_agendamento():
         #Adicionado validação de payload para garantir que os dados enviados estejam corretos
         data = AgendamentoSchema(**request.get_json()) 
         #Se existir um agendamento entre a data de inicio e fim do serviço, retornar erro
+        #Vinicius - 05/04/2026
+        #Adicionado verificação se o serviço existe
+        if Servico.query.get(data.servico_id) is None:
+            return jsonify({'erro': 'Serviço não encontrado'}), 404
+        #Vinicius - 05/04/2026
+        #Adicionado verificação se o cliente existe
+        if Cliente.query.get(data.cliente_id) is None:
+            return jsonify({'erro': 'Cliente não encontrado'}), 404
+        #Vinicius - 05/04/2026
+        #Adicionado verificação se o barbeiro existe
+        if Barbeiro.query.get(data.barbeiro_id) is None:
+            return jsonify({'erro': 'Barbeiro não encontrado'}), 404
+
         duracao_servico = Servico.query.get(data.servico_id).duracao_minutos
         data_fim = data.data_agendamento + timedelta(minutes=duracao_servico)
 
@@ -39,7 +54,7 @@ def criar_agendamento():
             'msg': 'Agendamento criado com sucesso'
         }}), 201
 
-    except ValidationError as e:
+    except ValueError as e:
         return jsonify({'erro': 'Erro ao criar agendamento: ' + str(e)}), 400
     except Exception as e:
         return jsonify({'erro': 'Erro ao criar agendamento: ' + str(e)}), 500

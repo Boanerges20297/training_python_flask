@@ -1,0 +1,45 @@
+- Iniciando teste de criação de agendamento
+- Criando agendamento para o teste
+Horario utiliziado: 2028-12-31T12:00:00
+- Agendamento criado com sucesso!
+Resposta da API: {'agendamento': {'barbeiro_id': 1, 'cliente_id': 1, 'data_agendamento': 'Sun, 31 Dec 2028 12:00:00 GMT', 'id': 1, 'msg': 'Agendamento criado com sucesso', 'observacoes': 'teste', 'servico_id': 1}}
+✅ Passou no teste - Criação de agendamento
+Deletando agendamento criado para o teste
+✅ Agendamento deletado com sucesso!
+Resposta da API: {'msg': 'Agendamento deletado com sucesso'}
+----------------------------------
+- Iniciando teste de conflitos de agendamentos
+- Tentando criar primeiro agendamento
+Horario utiliziado: 2028-12-31T12:00:00
+- Primeiro agendamento criado
+Resposta da API: {'agendamento': {'barbeiro_id': 1, 'cliente_id': 1, 'data_agendamento': 'Sun, 31 Dec 2028 12:00:00 GMT', 'id': 1, 'msg': 'Agendamento criado com sucesso', 'observacoes': 'teste', 'servico_id': 1}}
+id_agendamento1: 1
+- Tentando criar segundo agendamento no mesmo horario
+Horario utiliziado: 2028-12-31T12:00:00
+- Segundo agendamento não criado
+Resposta da API: Horario indisponivel
+✅ Passou no teste - Conflitos de agendamentos
+Deletando agendamento criado para o teste
+✅ Agendamento deletado com sucesso!
+Resposta da API: {'msg': 'Agendamento deletado com sucesso'}
+----------------------------------
+- Iniciando teste de horario de funcionamento
+- Tentando criar agendamento apos o fechamento do estabelecimento
+Horario utiliziado: 2028-12-31T20:00:01
+- Agendamento não criado
+Resposta da API: {'erro': "Erro ao criar agendamento: 1 validation error for AgendamentoSchema\ndata_agendamento\n  Value error, Barbearia fechada neste horario [type=value_error, input_value='2028-12-31T20:00:01', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/value_error"}
+✅ Passou no teste - Horario de funcionamento após fechamento
+----------------------------------
+- Tentando criar agendamento antes da abertura do estabelecimento
+Horario utiliziado: 2028-12-31T07:59:59
+- Agendamento não criado
+Resposta da API: {'erro': "Erro ao criar agendamento: 1 validation error for AgendamentoSchema\ndata_agendamento\n  Value error, Barbearia fechada neste horario [type=value_error, input_value='2028-12-31T07:59:59', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/value_error"}
+✅ Passou no teste - Horario de funcionamento antes da abertura
+----------------------------------RELATORIO----------------------------------
+
+    Relatorio de testes de agendamentos
+    Criação de agendamento: ✅ Passou no teste
+    Conflitos de agendamentos: ✅ Passou no teste
+    Horario de funcionamento apos fechamento: ✅ Passou no teste
+    Horario de funcionamento antes da abertura: ✅ Passou no teste
+    

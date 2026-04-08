@@ -1,0 +1,26 @@
+- Iniciando teste de criaþÒo de agendamento
+- Criando agendamento para o teste
+Horario utiliziado: 2028-12-31T12:00:00
+- Agendamento nÒo criado
+Traceback (most recent call last):
+  File "D:\ProgramaþÒo\Python neuroaprendizado\barba-byte-novo-novo\training_python_flask\backend\tests\agendamentos_testes.py", line 67, in criacao_agendamento_teste
+    print(f'\u274c NÒo passou no teste')
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Vinicius\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u274c' in position 0: character maps to <undefined>
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\ProgramaþÒo\Python neuroaprendizado\barba-byte-novo-novo\training_python_flask\backend\tests\agendamentos_testes.py", line 194, in <module>
+    criacao_agendamento_teste()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\ProgramaþÒo\Python neuroaprendizado\barba-byte-novo-novo\training_python_flask\backend\tests\agendamentos_testes.py", line 76, in criacao_agendamento_teste
+    print(f'\u274c Erro ao testar criaþÒo de agendamento: {e}')
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Vinicius\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u274c' in position 0: character maps to <undefined>
