@@ -1,43 +1,43 @@
 import React, { useState, useEffect } from 'react';
-import { createCliente, updateCliente } from '../../../api/clients';
-import type { Cliente } from '../../../types';
-import { User, Phone, Mail, Loader2, CheckCircle2, Plus, Edit2, Lock } from 'lucide-react';
+import { createBarbeiro, updateBarbeiro } from '../../../api/barbers';
+import type { Barbeiro } from '../../../types';
+import { User, Phone, Mail, Loader2, CheckCircle2, Plus, Edit2, Award, Lock, ToggleLeft, ToggleRight } from 'lucide-react';
 import Modal from '../../Modal';
-import './ClientModal.css';
+import './BarbersModal.css';
 
-interface ClientModalProps {
+//Gabriel (Dev 1) - Criação do Modal de Barbeiros seguindo padrão dos outros modais.
+
+interface BarbersModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  clienteParaEditar?: Cliente | null;
+  barbeiroParaEditar?: Barbeiro | null;
 }
 
-// # Gabriel (Dev 1)
-// Refatorado para usar o Modal genérico e evitar código repetido.
-const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, onSuccess, clienteParaEditar }) => {
-  const [formData, setFormData] = useState({ nome: '', email: '', telefone: '', senha: '' });
+const BarbersModal: React.FC<BarbersModalProps> = ({ isOpen, onClose, onSuccess, barbeiroParaEditar }) => {
+  const [formData, setFormData] = useState({ nome: '', especialidade: '', email: '', telefone: '', senha: '', ativo: true });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // # Ian (Dev 2)
-  // Preenche o formulário com os dados do cliente ao abrir para edição.
   useEffect(() => {
     if (isOpen) {
-      if (clienteParaEditar) {
+      if (barbeiroParaEditar) {
         setFormData({
-          nome: clienteParaEditar.nome,
-          email: clienteParaEditar.email,
-          telefone: clienteParaEditar.telefone,
-          senha: '', // # Gabriel (Dev 1) - Senha não é editada aqui por segurança
+          nome: barbeiroParaEditar.nome,
+          especialidade: barbeiroParaEditar.especialidade,
+          email: barbeiroParaEditar.email,
+          telefone: barbeiroParaEditar.telefone,
+          senha: '', // Senha não é editada aqui
+          ativo: barbeiroParaEditar.ativo
         });
       } else {
-        setFormData({ nome: '', email: '', telefone: '', senha: '' });
+        setFormData({ nome: '', especialidade: '', email: '', telefone: '', senha: '', ativo: true });
       }
       setSuccess(false);
       setError(null);
     }
-  }, [isOpen, clienteParaEditar]);
+  }, [isOpen, barbeiroParaEditar]);
 
   // Máscara de Telefone: (00) 00000-0000
   const formatPhone = (value: string) => {
@@ -73,9 +73,9 @@ const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, onSuccess, c
       setError("Por favor, insira um endereço de e-mail válido.");
       return;
     }
-
-    if (!clienteParaEditar && !formData.senha) {  // # Gabriel (Dev 1) - Validação de senha para novo cliente
-      setError("A senha é obrigatória para o cadastro.");
+    
+    if (!barbeiroParaEditar && !formData.senha) {
+      setError("A senha é obrigatória para o cadastro do barbeiro.");
       return;
     }
 
@@ -83,15 +83,12 @@ const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, onSuccess, c
     setError(null);
 
     try {
-      if (clienteParaEditar) {
-        const successEdit = await updateCliente(clienteParaEditar.id, {
-          nome: formData.nome,
-          email: formData.email,
-          telefone: formData.telefone
-        });
-        if (!successEdit) throw new Error("Erro ao atualizar cliente.");
+      if (barbeiroParaEditar) {
+        const { senha, ...updateData } = formData; // Na edição não enviamos a senha
+        const successEdit = await updateBarbeiro(barbeiroParaEditar.id!, updateData);
+        if (!successEdit) throw new Error("Erro ao atualizar dados do barbeiro.");
       } else {
-        await createCliente(formData);
+        await createBarbeiro(formData);
       }
 
       setSuccess(true);
@@ -100,9 +97,8 @@ const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, onSuccess, c
         onClose();
       }, 1500);
     } catch (err: any) {
-      const msg = err.message || err.response?.data?.erro || 'Erro ao processar solicitação. Tente novamente.';
+      const msg = err.message || err.response?.data?.erro || 'Erro ao processar solicitação. Tente Novamente.';
       setError(msg);
-      // Hierarquia de Notificações: Erros no modal NÃO dispara Toast (já está no error-message)
     } finally {
       setIsSubmitting(false);
     }
@@ -112,36 +108,51 @@ const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, onSuccess, c
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={clienteParaEditar ? "Editar Cliente" : "Cadastrar Cliente"}
-      variant="blue"
-      subtitle={clienteParaEditar ? "Atualize os dados do cliente." : "Insira os dados para cadastrar o cliente na base."}
+      title={barbeiroParaEditar ? "Editar Barbeiro" : "Contratar Barbeiro"}
+      variant="amber"
+      subtitle={barbeiroParaEditar ? "Atualize o perfil do profissional." : "Adicione um novo profissional ao seu time."}
     >
 
       <div className="modal-body-content">
         {success ? (
           <div className="success-state">
-            <div className="success-icon-wrapper">
-              <CheckCircle2 size={48} color="#22c55e" />
+            <div className="success-icon-wrapper" style={{ background: 'rgba(245, 158, 11, 0.1)' }}>
+              <CheckCircle2 size={48} color="#f59e0b" />
             </div>
             <h3 style={{ color: '#f8fafc', marginBottom: '0.5rem', fontSize: '1.25rem' }}>Sucesso!</h3>
             <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
-              {clienteParaEditar ? 'Cliente atualizado com sucesso.' : 'Cliente cadastrado com sucesso.'}
+              {barbeiroParaEditar ? 'Perfil atualizado com sucesso.' : 'Barbeiro adicionado ao time com sucesso.'}
             </p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="modern-form">
             <div className="form-group-modern">
-              <label>Nome Completo</label>
+              <label>Nome do Barbeiro</label>
               <div className="input-group-modern">
                 <User size={18} className="input-icon" />
                 <input
                   type="text"
-                  placeholder="Ex: João Silva"
+                  placeholder="Nome completo"
                   required
                   maxLength={100}
                   value={formData.nome}
                   onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                   autoFocus
+                />
+              </div>
+            </div>
+
+            <div className="form-group-modern">
+              <label>Especialidade</label>
+              <div className="input-group-modern">
+                <Award size={18} className="input-icon" />
+                <input
+                  type="text"
+                  placeholder="Ex: Cortes Clássicos, Barba..."
+                  required
+                  maxLength={255}
+                  value={formData.especialidade}
+                  onChange={(e) => setFormData({ ...formData, especialidade: e.target.value })}
                 />
               </div>
             </div>
@@ -168,7 +179,7 @@ const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, onSuccess, c
                   <Mail size={18} className="input-icon" />
                   <input
                     type="email"
-                    placeholder="email@exemplo.com"
+                    placeholder="email@barbearia.com"
                     required
                     maxLength={100}
                     value={formData.email}
@@ -178,10 +189,9 @@ const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, onSuccess, c
               </div>
             </div>
 
-            {/* # Gabriel (Dev 1) - O campo de senha só aparece quando um novo cliente está sendo criado */}
-            {!clienteParaEditar && (
+            {!barbeiroParaEditar && (
                <div className="form-group-modern">
-               <label>Senha de Acesso</label>
+               <label>Senha Provisória</label>
                <div className="input-group-modern">
                  <Lock size={18} className="input-icon" />
                  <input
@@ -196,6 +206,18 @@ const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, onSuccess, c
                </div>
              </div>
             )}
+
+            <div className="form-group-modern">
+              <label>Disponibilidade</label>
+              <button 
+                type="button"
+                className={`status-toggle ${formData.ativo ? 'active' : 'inactive'}`}
+                onClick={() => setFormData({ ...formData, ativo: !formData.ativo })}
+              >
+                {formData.ativo ? <ToggleRight size={24} /> : <ToggleLeft size={24} />}
+                <span>{formData.ativo ? 'Está trabalhando atualmente' : 'Afastado / Indisponível'}</span>
+              </button>
+            </div>
 
             {error && (
               <div className="error-message">
@@ -221,8 +243,8 @@ const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, onSuccess, c
                   <Loader2 size={18} className="animate-spin" />
                 ) : (
                   <>
-                    {clienteParaEditar ? <Edit2 size={18} /> : <Plus size={18} />}
-                    <span>{clienteParaEditar ? 'Salvar Alterações' : 'Cadastrar Cliente'}</span>
+                    {barbeiroParaEditar ? <Edit2 size={18} /> : <Plus size={18} />}
+                    <span>{barbeiroParaEditar ? "Salvar Alterações" : "Adicionar Barbeiro"}</span>
                   </>
                 )}
               </button>
@@ -234,4 +256,4 @@ const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, onSuccess, c
   );
 };
 
-export default ClientModal;
+export default BarbersModal;

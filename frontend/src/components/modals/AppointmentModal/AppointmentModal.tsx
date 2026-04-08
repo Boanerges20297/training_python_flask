@@ -4,7 +4,6 @@ import type { Cliente, Servico } from '../../../types';
 import { User, ShoppingBag, Calendar, FileText, Loader2, CheckCircle2, Plus } from 'lucide-react';
 import Modal from '../../Modal';
 import './AppointmentModal.css';
-import { useToast } from '../../Toast';
 
 interface AppointmentModalProps {
   isOpen: boolean;
@@ -31,10 +30,18 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const { showToast } = useToast();
+  // # Gabriel (Dev 1) - Obtém a data e hora atual no formato ISO simplificado para o atributo 'min'
+  const today = new Date().toISOString().slice(0, 16);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // # Gabriel (Dev 1) - Reforçando regra aqui no front: Validação de data retroativa
+    if (formData.data_agendamento < today) {
+      setError("Não é possível agendar horários no passado.");
+      return; 
+    }
+
     setIsSubmitting(true);
     setError(null);
 
@@ -53,15 +60,15 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
 
       await createAgendamento(payload as any);
       setSuccess(true);
-      showToast('Agendamento salvo com sucesso!', 'success');
       setTimeout(() => {
         onSuccess();
         onClose();
+        setSuccess(false);
+        setFormData({ cliente_id: '', servico_id: '', data_agendamento: '', observacoes: '' });
       }, 1500);
     } catch (err: any) {
       const msg = err.response?.data?.message || err || 'Erro ao agendar horário.';
       setError(msg);
-      showToast(msg, 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -127,6 +134,8 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                 <input
                   type="datetime-local"
                   required
+                  min={today}
+                  max="2099-12-31T23:59"
                   value={formData.data_agendamento}
                   onChange={(e) => setFormData({ ...formData, data_agendamento: e.target.value })}
                 />
@@ -139,6 +148,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                 <FileText size={18} className="input-icon" style={{ top: '1rem', transform: 'none' }} />
                 <textarea
                   rows={3}
+                  maxLength={250}
                   placeholder="Ex: Cabelo muito comprido, lavagem especial..."
                   value={formData.observacoes}
                   onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}

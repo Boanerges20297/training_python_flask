@@ -3,7 +3,6 @@ import { createServico } from '../../../api/services';
 import { Tag, DollarSign, Clock, Loader2, CheckCircle2, Plus } from 'lucide-react';
 import Modal from '../../Modal';
 import './ServiceModal.css';
-import { useToast } from '../../Toast';
 
 interface ServiceModalProps {
   isOpen: boolean;
@@ -18,7 +17,6 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, onSuccess 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const { showToast } = useToast();
 
   // # Gabriel (Dev 1)
   // Função para formatar o preço do serviço.
@@ -56,7 +54,6 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, onSuccess 
 
       await createServico(payload);
       setSuccess(true);
-      showToast('Serviço criado com sucesso!', 'success');
       setTimeout(() => {
         onSuccess();
         onClose();
@@ -66,7 +63,6 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, onSuccess 
     } catch (err: any) {
       const msg = err.response?.data?.message || err || 'Erro ao cadastrar serviço.';
       setError(msg);
-      showToast(msg, 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -100,6 +96,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, onSuccess 
                   type="text" 
                   placeholder="Ex: Corte Degradê" 
                   required
+                  maxLength={255}
                   value={formData.nome}
                   onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                   autoFocus

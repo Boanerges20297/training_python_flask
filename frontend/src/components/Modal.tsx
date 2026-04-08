@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 import './Modal.css';
 
@@ -7,7 +7,7 @@ interface ModalProps {
   onClose: () => void;    
   title: string;          
   children: React.ReactNode; 
-  variant?: 'blue' | 'purple' | 'green' | 'default'; // # Gabriel (Dev 1) - Cores dinâmicas
+  variant?: 'blue' | 'purple' | 'green' | 'amber' | 'default'; // # Gabriel (Dev 1) - Cores dinâmicas
   subtitle?: string;
   size?: 'md' | 'lg'; // # Gabriel (Dev 1) - Tamanhos flexíveis
 }
@@ -21,16 +21,28 @@ const Modal: React.FC<ModalProps> = ({
   variant = 'default',
   subtitle,
   size = 'md'
-}) => {
+}) => { // # Gabriel (Dev 1) - keydown para a tecla Esc fechar modal e scroll ser travado
+    useEffect(() => {
+    if (!isOpen) return;
+
+    const handleEsc = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleEsc);
+
+    return () => {
+      document.body.style.overflow = 'unset';
+      window.removeEventListener('keydown', handleEsc);
+    };
+  }, [isOpen, onClose]); 
+
   // Se o modal não estiver aberto, não renderizamos nada (Early Return)
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      {/* O stopPropagation impede que o clique dentro da caixa feche o modal acidentalmente */}
+    <div className="modal-overlay">
       <div 
         className={`modal-content-premium ${variant} ${size}`} 
-        onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-header-refined">
           <div className="header-text-container">

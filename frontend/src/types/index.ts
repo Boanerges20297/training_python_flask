@@ -20,3 +20,12 @@ export interface Agendamento {
   data_agendamento: string;
   observacoes: string;
 }
+
+export interface Barbeiro {
+  id?: number;
+  nome: string;
+  especialidade: string;
+  email: string;
+  telefone: string;
+  ativo: boolean;
+}
