@@ -97,36 +97,35 @@ def criar_barbeiro():
         # Vinicius - 08/04/2026
         # Adicionado validação de payload para garantir que os dados enviados estejam corretos
         try:
-            data = ClienteSchema(**request.get_json())
+            data = BarbeiroSchema(**request.get_json())
         except Exception as e:
-            return jsonify({"erro": "Erro ao incluir cliente: " + str(e)}), 400
+            return jsonify({"erro": "Erro ao incluir barbeiro: " + str(e)}), 400
         # Vinicius - 08/04/2026
         # Removido validações feitas pelo Josue, que agora serão validadas pelo schema
 
-        # Criar cliente e salvar no banco
-        cliente = Cliente(**data.model_dump())
+        # Criar barbeiro e salvar no banco
+        barbeiro = Barbeiro(**data.model_dump())
         # Vinicius - 04/04/2026
         # Utilizando o metodo do mixin para hashear a senha em texto simples antes de efetuar o commit no banco
-        cliente.senha = data.senha
-        db.session.add(cliente)
+        barbeiro.senha = data.senha
+        db.session.add(barbeiro)
         db.session.commit()
         return (
             jsonify(
                 {
-                    "cliente": {
-                        "id": cliente.id,
-                        "nome": cliente.nome,
-                        "telefone": cliente.telefone,
-                        "email": cliente.email,
-                        "msg": "Cliente criado com sucesso",
+                    "barbeiro": {
+                        "id": barbeiro.id,
+                        "nome": barbeiro.nome,
+                        "telefone": barbeiro.telefone,
+                        "email": barbeiro.email,
+                        "msg": "Barbeiro criado com sucesso",
                     }
                 }
             ),
             201,
         )
     except Exception as e:
-        return jsonify({"erro": "Erro ao incluir cliente: " + str(e)}), 500
-
+        return jsonify({"erro": "Erro ao incluir barbeiro: " + str(e)}), 500
 
 # Vinicius - 08/04/2026
 # Modificado o metodo de PUT para PATCH, pois PATCH é usado para atualizar apenas os campos enviados
