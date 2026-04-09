@@ -26,30 +26,37 @@ class ClienteSchema(BaseModel):
             return value.lower()
         return value
 
-    @field_validator("telefone")
+    @field_validator("telefone", mode="before")
     @classmethod
     def validar_telefone(cls, value):
-        if not re.match(r"^[\d\s\+\-\(\)]+$", value):
-            raise ValueError(
-                "Telefone inválido (deve conter apenas números e símbolos como +, -, (), espaços)"
-            )
-        return value
+        # Remove caracteres comuns de máscara para validar apenas os números
+        numeros = re.sub(r"\D", "", value)
+
+        # Validação: Um telefone brasileiro tem entre 10 (fixo) e 11 (celular) dígitos
+        if not (10 <= len(numeros) <= 11):
+            raise ValueError("O telefone deve conter entre 10 e 11 dígitos (com DDD)")
+
+        # Opcional: Você pode retornar apenas os números limpos para o banco
+        return numeros
 
 
 # Vinicius - 08/04/2026
 # Herda de ClienteSchema para reutilizar validações
 class ClienteUpdateSchema(BaseModel):
     nome: str | None = Field(
-        default=None, max_length=100, description="Nome do serviço"
+        default=None, min_length=3, max_length=100, description="Nome do serviço"
     )
     telefone: str | None = Field(
-        default=None, max_length=20, description="Telefone do serviço"
+        default=None, min_length=11, max_length=20, description="Telefone do serviço"
     )
     email: EmailStr | None = Field(
-        default=None, max_length=100, description="Email do serviço"
+        default=None, min_length=10, max_length=100, description="Email do serviço"
     )
     senha: str | None = Field(
-        default=None, min_length=6, description="Senha do serviço (mínimo 6 caracteres)"
+        default=None,
+        min_length=6,
+        max_length=100,
+        description="Senha do serviço (mínimo 6 caracteres)",
     )
 
     # Adicionado 'extra': 'forbid' para que o campo não aceite campos extras
@@ -57,7 +64,23 @@ class ClienteUpdateSchema(BaseModel):
     model_config = {"extra": "forbid", "str_lowercase": True}
 
     # Adicionado 'str_validator' para validar os campos string, fazendo com que todos os campos string sejam convertidos para minúsculo
-    @field_validator("nome", "descricao", mode="before")
+    @field_validator("nome", mode="before")
     @classmethod
     def str_validator(cls, value):
         return value.lower()
+
+    @field_validator("telefone", mode="before")
+    @classmethod
+    def validar_telefone(cls, value):
+        if value is None:
+            return value
+
+        # Remove caracteres comuns de máscara para validar apenas os números
+        numeros = re.sub(r"\D", "", value)
+
+        # Validação: Um telefone brasileiro tem entre 10 (fixo) e 11 (celular) dígitos
+        if not (10 <= len(numeros) <= 11):
+            raise ValueError("O telefone deve conter entre 10 e 11 dígitos (com DDD)")
+
+        # Opcional: Você pode retornar apenas os números limpos para o banco
+        return numeros

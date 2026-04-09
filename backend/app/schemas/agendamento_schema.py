@@ -80,7 +80,9 @@ class AgendamentoUpdateSchema(BaseModel):
     status: str | None = Field(
         max_length=20, default="pendente", description="Status do agendamento"
     )
-    observacoes: str | None = Field(description="Observações do agendamento")
+    observacoes: str | None = Field(
+        default=None, description="Observações do agendamento"
+    )
 
     # Vinicius - 05/04/2026
     # Adicionado 'extra': 'forbid' para que o campo não aceite campos extras

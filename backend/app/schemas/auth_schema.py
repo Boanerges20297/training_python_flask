@@ -5,7 +5,11 @@ from pydantic import BaseModel, Field, EmailStr
 
 
 class LoginSchema(BaseModel):
-    email: EmailStr = Field(..., max_length=100, description="E-mail do usuário")
-    senha: str = Field(..., description="Senha do usuário")
+    email: EmailStr = Field(
+        ..., min_length=10, max_length=100, description="E-mail do usuário"
+    )
+    senha: str = Field(
+        ..., min_length=6, max_length=100, description="Senha do usuário"
+    )
 
     model_config = {"extra": "forbid", "str_lowercase": True}

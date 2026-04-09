@@ -10,7 +10,7 @@ class ServicoSchema(BaseModel):
     # Adicionado 'description' para que o campo seja documentado
     # Adicionado 'max_length' para que o campo nome tenha no máximo 100 caracteres
     # Adicionado 'default' para que o campo descricao tenha um valor padrão
-    nome: str = Field(..., max_length=100, description="Nome do serviço")
+    nome: str = Field(..., min_length=3, max_length=100, description="Nome do serviço")
     descricao: str = Field(default="", description="Descrição do serviço")
     preco: float = Field(..., gt=0, description="Preço do serviço (maior que zero)")
     duracao_minutos: int = Field(
@@ -34,13 +34,19 @@ class ServicoSchema(BaseModel):
 # Vinicius - 08/04/2026
 # Classe para atualizar o serviço
 class ServicoUpdateSchema(BaseModel):
-    nome: Field(default=None, max_length=100, description="Nome do serviço")
-    descricao: Field(default=None, description="Descrição do serviço")
-    preco: Field(default=None, gt=0, description="Preço do serviço (maior que zero)")
-    duracao_minutos: Field(
+    nome: str | None = Field(
+        default=None, min_length=3, max_length=100, description="Nome do serviço"
+    )
+    descricao: str | None = Field(
+        default=None, min_length=3, description="Descrição do serviço"
+    )
+    preco: float | None = Field(
+        default=None, gt=0, description="Preço do serviço (maior que zero)"
+    )
+    duracao_minutos: int | None = Field(
         default=None, gt=0, description="Duração do serviço em minutos (maior que zero)"
     )
-    barbeiro_id: Field(default=None, description="ID do barbeiro")
+    barbeiro_id: int | None = Field(default=None, description="ID do barbeiro")
 
     # Adicionado 'extra': 'forbid' para que o campo não aceite campos extras
     # Adicionado 'str_lowercase': True para que o campo string seja convertido para minúsculo
