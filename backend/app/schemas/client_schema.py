@@ -6,15 +6,21 @@ import re
 
 
 class ClienteSchema(BaseModel):
-    nome: str = Field(..., max_length=100, description="Nome completo do cliente")
+    nome: str = Field(
+        ..., min_length=3, max_length=100, description="Nome completo do cliente"
+    )
     telefone: str = Field(
         ...,
-        max_length=20,
         description="Telefone do cliente (apenas números e símbolos básicos)",
     )
-    email: EmailStr = Field(..., max_length=100, description="E-mail do cliente")
+    email: EmailStr = Field(
+        ..., min_length=10, max_length=100, description="E-mail do cliente"
+    )
     senha: str = Field(
-        ..., min_length=6, description="Senha do cliente (mínimo 6 caracteres)"
+        ...,
+        min_length=6,
+        max_length=256,
+        description="Senha do cliente (mínimo 6 caracteres)",
     )
 
     model_config = {"extra": "forbid", "str_lowercase": True}
