@@ -182,10 +182,6 @@ body {
   cursor: pointer;
 }
 
-.sidebar.collapsed .logout-btn {
-  padding: 0.75rem;
-}
-
 /* MAIN CONTENT */
 .main-content {
   flex: 1;
@@ -229,12 +225,18 @@ body {
   border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
+.status-badge.inactive {
+  background: rgba(148, 163, 184, 0.1);
+  color: #94a3b8;
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
 .content-body {
   padding: 2rem;
   flex: 1;
 }
 
-/* SHARED UI COMPONENTS (CARDS, TABLES, ETC) */
+/* UI COMPONENTS (CARDS, TABLES, ETC) */
 .card {
   background: #1e293b;
   border: 1px solid rgba(255, 255, 255, 0.05);
@@ -272,6 +274,10 @@ td {
   color: #cbd5e1;
 }
 
+.text-capitalize {
+  text-transform: capitalize;
+}
+
 tr:hover td {
   background: rgba(255, 255, 255, 0.01);
 }
@@ -283,25 +289,6 @@ tr:hover td {
   border-radius: 0.5rem;
   font-size: 0.75rem;
   font-weight: 700;
-}
-
-.btn-primary {
-  background: #3b82f6;
-  color: white;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  border-radius: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.2s;
-}
-
-.btn-primary:hover {
-  background: #2563eb;
-  transform: translateY(-1px);
 }
 
 .animate-spin {
@@ -321,3 +308,4 @@ tr:hover td {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+

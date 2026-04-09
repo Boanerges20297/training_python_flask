@@ -69,7 +69,7 @@ export default function Sidebar({
           </div>
           {!isCollapsed && (
             <div className="user-text">
-              <p className="user-name">{user?.nome || 'Usuário'}</p>
+              <p className="user-name text-capitalize">{user?.nome || 'Usuário'}</p>
               <p className="user-role">{user?.role || 'Administrador'}</p>
             </div>
           )}

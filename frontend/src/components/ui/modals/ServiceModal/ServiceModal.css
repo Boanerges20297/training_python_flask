@@ -1,0 +1,13 @@
+/* Gabriel (Dev 1) - Estilos específicos para o Modal de Serviços */
+
+.modal-content-premium.green {
+  --input-focus-color: #10b981;
+  --input-focus-shadow: rgba(16, 185, 129, 0.2);
+  background-image: linear-gradient(135deg, rgba(16, 185, 129, 0.202) 0%, rgba(30, 41, 59, 0.7) 100%);
+  border-top: 2px solid rgba(16, 185, 129, 0.3);
+}
+
+.modal-content-premium.green .success-icon-wrapper {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}

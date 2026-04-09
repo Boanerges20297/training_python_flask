@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, CheckCircle2, AlertCircle, AlertTriangle } from 'lucide-react';
 import './Modal.css';
 
 interface ModalProps {
@@ -9,10 +9,14 @@ interface ModalProps {
   children: React.ReactNode; 
   variant?: 'blue' | 'purple' | 'green' | 'amber' | 'default'; // # Gabriel (Dev 1) - Cores dinâmicas
   subtitle?: string;
-  size?: 'md' | 'lg'; // # Gabriel (Dev 1) - Tamanhos flexíveis
+  size?: 'md' | 'lg';
+  feedback?: {
+    type: 'success' | 'error' | 'warning';
+    title: string;
+    message: string;
+  } | null;
 }
 
-// # Gabriel (Dev 1) - Refatoração para arquitetura modular Premium
 const Modal: React.FC<ModalProps> = ({ 
   isOpen, 
   onClose, 
@@ -20,8 +24,9 @@ const Modal: React.FC<ModalProps> = ({
   children,
   variant = 'default',
   subtitle,
-  size = 'md'
-}) => { // # Gabriel (Dev 1) - keydown para a tecla Esc fechar modal e scroll ser travado
+  size = 'md',
+  feedback = null
+}) => {
     useEffect(() => {
     if (!isOpen) return;
 
@@ -36,14 +41,20 @@ const Modal: React.FC<ModalProps> = ({
     };
   }, [isOpen, onClose]); 
 
-  // Se o modal não estiver aberto, não renderizamos nada (Early Return)
   if (!isOpen) return null;
+
+  const renderFeedbackIcon = () => {
+    switch (feedback?.type) {
+      case 'success': return <CheckCircle2 size={48} className="feedback-icon success" />;
+      case 'error': return <AlertCircle size={48} className="feedback-icon error" />;
+      case 'warning': return <AlertTriangle size={48} className="feedback-icon warning" />;
+      default: return null;
+    }
+  };
 
   return (
     <div className="modal-overlay">
-      <div 
-        className={`modal-content-premium ${variant} ${size}`} 
-      >
+      <div className={`modal-content-premium ${variant} ${size}`}>
         <div className="modal-header-refined">
           <div className="header-text-container">
             <h3>{title}</h3>
@@ -55,7 +66,17 @@ const Modal: React.FC<ModalProps> = ({
         </div>
         
         <div className="modal-body-refined">
-          {children}
+          {feedback ? (
+            <div className="feedback-state animate-in">
+              <div className={`feedback-icon-wrapper ${feedback.type}`}>
+                {renderFeedbackIcon()}
+              </div>
+              <h3 className="feedback-title">{feedback.title}</h3>
+              <p className="feedback-message">{feedback.message}</p>
+            </div>
+          ) : (
+            children
+          )}
         </div>
       </div>
     </div>

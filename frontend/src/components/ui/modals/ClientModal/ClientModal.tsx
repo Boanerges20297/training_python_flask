@@ -1,0 +1,210 @@
+import React, { useState, useEffect } from 'react';
+import { createCliente, updateCliente } from '../../../../api/clients';
+import type { Cliente } from '../../../../types';
+import { User, Phone, Mail, Plus, Edit2, Lock } from 'lucide-react';
+import Modal from '../../Modal';
+import Input, { cleanPhone } from '../../Input';
+import Button from '../../Button';
+import './ClientModal.css';
+
+interface ClientModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+  clienteParaEditar?: Cliente | null;
+}
+
+// # Gabriel (Dev 1)
+// Refatorado para usar o Modal genérico e evitar código repetido.
+const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, onSuccess, clienteParaEditar }) => {
+  const [formData, setFormData] = useState({ nome: '', email: '', telefone: '', senha: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  // # Ian (Dev 2)
+  // Preenche o formulário com os dados do cliente ao abrir para edição.
+  useEffect(() => {
+    if (isOpen) {
+      if (clienteParaEditar) {
+        setFormData({
+          nome: clienteParaEditar.nome,
+          email: clienteParaEditar.email,
+          telefone: clienteParaEditar.telefone,
+          senha: '', // # Gabriel (Dev 1) - Senha não é editada aqui por segurança
+        });
+      } else {
+        setFormData({ nome: '', email: '', telefone: '', senha: '' });
+      }
+      setSuccess(false);
+      setError(null);
+    }
+  }, [isOpen, clienteParaEditar]);
+
+
+  const isValidEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (formData.telefone.replace(/\D/g, "").length < 10) {
+      setError("Por favor, insira um telefone válido com DDD.");
+      return;
+    }
+
+    if (!isValidEmail(formData.email)) {
+      setError("Por favor, insira um endereço de e-mail válido.");
+      return;
+    }
+
+    if (!clienteParaEditar && !formData.senha) {  // # Gabriel (Dev 1) - Validação de senha para novo cliente
+      setError("A senha é obrigatória para o cadastro.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      if (clienteParaEditar) {
+        const payload = {
+          nome: formData.nome,
+          email: formData.email,
+          telefone: cleanPhone(formData.telefone)
+        };
+        const successEdit = await updateCliente(clienteParaEditar.id, payload);
+        if (!successEdit) throw new Error("Erro ao atualizar cliente.");
+      } else {
+        const payload = {
+          ...formData,
+          telefone: cleanPhone(formData.telefone)
+        };
+        await createCliente(payload);
+      }
+
+      setSuccess(true);
+      setTimeout(() => {
+        onSuccess();
+        onClose();
+      }, 1500);
+    } catch (err: any) {
+      const msg = err.message || err.response?.data?.erro || 'Erro ao processar solicitação. Tente novamente.';
+      setError(msg);
+      // Hierarquia de Notificações: Erros no modal NÃO dispara Toast (já está no error-message)
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={clienteParaEditar ? "Editar Cliente" : "Cadastrar Cliente"}
+      variant="blue"
+      subtitle={clienteParaEditar ? "Atualize os dados do cliente." : "Insira os dados para cadastrar o cliente na base."}
+      feedback={success ? {
+        type: 'success',
+        title: 'Sucesso!',
+        message: clienteParaEditar ? 'Cliente atualizado com sucesso.' : 'Cliente cadastrado com sucesso.'
+      } : null}
+    >
+
+      <div className="modal-body-content">
+        <form onSubmit={handleSubmit} className="modern-form">
+          <div className="form-group-modern">
+            <label>Nome Completo</label>
+            <Input
+              type="text"
+              icon={<User size={18} />}
+              placeholder="Ex: João Silva"
+              required
+              maxLength={100}
+              value={formData.nome}
+              onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+              autoFocus
+            />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div className="form-group-modern">
+              <label>Telefone</label>
+              <Input
+                mask="phone"
+                type="tel"
+                icon={<Phone size={18} />}
+                placeholder="(00) 00000-0000"
+                required
+                maxLength={15}
+                value={formData.telefone}
+                onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+              />
+            </div>
+
+            <div className="form-group-modern">
+              <label>E-mail</label>
+              <Input
+                type="email"
+                icon={<Mail size={18} />}
+                placeholder="email@exemplo.com"
+                required
+                maxLength={100}
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              />
+            </div>
+          </div>
+
+          {/* # Gabriel (Dev 1) - O campo de senha só aparece quando um novo cliente está sendo criado */}
+          {!clienteParaEditar && (
+            <div className="form-group-modern">
+              <label>Senha de Acesso</label>
+              <Input
+                type="password"
+                icon={<Lock size={18} />}
+                placeholder="Mínimo 6 caracteres"
+                required
+                minLength={6}
+                maxLength={20}
+                value={formData.senha}
+                onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
+              />
+            </div>
+          )}
+
+          {error && (
+            <div className="error-message">
+              {error}
+            </div>
+          )}
+
+          <div className="modal-footer-refined">
+            <Button
+              type="button"
+              onClick={onClose}
+              variant="secondary"
+              size="sm"
+              disabled={isSubmitting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              theme="blue"
+              size="md"
+              disabled={isSubmitting}
+              isLoading={isSubmitting}
+              icon={clienteParaEditar ? <Edit2 size={18} /> : <Plus size={18} />}
+            >
+              {clienteParaEditar ? 'Salvar Alterações' : 'Cadastrar Cliente'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </Modal>
+  );
+};
+
+export default ClientModal;

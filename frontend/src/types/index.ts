@@ -10,6 +10,7 @@ export interface Servico {
   nome: string;
   preco: number;
   duracao_minutos: number;
+  barbeiro_id: number;
 }
 
 export interface Agendamento {

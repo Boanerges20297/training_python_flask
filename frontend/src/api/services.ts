@@ -22,7 +22,7 @@ export async function createServico(servico: Omit<Servico, 'id'>): Promise<Servi
 }
 export async function updateServico(id: number, servico: Partial<Servico>): Promise<boolean> {
   try {
-    await api.put(`/servicos/editar-servico/${id}`, servico);
+    await api.patch(`/servicos/editar-servico/${id}`, servico);
     return true;
   } catch (error) {
     console.error("Erro ao atualizar serviço:", error);
