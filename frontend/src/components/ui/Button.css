@@ -1,0 +1,163 @@
+/* Gabriel (Dev 1) - Estilos atômicos para o component Button */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  outline: none;
+  font-family: inherit;
+}
+
+.btn.w-full {
+  width: 100%;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-icon {
+  display: flex;
+  align-items: center;
+}
+
+/*  TEMAS (Controle de Paleta) */
+.btn.theme-blue {
+  --btn-color-strong: #2563eb;
+  --btn-color-base: #3b82f6;
+  --btn-color-light: #60a5fa;
+  --btn-color-transparent: rgba(59, 130, 246, 0.15);
+  --btn-shadow: rgba(59, 130, 246, 0.3);
+  --btn-shadow-hover: rgba(59, 130, 246, 0.5);
+}
+
+.btn.theme-purple {
+  --btn-color-strong: #6d28d9;
+  --btn-color-base: #8b5cf6;
+  --btn-color-light: #a78bfa;
+  --btn-color-transparent: rgba(139, 92, 246, 0.15);
+  --btn-shadow: rgba(109, 40, 217, 0.3);
+  --btn-shadow-hover: rgba(109, 40, 217, 0.5);
+}
+
+.btn.theme-green {
+  --btn-color-strong: #059669;
+  --btn-color-base: #10b981;
+  --btn-color-light: #34d399;
+  --btn-color-transparent: rgba(16, 185, 129, 0.15);
+  --btn-shadow: rgba(16, 185, 129, 0.3);
+  --btn-shadow-hover: rgba(16, 185, 129, 0.5);
+}
+
+.btn.theme-amber {
+  --btn-color-strong: #d97706;
+  --btn-color-base: #f59e0b;
+  --btn-color-light: #fbbf24;
+  --btn-color-transparent: rgba(245, 158, 11, 0.15);
+  --btn-shadow: rgba(245, 158, 11, 0.3);
+  --btn-shadow-hover: rgba(245, 158, 11, 0.5);
+}
+
+.btn.theme-slate {
+  --btn-color-strong: #475569;
+  --btn-color-base: #64748b;
+  --btn-color-light: #94a3b8;
+  --btn-color-transparent: rgba(148, 163, 184, 0.15);
+  --btn-shadow: rgba(100, 116, 139, 0.3);
+  --btn-shadow-hover: rgba(100, 116, 139, 0.5);
+}
+
+/*  TAMANHOS (Ajustes de Escala) */
+.btn-sm {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.8rem;
+  border-radius: 8px;
+}
+
+.btn-md {
+  padding: 0.8rem 1.2rem;
+  font-size: 0.95rem;
+  border-radius: 14px;
+}
+
+.btn-lg {
+  padding: 1rem 2rem;
+  font-size: 1.05rem;
+  border-radius: 16px;
+}
+
+/*  VARIANTES (Estrutura e Preenchimento) */
+
+/* Variantes Primárias (Foco Total e Glow) */
+.btn-primary {
+  color: white;
+  background: linear-gradient(135deg, var(--btn-color-base) 0%, var(--btn-color-strong) 100%);
+  box-shadow: 0 4px 12px var(--btn-shadow);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--btn-shadow-hover);
+  filter: brightness(1.1);
+}
+
+/* Variante Secundária (Discreta e sem Glow) */
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  box-shadow: none;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
+  transform: translateY(-1px);
+}
+
+.btn-normal {
+  color: white;
+  background: linear-gradient(135deg, var(--btn-color-base) 0%, var(--btn-color-strong) 100%);
+  box-shadow: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-normal:hover:not(:disabled) {
+  filter: brightness(1.1);
+  box-shadow: none;
+}
+
+/* Variante Danger */
+.btn-danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  box-shadow: none;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.4);
+  transform: translateY(-1px);
+}
+
+/* Variante Fantasma (Sem fundo e sem sombra) */
+.btn-ghost {
+  background: transparent;
+  color: var(--btn-color-base);
+  box-shadow: none;
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--btn-color-transparent);
+}

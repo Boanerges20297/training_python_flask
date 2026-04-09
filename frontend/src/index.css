@@ -230,7 +230,7 @@ body {
   flex: 1;
 }
 
-/* SHARED UI COMPONENTS (CARDS, TABLES, ETC) */
+/* UI COMPONENTS (CARDS, TABLES, ETC) */
 .card {
   background: #1e293b;
   border: 1px solid rgba(255, 255, 255, 0.05);
@@ -281,25 +281,6 @@ tr:hover td {
   font-weight: 700;
 }
 
-.btn-primary {
-  background: #3b82f6;
-  color: white;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  border-radius: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.2s;
-}
-
-.btn-primary:hover {
-  background: #2563eb;
-  transform: translateY(-1px);
-}
-
 .animate-spin {
   animation: spin 1s linear infinite;
 }
@@ -317,3 +298,4 @@ tr:hover td {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+

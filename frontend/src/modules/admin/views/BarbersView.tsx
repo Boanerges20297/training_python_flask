@@ -128,6 +128,7 @@ export default function BarbersView() {
           setIsModalOpen(true);
         }}
         themeColor="#f59e0b"
+        buttonTheme="amber"
         emptyStateIcon={Scissors}
         emptyStateText="Nenhum barbeiro cadastrado no time."
       />

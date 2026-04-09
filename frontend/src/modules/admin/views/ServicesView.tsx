@@ -114,6 +114,7 @@ export default function ServicesView() {
         addButtonText="Novo Serviço"
         onAddClick={handleNewService}
         themeColor="#10b981"
+        buttonTheme="green"
         emptyStateIcon={Briefcase}
         emptyStateText="Nenhum serviço encontrado no sistema."
       />

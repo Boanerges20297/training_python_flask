@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { createCliente, updateCliente } from '../../../../api/clients';
 import type { Cliente } from '../../../../types';
-import { User, Phone, Mail, Loader2, CheckCircle2, Plus, Edit2, Lock } from 'lucide-react';
+import { User, Phone, Mail, Plus, Edit2, Lock } from 'lucide-react';
 import Modal from '../../Modal';
 import Input from '../../Input';
+import Button from '../../Button';
 import './ClientModal.css';
 
 interface ClientModalProps {
@@ -99,113 +100,103 @@ const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, onSuccess, c
       title={clienteParaEditar ? "Editar Cliente" : "Cadastrar Cliente"}
       variant="blue"
       subtitle={clienteParaEditar ? "Atualize os dados do cliente." : "Insira os dados para cadastrar o cliente na base."}
+      feedback={success ? {
+        type: 'success',
+        title: 'Sucesso!',
+        message: clienteParaEditar ? 'Cliente atualizado com sucesso.' : 'Cliente cadastrado com sucesso.'
+      } : null}
     >
 
       <div className="modal-body-content">
-        {success ? (
-          <div className="success-state">
-            <div className="success-icon-wrapper">
-              <CheckCircle2 size={48} color="#22c55e" />
-            </div>
-            <h3 style={{ color: '#f8fafc', marginBottom: '0.5rem', fontSize: '1.25rem' }}>Sucesso!</h3>
-            <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
-              {clienteParaEditar ? 'Cliente atualizado com sucesso.' : 'Cliente cadastrado com sucesso.'}
-            </p>
+        <form onSubmit={handleSubmit} className="modern-form">
+          <div className="form-group-modern">
+            <label>Nome Completo</label>
+            <Input
+              type="text"
+              icon={<User size={18} />}
+              placeholder="Ex: João Silva"
+              required
+              maxLength={100}
+              value={formData.nome}
+              onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+              autoFocus
+            />
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="modern-form">
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div className="form-group-modern">
-              <label>Nome Completo</label>
+              <label>Telefone</label>
               <Input
-                type="text"
-                icon={<User size={18} />}
-                placeholder="Ex: João Silva"
+                mask="phone"
+                type="tel"
+                icon={<Phone size={18} />}
+                placeholder="(00) 00000-0000"
                 required
-                maxLength={100}
-                value={formData.nome}
-                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                autoFocus
+                maxLength={15}
+                value={formData.telefone}
+                onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div className="form-group-modern">
-                <label>Telefone</label>
-                <Input
-                  mask="phone"
-                  type="tel"
-                  icon={<Phone size={18} />}
-                  placeholder="(00) 00000-0000"
-                  required
-                  maxLength={15}
-                  value={formData.telefone}
-                  onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-                />
-              </div>
-
-              <div className="form-group-modern">
-                <label>E-mail</label>
-                <Input
-                  type="email"
-                  icon={<Mail size={18} />}
-                  placeholder="email@exemplo.com"
-                  required
-                  maxLength={100}
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                />
-              </div>
+            <div className="form-group-modern">
+              <label>E-mail</label>
+              <Input
+                type="email"
+                icon={<Mail size={18} />}
+                placeholder="email@exemplo.com"
+                required
+                maxLength={100}
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              />
             </div>
+          </div>
 
-            {/* # Gabriel (Dev 1) - O campo de senha só aparece quando um novo cliente está sendo criado */}
-            {!clienteParaEditar && (
-              <div className="form-group-modern">
-                <label>Senha de Acesso</label>
-                <Input
-                  type="password"
-                  icon={<Lock size={18} />}
-                  placeholder="Mínimo 6 caracteres"
-                  required
-                  minLength={6}
-                  maxLength={20}
-                  value={formData.senha}
-                  onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
-                />
-              </div>
-            )}
-
-            {error && (
-              <div className="error-message">
-                {error}
-              </div>
-            )}
-
-            <div className="modal-footer-refined">
-              <button
-                type="button"
-                onClick={onClose}
-                className="btn-glass-secondary"
-                disabled={isSubmitting}
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                className="btn-premium-primary"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <Loader2 size={18} className="animate-spin" />
-                ) : (
-                  <>
-                    {clienteParaEditar ? <Edit2 size={18} /> : <Plus size={18} />}
-                    <span>{clienteParaEditar ? 'Salvar Alterações' : 'Cadastrar Cliente'}</span>
-                  </>
-                )}
-              </button>
+          {/* # Gabriel (Dev 1) - O campo de senha só aparece quando um novo cliente está sendo criado */}
+          {!clienteParaEditar && (
+            <div className="form-group-modern">
+              <label>Senha de Acesso</label>
+              <Input
+                type="password"
+                icon={<Lock size={18} />}
+                placeholder="Mínimo 6 caracteres"
+                required
+                minLength={6}
+                maxLength={20}
+                value={formData.senha}
+                onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
+              />
             </div>
-          </form>
-        )}
+          )}
+
+          {error && (
+            <div className="error-message">
+              {error}
+            </div>
+          )}
+
+          <div className="modal-footer-refined">
+            <Button
+              type="button"
+              onClick={onClose}
+              variant="secondary"
+              size="sm"
+              disabled={isSubmitting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              theme="blue"
+              size="md"
+              disabled={isSubmitting}
+              isLoading={isSubmitting}
+              icon={clienteParaEditar ? <Edit2 size={18} /> : <Plus size={18} />}
+            >
+              {clienteParaEditar ? 'Salvar Alterações' : 'Cadastrar Cliente'}
+            </Button>
+          </div>
+        </form>
       </div>
     </Modal>
   );

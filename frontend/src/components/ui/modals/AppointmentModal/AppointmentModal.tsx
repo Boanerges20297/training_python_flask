@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { createAgendamento } from '../../../../api/appointments';
 import type { Cliente, Servico } from '../../../../types';
-import { User, ShoppingBag, Calendar, FileText, Loader2, CheckCircle2, Plus } from 'lucide-react';
+import { User, ShoppingBag, Calendar, FileText, Plus } from 'lucide-react';
 import Modal from '../../Modal';
 import Input from '../../Input';
+import Button from '../../Button';
 import './AppointmentModal.css';
 
 interface AppointmentModalProps {
@@ -83,110 +84,99 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
       variant="purple"
       subtitle='Escolha o cliente, o serviço e o horário.'
       size="lg"
+      feedback={success ? {
+        type: 'success',
+        title: 'Agendado!',
+        message: 'O horário foi reservado com sucesso.'
+      } : null}
     >
 
       <div className="modal-body-content">
-        {success ? (
-          <div className="success-state">
-            <div className="success-icon-wrapper">
-              <CheckCircle2 size={48} color="#8b5cf6" />
-            </div>
-            <h3 style={{ color: '#f8fafc', marginBottom: '0.5rem', fontSize: '1.25rem' }}>Agendado!</h3>
-            <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>O horário foi reservado com sucesso.</p>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="modern-form">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-              <div className="form-group-modern">
-                <label>Cliente</label>
-                <div className="input-group-modern has-icon">
-                  <User size={18} className="input-icon" />
-                  <select
-                    required
-                    value={formData.cliente_id}
-                    onChange={(e) => setFormData({ ...formData, cliente_id: e.target.value })}
-                  >
-                    <option value="">Selecione...</option>
-                    {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-group-modern">
-                <label>Serviço</label>
-                <div className="input-group-modern has-icon">
-                  <ShoppingBag size={18} className="input-icon" />
-                  <select
-                    required
-                    value={formData.servico_id}
-                    onChange={(e) => setFormData({ ...formData, servico_id: e.target.value })}
-                  >
-                    <option value="">Selecione...</option>
-                    {servicos.map(s => <option key={s.id} value={s.id}>{s.nome} - R$ {Number(s.preco).toFixed(2)}</option>)}
-                  </select>
-                </div>
-              </div>
-            </div>
-
+        <form onSubmit={handleSubmit} className="modern-form">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
             <div className="form-group-modern">
-              <label>Data e Horário</label>
+              <label>Cliente</label>
               <Input
-                type="datetime-local"
-                icon={<Calendar size={18} />}
+                as="select"
+                icon={<User size={18} />}
                 required
-                min={today}
-                max="2099-12-31T23:59"
-                value={formData.data_agendamento}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, data_agendamento: e.target.value })}
-              />
+                value={formData.cliente_id}
+                onChange={(e) => setFormData({ ...formData, cliente_id: e.target.value })}
+              >
+                <option value="">Selecione...</option>
+                {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+              </Input>
             </div>
 
             <div className="form-group-modern">
-              <label>Observações (Opcional)</label>
-              <div className="input-group-modern has-icon">
-                <FileText size={18} className="input-icon at-top" />
-                <textarea
-                  rows={3}
-                  maxLength={250}
-                  placeholder="Ex: Cabelo muito comprido, lavagem especial..."
-                  value={formData.observacoes}
-                  onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                />
-              </div>
-            </div>
-
-            {error && (
-              <div className="error-message">
-                {error}
-              </div>
-            )}
-
-            <div className="modal-footer-refined">
-              <button
-                type="button"
-                onClick={onClose}
-                className="btn-glass-secondary"
-                disabled={isSubmitting}
+              <label>Serviço</label>
+              <Input
+                as="select"
+                icon={<ShoppingBag size={18} />}
+                required
+                value={formData.servico_id}
+                onChange={(e) => setFormData({ ...formData, servico_id: e.target.value })}
               >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                className="btn-premium-primary"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <Loader2 size={18} className="animate-spin" />
-                ) : (
-                  <>
-                    <Plus size={18} />
-                    <span>Confirmar Agendamento</span>
-                  </>
-                )}
-              </button>
+                <option value="">Selecione...</option>
+                {servicos.map(s => <option key={s.id} value={s.id}>{s.nome} - R$ {Number(s.preco).toFixed(2)}</option>)}
+              </Input>
             </div>
-          </form>
-        )}
+          </div>
+
+          <div className="form-group-modern">
+            <label>Data e Horário</label>
+            <Input
+              type="datetime-local"
+              icon={<Calendar size={18} />}
+              required
+              min={today}
+              max="2099-12-31T23:59"
+              value={formData.data_agendamento}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, data_agendamento: e.target.value })}
+            />
+          </div>
+
+          <div className="form-group-modern">
+            <label>Observações (Opcional)</label>
+            <Input
+              as="textarea"
+              icon={<FileText size={18} />}
+              rows={3}
+              maxLength={250}
+              placeholder="Ex: Cabelo muito comprido, lavagem especial..."
+              value={formData.observacoes}
+              onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
+            />
+          </div>
+
+          {error && (
+            <div className="error-message">
+              {error}
+            </div>
+          )}
+
+          <div className="modal-footer-refined">
+            <Button
+              type="button"
+              onClick={onClose}
+              variant="secondary"
+              size="sm"
+              disabled={isSubmitting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              theme="purple"
+              size="md"
+              disabled={isSubmitting}
+              isLoading={isSubmitting}
+              icon={<Plus size={18} />}
+            >
+              Confirmar Agendamento
+            </Button>
+          </div>
+        </form>
       </div>
     </Modal>
   );

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { createServico } from '../../../../api/services';
-import { Tag, DollarSign, Clock, Loader2, CheckCircle2, Plus } from 'lucide-react';
+import { Tag, DollarSign, Clock, Plus } from 'lucide-react';
 import Modal from '../../Modal';
 import Input from '../../Input';
+import Button from '../../Button';
 import './ServiceModal.css';
 
 interface ServiceModalProps {
@@ -65,92 +66,82 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, onSuccess 
       title="Novo Serviço"
       variant="green"
       subtitle='Cadastre os detalhes do serviço oferecido.'
+      feedback={success ? {
+        type: 'success',
+        title: 'Sucesso!',
+        message: 'Serviço criado com sucesso.'
+      } : null}
     >
 
       <div className="modal-body-content">
-        {success ? (
-          <div className="success-state">
-            <div className="success-icon-wrapper" style={{ background: 'rgba(16, 185, 129, 0.1)' }}>
-              <CheckCircle2 size={48} color="#10b981" />
-            </div>
-            <h3 style={{ color: '#f8fafc', marginBottom: '0.5rem', fontSize: '1.25rem' }}>Sucesso!</h3>
-            <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Serviço criado com sucesso.</p>
+        <form onSubmit={handleSubmit} className="modern-form">
+          <div className="form-group-modern">
+            <label>Nome do Serviço</label>
+            <Input
+              type="text"
+              icon={<Tag size={18} />}
+              placeholder="Ex: Corte Degradê"
+              required
+              maxLength={255}
+              value={formData.nome}
+              onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+              autoFocus
+            />
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="modern-form">
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div className="form-group-modern">
-              <label>Nome do Serviço</label>
+              <label>Preço (R$)</label>
               <Input
-                type="text"
-                icon={<Tag size={18} />}
-                placeholder="Ex: Corte Degradê"
+                mask="currency"
+                icon={<DollarSign size={18} />}
+                placeholder="0,00"
                 required
-                maxLength={255}
-                value={formData.nome}
-                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                autoFocus
+                value={formData.preco}
+                onChange={(e) => setFormData({ ...formData, preco: e.target.value })}
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div className="form-group-modern">
-                <label>Preço (R$)</label>
-                <Input
-                  mask="currency"
-                  icon={<DollarSign size={18} />}
-                  placeholder="0,00"
-                  required
-                  value={formData.preco}
-                  onChange={(e) => setFormData({ ...formData, preco: e.target.value })}
-                />
-              </div>
-
-              <div className="form-group-modern">
-                <label>Duração (min)</label>
-                <Input
-                  type="number"
-                  icon={<Clock size={18} />}
-                  min="0"
-                  placeholder="30"
-                  required
-                  value={formData.duracao_minutos}
-                  onChange={(e) => setFormData({ ...formData, duracao_minutos: e.target.value })}
-                />
-              </div>
+            <div className="form-group-modern">
+              <label>Duração (min)</label>
+              <Input
+                type="number"
+                icon={<Clock size={18} />}
+                min="0"
+                placeholder="30"
+                required
+                value={formData.duracao_minutos}
+                onChange={(e) => setFormData({ ...formData, duracao_minutos: e.target.value })}
+              />
             </div>
+          </div>
 
-            {error && (
-              <div className="error-message">
-                {error}
-              </div>
-            )}
-
-            <div className="modal-footer-refined">
-              <button
-                type="button"
-                onClick={onClose}
-                className="btn-glass-secondary"
-                disabled={isSubmitting}
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                className="btn-premium-primary"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <Loader2 size={18} className="animate-spin" />
-                ) : (
-                  <>
-                    <Plus size={18} />
-                    <span>Criar Serviço</span>
-                  </>
-                )}
-              </button>
+          {error && (
+            <div className="error-message">
+              {error}
             </div>
-          </form>
-        )}
+          )}
+
+          <div className="modal-footer-refined">
+            <Button
+              type="button"
+              onClick={onClose}
+              variant="secondary"
+              disabled={isSubmitting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              theme="green"
+              disabled={isSubmitting}
+              isLoading={isSubmitting}
+              icon={<Plus size={18} />}
+            >
+              Criar Serviço
+            </Button>
+          </div>
+        </form>
       </div>
     </Modal>
   );

@@ -118,6 +118,7 @@ export default function ClientsView() {
         emptyStateIcon={Users}
         emptyStateText="Nenhum cliente encontrado no sistema."
         themeColor="#3b82f6"
+        buttonTheme="blue"
       />
 
       <ClientModal

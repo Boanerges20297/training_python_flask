@@ -1,15 +1,18 @@
-// Gabriel (Dev 1) - Componente Input inteligente
+// Gabriel (Dev 1) - Componente Input inteligente e polimórfico
 import React, { forwardRef } from 'react';
-import type { InputHTMLAttributes } from 'react';
 import './Input.css';
 
 export type InputMaskType = 'phone' | 'currency' | 'none';
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+// # Gabriel (Dev 1) - Interface flexível para suportar input, select e textarea
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement> {
+  as?: 'input' | 'select' | 'textarea';
   mask?: InputMaskType;
   icon?: React.ReactNode;
   label?: string;
   error?: string;
+  rows?: number;
+  asSelect?: boolean; // Prop auxiliar para garantir cast de tipo se necessário
 }
 
 export const formatPhone = (value: string) => {
@@ -32,58 +35,74 @@ export const formatCurrency = (value: string | number) => {
   }).format(floatValue);
 };
 
-export const extractCurrencyValue = (formattedString: string) => {
-  return (parseFloat(formattedString.replace(/\D/g, "")) || 0) / 100;
-};
-
-const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ mask = 'none', icon, label, error, onChange, className, type, value, ...props }, ref) => {
+const Input = forwardRef<any, InputProps>(
+  ({ as = 'input', mask = 'none', icon, label, error, onChange, className, type, value, children, ...props }, ref) => {
     
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (e: React.ChangeEvent<any>) => {
       if (!onChange) return;
 
-      if (mask === 'phone') {
+      if (as === 'input' && mask === 'phone') {
         e.target.value = formatPhone(e.target.value);
-      } else if (mask === 'currency') {
-        const numericStr = e.target.value.replace(/\D/g, "");
-        e.target.value = numericStr; // Envia os digitos brutos por baixo dos panos na string
+      } else if (as === 'input' && mask === 'currency') {
+        e.target.value = e.target.value.replace(/\D/g, "");
       }
       
       onChange(e);
     };
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-      // Bloqueio rigoroso para inputs do tipo numero (evita "e", "-", "+")
-      if (type === 'number') {
+    const handleKeyDown = (e: React.KeyboardEvent<any>) => {
+      if (as === 'input' && type === 'number') {
         if (['e', 'E', '+', '-'].includes(e.key)) {
           e.preventDefault();
         }
       }
-      // Se tiver prop onKeyDown definida nativamente
       if (props.onKeyDown) props.onKeyDown(e);
     };
 
-    // Resoluçao visual de valor (para currency)
     let displayValue = value;
-    if (mask === 'currency' && value !== undefined) {
-       // Garantimos que value seja string ou number para a função formatCurrency
+    if (as === 'input' && mask === 'currency' && value !== undefined) {
        const safeValue = Array.isArray(value) ? value[0] : value;
        displayValue = formatCurrency(safeValue as string | number);
     }
 
+    const renderElement = () => {
+      const commonProps = {
+        ...props,
+        ref,
+        value: displayValue,
+        onChange: handleChange,
+        onKeyDown: handleKeyDown,
+      };
+
+      if (as === 'select') {
+        return (
+          <select {...(commonProps as any)} className={className}>
+            {children}
+          </select>
+        );
+      }
+
+      if (as === 'textarea') {
+        return (
+          <textarea {...(commonProps as any)} className={className} />
+        );
+      }
+
+      return (
+        <input
+          {...(commonProps as any)}
+          className={className}
+          type={type === 'number' && mask === 'currency' ? 'text' : type}
+        />
+      );
+    };
+
     return (
       <div className={`form-group-modern ${className || ''}`}>
         {label && <label>{label}</label>}
-        <div className={`input-group-modern ${icon ? 'has-icon' : ''}`}>
-          {icon && <span className="input-icon">{icon}</span>}
-          <input
-            {...props}
-            ref={ref}
-            type={type === 'number' && mask === 'currency' ? 'text' : type} // Currency mask precisa de type="text"
-            value={displayValue}
-            onChange={handleChange}
-            onKeyDown={handleKeyDown}
-          />
+        <div className={`input-group-modern ${icon ? 'has-icon' : ''} ${as === 'textarea' ? 'is-textarea' : ''}`}>
+          {icon && <span className={`input-icon ${as === 'textarea' ? 'at-top' : ''}`}>{icon}</span>}
+          {renderElement()}
         </div>
         {error && <span style={{ color: '#f87171', fontSize: '0.8rem', marginTop: '4px' }}>{error}</span>}
       </div>
@@ -92,6 +111,4 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
 );
 
 Input.displayName = 'Input';
-
-// Gabriel (Dev 1) - Componente Input inteligente exportado por default
 export default Input;

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Loader2, Plus } from 'lucide-react';
+import Button from './Button';
 import type { LucideIcon } from 'lucide-react';
 
 export interface Column<T> {
@@ -19,6 +20,9 @@ export interface DataTableProps<T> {
   addButtonText?: string;
   onAddClick?: () => void;
   themeColor?: string;
+  buttonTheme?: 'blue' | 'green' | 'purple' | 'amber' | 'slate';
+  buttonVariant?: 'primary' | 'secondary' | 'danger' | 'normal' | 'ghost';
+  buttonSize?: 'sm' | 'md' | 'lg';
   emptyStateIcon: LucideIcon;
   emptyStateText?: string;
   id?: string;
@@ -37,6 +41,9 @@ function DataTable<T>({
   addButtonText,
   onAddClick,
   themeColor = '#3b82f6',
+  buttonTheme = 'blue',
+  buttonVariant = 'normal',
+  buttonSize = 'md',
   emptyStateIcon: EmptyIcon,
   emptyStateText = 'Nenhum registro encontrado no sistema.',
   id
@@ -50,13 +57,15 @@ function DataTable<T>({
           <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#f8fafc' }}>{title}</h2>
         </div>
         {addButtonText && onAddClick && (
-          <button 
+          <Button 
             onClick={onAddClick} 
-            className="btn-primary" 
-            style={{ fontSize: '0.875rem', background: themeColor }}
+            theme={buttonTheme}
+            variant={buttonVariant}
+            size={buttonSize}
+            icon={<Plus size={16} />}
           >
-            <Plus size={16} /> {addButtonText}
-          </button>
+            {addButtonText}
+          </Button>
         )}
       </div>
 

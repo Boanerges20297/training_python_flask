@@ -122,6 +122,8 @@ export default function AppointmentsView() {
         addButtonText="Novo Agendamento"
         onAddClick={() => setIsModalOpen(true)}
         themeColor="#a78bfa"
+        buttonTheme="purple"
+        buttonSize="md"
         emptyStateIcon={Calendar}
         emptyStateText="Nenhum agendamento para hoje."
       />

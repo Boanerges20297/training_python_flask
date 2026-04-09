@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { login } from '../../../api/auth';
-import { Lock, Mail, Loader2, Scissors } from 'lucide-react';
+import { Lock, Mail, Scissors, LogIn } from 'lucide-react';
+import Button from '../../../components/ui/Button';
+import Input from '../../../components/ui/Input';
 
 interface LoginProps {
   onLoginSuccess: (user: any) => void;
@@ -40,34 +42,41 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           <p>Acesse sua conta</p>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="input-group">
-            <label><Mail size={16} /> Email</label>
-            <input 
-              type="email" 
-              placeholder="seu@email.com" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="modern-form">
+          <Input 
+            label="E-mail"
+            type="email" 
+            icon={<Mail size={18} />}
+            placeholder="seu@email.com" 
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoFocus
+          />
 
-          <div className="input-group">
-            <label><Lock size={16} /> Senha</label>
-            <input 
-              type="password" 
-              placeholder="Digite sua senha" 
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              required
-            />
-          </div>
+          <Input 
+            label="Senha"
+            type="password" 
+            icon={<Lock size={18} />}
+            placeholder="Digite sua senha" 
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            required
+          />
 
           {error && <div className="error-message">{error}</div>}
 
-          <button type="submit" className="btn-primary login-btn" disabled={loading}>
-            {loading ? <Loader2 className="animate-spin" size={20} /> : 'Entrar no Sistema'}
-          </button>
+          <Button 
+            type="submit" 
+            variant="primary" 
+            theme="blue" 
+            size="lg" 
+            fullWidth 
+            isLoading={loading}
+            icon={<LogIn size={20} />}
+          >
+            Entrar no Sistema
+          </Button>
         </form>
 
         <div className="login-footer">
