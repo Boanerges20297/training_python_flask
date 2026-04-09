@@ -1,0 +1,103 @@
+/* # Gabriel (Dev 1) - Estilos Universais de Input e Form Group */
+.form-group-modern {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/*Classe Genérica que controla os formulários com um todo*/
+.modern-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group-modern label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.input-group-modern {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 1rem;
+  color: #475569;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  opacity: 0.7;
+  z-index: 2;
+}
+
+.input-icon.at-top {
+  top: 1rem;
+  transform: none;
+}
+
+.input-group-modern input,
+.input-group-modern select,
+.input-group-modern textarea {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  background: rgba(2, 6, 23, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  color: #f8fafc;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+/* Padding condicional para quando há ícone */
+.input-group-modern.has-icon input,
+.input-group-modern.has-icon select,
+.input-group-modern.has-icon textarea {
+  padding-left: 2.4rem;
+}
+
+/* Correção de alinhamento para o select (Chevron) */
+.input-group-modern select {
+  padding-right: 2.5rem;  
+  cursor: pointer;
+}
+
+.input-group-modern textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+/* Efeito de Foco Dinâmico */
+.input-group-modern input:focus,
+.input-group-modern select:focus,
+.input-group-modern textarea:focus {
+  outline: none;
+  border-color: var(--input-focus-color);
+  background: rgba(2, 6, 23, 0.6);
+  box-shadow: 0 0 0 4px var(--input-focus-shadow, rgba(59, 130, 246, 0.1));
+}
+
+/* Se for focado, o ícone brilha com a cor do tema */
+.input-group-modern:focus-within .input-icon {
+  color: var(--input-focus-color);
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.error-message {
+  color: #f87171;
+  font-size: 0.85rem;
+  background: rgba(239, 68, 68, 0.05);
+  padding: 0.8rem;
+  border-radius: 10px;
+  border: 1px solid rgba(239, 68, 68, 0.1);
+  margin-top: 0.5rem;
+}

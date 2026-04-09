@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import Login from './components/Login';
-import Sidebar from './components/Sidebar';
-import Header from './components/Header';
-import ClientsView from './views/ClientsView';
-import ServicesView from './views/ServicesView';
-import AppointmentsView from './views/AppointmentsView';
-import BarbersView from './views/BarbersView';
+import Login from './modules/admin/views/Login';
+import Sidebar from './components/layouts/Sidebar';
+import Header from './components/layouts/Header';
+import ClientsView from './modules/admin/views/ClientsView';
+import ServicesView from './modules/admin/views/ServicesView';
+import AppointmentsView from './modules/admin/views/AppointmentsView';
+import BarbersView from './modules/admin/views/BarbersView';
 
 type Tab = 'clientes' | 'servicos' | 'agendamentos' | 'barbeiros';
 

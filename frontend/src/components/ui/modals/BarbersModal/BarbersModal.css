@@ -1,9 +1,16 @@
 /* Gabriel (Dev 1) - Estilos específicos para o Modal de Barbeiros */
 
+.modal-content-premium.amber {
+  --input-focus-color: #f59e0b;
+  --input-focus-shadow: rgba(245, 158, 11, 0.2);
+  background-image: linear-gradient(135deg, rgba(245, 158, 11, 0.202) 0%, rgba(30, 41, 59, 0.7) 100%);
+  border-top: 2px solid rgba(245, 158, 11, 0.3);
+}
+
 .status-toggle {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: .5rem;
   padding: 1rem;
   background: rgba(2, 6, 23, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.05);
@@ -31,47 +38,16 @@
   background: rgba(2, 6, 23, 0.6);
 }
 
-.status-toggle.active:hover {
-  background: rgba(34, 197, 94, 0.12);
-}
-
-.status-toggle.inactive:hover {
-  background: rgba(239, 68, 68, 0.12);
-}
-
-.status-toggle span {
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-.amber-glow {
-  color: #f59e0b;
-  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.3));
-}
-
 .btn-premium-primary {
-  flex: 2;
-  padding: 0.8rem;
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  border: none;
-  color: white;
-  border-radius: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  transition: all 0.3s;
   box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
 }
 
 .btn-premium-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
-  filter: brightness(1.1);
 }
 
-.btn-premium-primary:active:not(:disabled) {
-  transform: translateY(0);
+.success-icon-wrapper {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
 }

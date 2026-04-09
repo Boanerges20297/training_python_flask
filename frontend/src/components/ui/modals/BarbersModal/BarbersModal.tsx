@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { createBarbeiro, updateBarbeiro } from '../../../api/barbers';
-import type { Barbeiro } from '../../../types';
+import { createBarbeiro, updateBarbeiro } from '../../../../api/barbers';
+import type { Barbeiro } from '../../../../types';
 import { User, Phone, Mail, Loader2, CheckCircle2, Plus, Edit2, Award, Lock, ToggleLeft, ToggleRight } from 'lucide-react';
 import Modal from '../../Modal';
+import Input from '../../Input';
 import './BarbersModal.css';
 
 //Gabriel (Dev 1) - Criação do Modal de Barbeiros seguindo padrão dos outros modais.
@@ -39,23 +40,7 @@ const BarbersModal: React.FC<BarbersModalProps> = ({ isOpen, onClose, onSuccess,
     }
   }, [isOpen, barbeiroParaEditar]);
 
-  // Máscara de Telefone: (00) 00000-0000
-  const formatPhone = (value: string) => {
-    if (!value) return "";
-    value = value.replace(/\D/g, "");
-    value = value.slice(0, 11);
 
-    if (value.length <= 10) {
-      return value.replace(/^(\d{2})(\d)/g, "($1) $2").replace(/(\d{4})(\d)/, "$1-$2");
-    } else {
-      return value.replace(/^(\d{2})(\d)/g, "($1) $2").replace(/(\d{5})(\d)/, "$1-$2");
-    }
-  };
-
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatPhone(e.target.value);
-    setFormData({ ...formData, telefone: formatted });
-  };
 
   const isValidEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -73,7 +58,7 @@ const BarbersModal: React.FC<BarbersModalProps> = ({ isOpen, onClose, onSuccess,
       setError("Por favor, insira um endereço de e-mail válido.");
       return;
     }
-    
+
     if (!barbeiroParaEditar && !formData.senha) {
       setError("A senha é obrigatória para o cadastro do barbeiro.");
       return;
@@ -116,7 +101,7 @@ const BarbersModal: React.FC<BarbersModalProps> = ({ isOpen, onClose, onSuccess,
       <div className="modal-body-content">
         {success ? (
           <div className="success-state">
-            <div className="success-icon-wrapper" style={{ background: 'rgba(245, 158, 11, 0.1)' }}>
+            <div className="success-icon-wrapper">
               <CheckCircle2 size={48} color="#f59e0b" />
             </div>
             <h3 style={{ color: '#f8fafc', marginBottom: '0.5rem', fontSize: '1.25rem' }}>Sucesso!</h3>
@@ -128,88 +113,79 @@ const BarbersModal: React.FC<BarbersModalProps> = ({ isOpen, onClose, onSuccess,
           <form onSubmit={handleSubmit} className="modern-form">
             <div className="form-group-modern">
               <label>Nome do Barbeiro</label>
-              <div className="input-group-modern">
-                <User size={18} className="input-icon" />
-                <input
-                  type="text"
-                  placeholder="Nome completo"
-                  required
-                  maxLength={100}
-                  value={formData.nome}
-                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                  autoFocus
-                />
-              </div>
+              <Input
+                type="text"
+                icon={<User size={18} />}
+                placeholder="Nome completo"
+                required
+                maxLength={100}
+                value={formData.nome}
+                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                autoFocus
+              />
             </div>
 
             <div className="form-group-modern">
               <label>Especialidade</label>
-              <div className="input-group-modern">
-                <Award size={18} className="input-icon" />
-                <input
-                  type="text"
-                  placeholder="Ex: Cortes Clássicos, Barba..."
-                  required
-                  maxLength={255}
-                  value={formData.especialidade}
-                  onChange={(e) => setFormData({ ...formData, especialidade: e.target.value })}
-                />
-              </div>
+              <Input
+                type="text"
+                icon={<Award size={18} />}
+                placeholder="Ex: Cortes Clássicos, Barba..."
+                required
+                maxLength={255}
+                value={formData.especialidade}
+                onChange={(e) => setFormData({ ...formData, especialidade: e.target.value })}
+              />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div className="form-group-modern">
                 <label>Telefone</label>
-                <div className="input-group-modern">
-                  <Phone size={18} className="input-icon" />
-                  <input
-                    type="tel"
-                    placeholder="(00) 00000-0000"
-                    required
-                    maxLength={15}
-                    value={formData.telefone}
-                    onChange={handlePhoneChange}
-                  />
-                </div>
+                <Input
+                  mask="phone"
+                  type="tel"
+                  icon={<Phone size={18} />}
+                  placeholder="(00) 00000-0000"
+                  required
+                  maxLength={15}
+                  value={formData.telefone}
+                  onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                />
               </div>
 
               <div className="form-group-modern">
                 <label>E-mail</label>
-                <div className="input-group-modern">
-                  <Mail size={18} className="input-icon" />
-                  <input
-                    type="email"
-                    placeholder="email@barbearia.com"
-                    required
-                    maxLength={100}
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  />
-                </div>
+                <Input
+                  type="email"
+                  icon={<Mail size={18} />}
+                  placeholder="email@barbearia.com"
+                  required
+                  maxLength={100}
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                />
               </div>
             </div>
 
             {!barbeiroParaEditar && (
-               <div className="form-group-modern">
-               <label>Senha Provisória</label>
-               <div className="input-group-modern">
-                 <Lock size={18} className="input-icon" />
-                 <input
-                   type="password"
-                   placeholder="Mínimo 6 caracteres"
-                   required
-                   minLength={6}
-                   maxLength={20}
-                   value={formData.senha}
-                   onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
-                 />
-               </div>
-             </div>
+              <div className="form-group-modern">
+                <label>Senha Provisória</label>
+                <Input
+                  type="password"
+                  icon={<Lock size={18} />}
+                  placeholder="Mínimo 6 caracteres"
+                  required
+                  minLength={6}
+                  maxLength={20}
+                  value={formData.senha}
+                  onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
+                />
+              </div>
             )}
 
             <div className="form-group-modern">
               <label>Disponibilidade</label>
-              <button 
+              <button
                 type="button"
                 className={`status-toggle ${formData.ativo ? 'active' : 'inactive'}`}
                 onClick={() => setFormData({ ...formData, ativo: !formData.ativo })}
@@ -225,7 +201,7 @@ const BarbersModal: React.FC<BarbersModalProps> = ({ isOpen, onClose, onSuccess,
               </div>
             )}
 
-            <div className="modal-footer-modern">
+            <div className="modal-footer-refined">
               <button
                 type="button"
                 onClick={onClose}

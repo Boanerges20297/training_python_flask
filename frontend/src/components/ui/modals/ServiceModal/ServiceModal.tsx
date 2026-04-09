@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { createServico } from '../../../api/services';
+import { createServico } from '../../../../api/services';
 import { Tag, DollarSign, Clock, Loader2, CheckCircle2, Plus } from 'lucide-react';
 import Modal from '../../Modal';
+import Input from '../../Input';
 import './ServiceModal.css';
 
 interface ServiceModalProps {
@@ -18,17 +19,6 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, onSuccess 
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // # Gabriel (Dev 1)
-  // Função para formatar o preço do serviço.
-  const formatCurrency = (value: string) => {
-    const digits = value.replace(/\D/g, "");
-    if (!digits) return "";
-    
-    return (Number(digits) / 100).toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    });
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,9 +59,9 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, onSuccess 
   };
 
   return (
-    <Modal 
-      isOpen={isOpen} 
-      onClose={onClose} 
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
       title="Novo Serviço"
       variant="green"
       subtitle='Cadastre os detalhes do serviço oferecido.'
@@ -90,47 +80,42 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, onSuccess 
           <form onSubmit={handleSubmit} className="modern-form">
             <div className="form-group-modern">
               <label>Nome do Serviço</label>
-              <div className="input-group-modern">
-                <Tag size={18} className="input-icon" />
-                <input 
-                  type="text" 
-                  placeholder="Ex: Corte Degradê" 
-                  required
-                  maxLength={255}
-                  value={formData.nome}
-                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                  autoFocus
-                />
-              </div>
+              <Input
+                type="text"
+                icon={<Tag size={18} />}
+                placeholder="Ex: Corte Degradê"
+                required
+                maxLength={255}
+                value={formData.nome}
+                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                autoFocus
+              />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div className="form-group-modern">
                 <label>Preço (R$)</label>
-                <div className="input-group-modern">
-                  <DollarSign size={18} className="input-icon" />
-                  <input 
-                    type="text" 
-                    placeholder="0,00" 
-                    required
-                    value={formData.preco}
-                    onChange={(e) => setFormData({ ...formData, preco: formatCurrency(e.target.value) })}
-                  />
-                </div>
+                <Input
+                  mask="currency"
+                  icon={<DollarSign size={18} />}
+                  placeholder="0,00"
+                  required
+                  value={formData.preco}
+                  onChange={(e) => setFormData({ ...formData, preco: e.target.value })}
+                />
               </div>
 
               <div className="form-group-modern">
                 <label>Duração (min)</label>
-                <div className="input-group-modern">
-                  <Clock size={18} className="input-icon" />
-                  <input 
-                    type="number" 
-                    placeholder="30" 
-                    required
-                    value={formData.duracao_minutos}
-                    onChange={(e) => setFormData({ ...formData, duracao_minutos: e.target.value })}
-                  />
-                </div>
+                <Input
+                  type="number"
+                  icon={<Clock size={18} />}
+                  min="0"
+                  placeholder="30"
+                  required
+                  value={formData.duracao_minutos}
+                  onChange={(e) => setFormData({ ...formData, duracao_minutos: e.target.value })}
+                />
               </div>
             </div>
 
@@ -140,19 +125,18 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, onSuccess 
               </div>
             )}
 
-            <div className="modal-footer-modern">
-              <button 
-                type="button" 
-                onClick={onClose} 
-                className="btn-glass-secondary" 
+            <div className="modal-footer-refined">
+              <button
+                type="button"
+                onClick={onClose}
+                className="btn-glass-secondary"
                 disabled={isSubmitting}
               >
                 Cancelar
               </button>
-              <button 
-                type="submit" 
-                className="btn-premium-primary" 
-                style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)' }}
+              <button
+                type="submit"
+                className="btn-premium-primary"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (

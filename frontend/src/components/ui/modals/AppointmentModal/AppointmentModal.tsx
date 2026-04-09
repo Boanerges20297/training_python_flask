@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { createAgendamento } from '../../../api/appointments';
-import type { Cliente, Servico } from '../../../types';
+import { createAgendamento } from '../../../../api/appointments';
+import type { Cliente, Servico } from '../../../../types';
 import { User, ShoppingBag, Calendar, FileText, Loader2, CheckCircle2, Plus } from 'lucide-react';
 import Modal from '../../Modal';
+import Input from '../../Input';
 import './AppointmentModal.css';
 
 interface AppointmentModalProps {
@@ -14,12 +15,12 @@ interface AppointmentModalProps {
 }
 
 // # Gabriel (Dev 1) - Refatorado para usar o Modal genérico com personalização Purple/Large.
-const AppointmentModal: React.FC<AppointmentModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  onSuccess, 
-  clientes, 
-  servicos 
+const AppointmentModal: React.FC<AppointmentModalProps> = ({
+  isOpen,
+  onClose,
+  onSuccess,
+  clientes,
+  servicos
 }) => {
   const [formData, setFormData] = useState({
     cliente_id: '',
@@ -39,7 +40,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
     // # Gabriel (Dev 1) - Reforçando regra aqui no front: Validação de data retroativa
     if (formData.data_agendamento < today) {
       setError("Não é possível agendar horários no passado.");
-      return; 
+      return;
     }
 
     setIsSubmitting(true);
@@ -75,9 +76,9 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   };
 
   return (
-    <Modal 
-      isOpen={isOpen} 
-      onClose={onClose} 
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
       title="Agendar Horário"
       variant="purple"
       subtitle='Escolha o cliente, o serviço e o horário.'
@@ -87,7 +88,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
       <div className="modal-body-content">
         {success ? (
           <div className="success-state">
-            <div className="success-icon-wrapper" style={{ background: 'rgba(139, 92, 246, 0.1)' }}>
+            <div className="success-icon-wrapper">
               <CheckCircle2 size={48} color="#8b5cf6" />
             </div>
             <h3 style={{ color: '#f8fafc', marginBottom: '0.5rem', fontSize: '1.25rem' }}>Agendado!</h3>
@@ -98,7 +99,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
               <div className="form-group-modern">
                 <label>Cliente</label>
-                <div className="input-group-modern">
+                <div className="input-group-modern has-icon">
                   <User size={18} className="input-icon" />
                   <select
                     required
@@ -113,7 +114,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
 
               <div className="form-group-modern">
                 <label>Serviço</label>
-                <div className="input-group-modern">
+                <div className="input-group-modern has-icon">
                   <ShoppingBag size={18} className="input-icon" />
                   <select
                     required
@@ -129,30 +130,27 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
 
             <div className="form-group-modern">
               <label>Data e Horário</label>
-              <div className="input-group-modern">
-                <Calendar size={18} className="input-icon" />
-                <input
-                  type="datetime-local"
-                  required
-                  min={today}
-                  max="2099-12-31T23:59"
-                  value={formData.data_agendamento}
-                  onChange={(e) => setFormData({ ...formData, data_agendamento: e.target.value })}
-                />
-              </div>
+              <Input
+                type="datetime-local"
+                icon={<Calendar size={18} />}
+                required
+                min={today}
+                max="2099-12-31T23:59"
+                value={formData.data_agendamento}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, data_agendamento: e.target.value })}
+              />
             </div>
 
             <div className="form-group-modern">
               <label>Observações (Opcional)</label>
-              <div className="input-group-modern">
-                <FileText size={18} className="input-icon" style={{ top: '1rem', transform: 'none' }} />
+              <div className="input-group-modern has-icon">
+                <FileText size={18} className="input-icon at-top" />
                 <textarea
                   rows={3}
                   maxLength={250}
                   placeholder="Ex: Cabelo muito comprido, lavagem especial..."
                   value={formData.observacoes}
                   onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                  style={{ paddingLeft: '3rem' }}
                 />
               </div>
             </div>
@@ -163,7 +161,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
               </div>
             )}
 
-            <div className="modal-footer-modern">
+            <div className="modal-footer-refined">
               <button
                 type="button"
                 onClick={onClose}
@@ -175,7 +173,6 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
               <button
                 type="submit"
                 className="btn-premium-primary"
-                style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)' }}
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (

@@ -182,10 +182,6 @@ body {
   cursor: pointer;
 }
 
-.sidebar.collapsed .logout-btn {
-  padding: 0.75rem;
-}
-
 /* MAIN CONTENT */
 .main-content {
   flex: 1;

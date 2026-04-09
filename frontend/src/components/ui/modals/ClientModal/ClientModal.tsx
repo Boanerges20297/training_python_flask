@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { createCliente, updateCliente } from '../../../api/clients';
-import type { Cliente } from '../../../types';
+import { createCliente, updateCliente } from '../../../../api/clients';
+import type { Cliente } from '../../../../types';
 import { User, Phone, Mail, Loader2, CheckCircle2, Plus, Edit2, Lock } from 'lucide-react';
 import Modal from '../../Modal';
+import Input from '../../Input';
 import './ClientModal.css';
 
 interface ClientModalProps {
@@ -39,23 +40,6 @@ const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, onSuccess, c
     }
   }, [isOpen, clienteParaEditar]);
 
-  // Máscara de Telefone: (00) 00000-0000
-  const formatPhone = (value: string) => {
-    if (!value) return "";
-    value = value.replace(/\D/g, "");
-    value = value.slice(0, 11);
-
-    if (value.length <= 10) {
-      return value.replace(/^(\d{2})(\d)/g, "($1) $2").replace(/(\d{4})(\d)/, "$1-$2");
-    } else {
-      return value.replace(/^(\d{2})(\d)/g, "($1) $2").replace(/(\d{5})(\d)/, "$1-$2");
-    }
-  };
-
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatPhone(e.target.value);
-    setFormData({ ...formData, telefone: formatted });
-  };
 
   const isValidEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -132,69 +116,62 @@ const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, onSuccess, c
           <form onSubmit={handleSubmit} className="modern-form">
             <div className="form-group-modern">
               <label>Nome Completo</label>
-              <div className="input-group-modern">
-                <User size={18} className="input-icon" />
-                <input
-                  type="text"
-                  placeholder="Ex: João Silva"
-                  required
-                  maxLength={100}
-                  value={formData.nome}
-                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                  autoFocus
-                />
-              </div>
+              <Input
+                type="text"
+                icon={<User size={18} />}
+                placeholder="Ex: João Silva"
+                required
+                maxLength={100}
+                value={formData.nome}
+                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                autoFocus
+              />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div className="form-group-modern">
                 <label>Telefone</label>
-                <div className="input-group-modern">
-                  <Phone size={18} className="input-icon" />
-                  <input
-                    type="tel"
-                    placeholder="(00) 00000-0000"
-                    required
-                    maxLength={15}
-                    value={formData.telefone}
-                    onChange={handlePhoneChange}
-                  />
-                </div>
+                <Input
+                  mask="phone"
+                  type="tel"
+                  icon={<Phone size={18} />}
+                  placeholder="(00) 00000-0000"
+                  required
+                  maxLength={15}
+                  value={formData.telefone}
+                  onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                />
               </div>
 
               <div className="form-group-modern">
                 <label>E-mail</label>
-                <div className="input-group-modern">
-                  <Mail size={18} className="input-icon" />
-                  <input
-                    type="email"
-                    placeholder="email@exemplo.com"
-                    required
-                    maxLength={100}
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  />
-                </div>
+                <Input
+                  type="email"
+                  icon={<Mail size={18} />}
+                  placeholder="email@exemplo.com"
+                  required
+                  maxLength={100}
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                />
               </div>
             </div>
 
             {/* # Gabriel (Dev 1) - O campo de senha só aparece quando um novo cliente está sendo criado */}
             {!clienteParaEditar && (
-               <div className="form-group-modern">
-               <label>Senha de Acesso</label>
-               <div className="input-group-modern">
-                 <Lock size={18} className="input-icon" />
-                 <input
-                   type="password"
-                   placeholder="Mínimo 6 caracteres"
-                   required
-                   minLength={6}
-                   maxLength={20}
-                   value={formData.senha}
-                   onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
-                 />
-               </div>
-             </div>
+              <div className="form-group-modern">
+                <label>Senha de Acesso</label>
+                <Input
+                  type="password"
+                  icon={<Lock size={18} />}
+                  placeholder="Mínimo 6 caracteres"
+                  required
+                  minLength={6}
+                  maxLength={20}
+                  value={formData.senha}
+                  onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
+                />
+              </div>
             )}
 
             {error && (
@@ -203,7 +180,7 @@ const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, onSuccess, c
               </div>
             )}
 
-            <div className="modal-footer-modern">
+            <div className="modal-footer-refined">
               <button
                 type="button"
                 onClick={onClose}

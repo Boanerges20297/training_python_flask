@@ -1,0 +1,22 @@
+/* Gabriel (Dev 1) - Estilos específicos para o Modal de Clientes */
+
+.modal-content-premium.blue {
+  --input-focus-color: #3b82f6;
+  --input-focus-shadow: rgba(59, 130, 246, 0.2);
+  background-image: linear-gradient(135deg, rgba(59, 131, 246, 0.202) 0%, rgba(30, 41, 59, 0.7) 100%);
+  border-top: 2px solid rgba(59, 130, 246, 0.3);
+}
+
+.modal-content-premium.blue .btn-premium-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.modal-content-premium.blue .btn-premium-primary:hover:not(:disabled) {
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.success-icon-wrapper {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
