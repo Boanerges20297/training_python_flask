@@ -176,7 +176,7 @@ def editar_cliente(id):
 
 
 @clientes_bp.route("/deletar-cliente/<int:id>", methods=["DELETE"])
-# @admin_required
+@admin_required
 def deletar_cliente(id):
     try:
         cliente = Cliente.query.get(id)

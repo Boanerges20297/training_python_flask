@@ -9,6 +9,14 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 URL_BASE = "http://localhost:5000/api/clientes"
 
+"""
+POR FAVOR LER ANTES DE TESTAR
+
+Provavelmente vai dar erro de autenticação no teste de delete, pois não temos um usuário admin logado.
+Para resolver, comente temporariamente a linha 179 do código app/routes/client_routes.py.
+
+"""
+
 
 def testar():
     print("\n--- Testando ClienteSchema ---")
