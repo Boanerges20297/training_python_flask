@@ -2,6 +2,8 @@ from flask import Blueprint, request, jsonify
 from app.models.admin import Admin
 from app import db
 from datetime import datetime
+from pydantic import ValidationError
+from app.schemas.auth_schema import LoginSchema
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
@@ -13,7 +15,7 @@ def login():
     try:
         # Vinicius - 08/04/2026
         # Adicionado validação de payload para garantir que os dados enviados estejam corretos
-        data = AuthSchema(**request.get_json())
+        data = LoginSchema(**request.get_json())
 
         admin = Admin.query.filter_by(email=data.email).first()
 

@@ -34,3 +34,30 @@ class ClienteSchema(BaseModel):
                 "Telefone inválido (deve conter apenas números e símbolos como +, -, (), espaços)"
             )
         return value
+
+
+# Vinicius - 08/04/2026
+# Herda de ClienteSchema para reutilizar validações
+class ClienteUpdateSchema(BaseModel):
+    nome: str | None = Field(
+        default=None, max_length=100, description="Nome do serviço"
+    )
+    telefone: str | None = Field(
+        default=None, max_length=20, description="Telefone do serviço"
+    )
+    email: EmailStr | None = Field(
+        default=None, max_length=100, description="Email do serviço"
+    )
+    senha: str | None = Field(
+        default=None, min_length=6, description="Senha do serviço (mínimo 6 caracteres)"
+    )
+
+    # Adicionado 'extra': 'forbid' para que o campo não aceite campos extras
+    # Adicionado 'str_lowercase': True para que o campo string seja convertido para minúsculo
+    model_config = {"extra": "forbid", "str_lowercase": True}
+
+    # Adicionado 'str_validator' para validar os campos string, fazendo com que todos os campos string sejam convertidos para minúsculo
+    @field_validator("nome", "descricao", mode="before")
+    @classmethod
+    def str_validator(cls, value):
+        return value.lower()

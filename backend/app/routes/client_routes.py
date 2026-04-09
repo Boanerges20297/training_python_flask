@@ -3,6 +3,7 @@ from flask import Blueprint, jsonify, request
 from app.models.cliente import Cliente
 from app import db
 from app.utils.decorators import admin_required
+from app.schemas.client_schema import ClienteSchema, ClienteUpdateSchema
 
 clientes_bp = Blueprint("clientes", __name__, url_prefix="/api/clientes")
 
@@ -126,50 +127,53 @@ def criar_cliente():
         return jsonify({"erro": "Erro ao incluir cliente: " + str(e)}), 500
 
 
-@clientes_bp.route("/editar-cliente/<int:id>", methods=["PUT"])
+# Vinicius - 08/04/2026
+# Modificado o metodo de PUT para PATCH, pois PATCH é usado para atualizar apenas os campos enviados
+@clientes_bp.route("/editar-cliente/<int:id>", methods=["PATCH"])
 def editar_cliente(id):
     try:
+        # 1. Captura o JSON da requisição
+        body = request.get_json()
+
+        # 2. Validação inicial: O Pydantic verifica tipos e campos extras
+        try:
+            # Pydantic valida o dicionário
+            schema = ClienteUpdateSchema(**body)
+        except Exception as e:
+            return {"error": "Dados inválidos", "detalhes": str(e)}, 400
+
+        # 3. Transforma em dicionário pegando APENAS o que foi enviado
+        update_data = schema.model_dump(exclude_unset=True)
+
+        # 4. Condição: Se o dicionário estiver vazio, não há o que atualizar
+        if not update_data:
+            return {"message": "Nenhuma alteração enviada."}, 400
+
+        # 5. Busca o usuário no banco
         cliente = Cliente.query.get(id)
         if not cliente:
-            return jsonify({"erro": "Cliente não encontrado"}), 404
+            return {"error": "Cliente não encontrado"}, 404
 
-        dados_edicao = request.get_json()
-        if not dados_edicao:
-            return jsonify({"erro": "Nenhum dado fornecido para atualização"}), 400
+        # 6. Algoritmo de Atualização Dinâmica
+        # Em vez de fazer: user.nome = update_data['nome'] manual para cada campo...
+        for key, value in update_data.items():
+            # Vinicius - 08/04/2026
+            # Adicionado tratamento para senha, pois ela precisa ser hasheada
+            if key == "senha":
+                cliente.senha = value
+            else:
+                setattr(cliente, key, value)  # Atualiza o atributo dinamicamente
 
-        if dados_edicao.get("email") and "@" not in dados_edicao["email"]:
-            return jsonify({"erro": "Email inválido"}), 400
-
-        # Verificar se os dados antigos são iguais aos novos (para evitar atualização desnecessária)
-        if (
-            cliente.nome == dados_edicao.get("nome", cliente.nome)
-            and cliente.telefone == dados_edicao.get("telefone", cliente.telefone)
-            and cliente.email == dados_edicao.get("email", cliente.email)
-        ):
-            return jsonify({"msg": "Nenhuma alteração detectada"}), 200
-
-        # Atualizar os campos do cliente
-        cliente.nome = dados_edicao.get("nome", cliente.nome)
-        cliente.telefone = dados_edicao.get("telefone", cliente.telefone)
-        cliente.email = dados_edicao.get("email", cliente.email)
-
+        # 7. Persiste no banco
         db.session.commit()
-        return (
-            jsonify(
-                {
-                    "cliente": {
-                        "id": cliente.id,
-                        "nome": cliente.nome,
-                        "telefone": cliente.telefone,
-                        "email": cliente.email,
-                        "msg": "Cliente atualizado com sucesso",
-                    }
-                }
-            ),
-            200,
-        )
+
+        return {
+            "message": "Cliente atualizado com sucesso!",
+            "campos_alterados": list(update_data.keys()),
+        }, 200
+
     except Exception as e:
-        return jsonify({"erro": "Erro ao atualizar cliente: " + str(e)}), 500
+        return jsonify({"erro": "Erro ao editar cliente: " + str(e)}), 500
 
 
 @clientes_bp.route("/deletar-cliente/<int:id>", methods=["DELETE"])

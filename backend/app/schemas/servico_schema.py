@@ -29,3 +29,25 @@ class ServicoSchema(BaseModel):
     @classmethod
     def str_validator(cls, value):
         return value.lower()
+
+
+# Vinicius - 08/04/2026
+# Classe para atualizar o serviço
+class ServicoUpdateSchema(BaseModel):
+    nome: Field(default=None, max_length=100, description="Nome do serviço")
+    descricao: Field(default=None, description="Descrição do serviço")
+    preco: Field(default=None, gt=0, description="Preço do serviço (maior que zero)")
+    duracao_minutos: Field(
+        default=None, gt=0, description="Duração do serviço em minutos (maior que zero)"
+    )
+    barbeiro_id: Field(default=None, description="ID do barbeiro")
+
+    # Adicionado 'extra': 'forbid' para que o campo não aceite campos extras
+    # Adicionado 'str_lowercase': True para que o campo string seja convertido para minúsculo
+    model_config = {"extra": "forbid", "str_lowercase": True}
+
+    # Adicionado 'str_validator' para validar os campos string, fazendo com que todos os campos string sejam convertidos para minúsculo
+    @field_validator("nome", "descricao", mode="before")
+    @classmethod
+    def str_validator(cls, value):
+        return value.lower()
