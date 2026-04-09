@@ -26,6 +26,8 @@ from flask import Blueprint, jsonify, request
 from app.models.servico import Servico
 from app.models.cliente import Cliente
 from app import db
+from app.schemas.servico_schema import ServicoSchema, ServicoUpdateSchema
+from pydantic import ValidationError
 
 # ========== PASSO 2: CRIAR BLUEPRINT ==========
 # Um blueprint precisa de um nome e um prefixo de URL
@@ -33,7 +35,7 @@ from app import db
 # URL Prefix: '/api/servicos' (todas as rotas deste blueprint começam com isso)
 
 # TODO: servico_bp = Blueprint(...)
-servico_bp = Blueprint('servicos',__name__,url_prefix='/api/servicos')
+servico_bp = Blueprint("servicos", __name__, url_prefix="/api/servicos")
 
 # ========== PASSO 3: CRIAR ROTA GET ==========
 # Rota: /api/servicos  (GET)
@@ -44,150 +46,172 @@ servico_bp = Blueprint('servicos',__name__,url_prefix='/api/servicos')
 # @servico_bp.route('', methods=['GET'])
 # (vazio '' porque já tem '/api/servicos' no url_prefix)
 
-@servico_bp.route('/', methods=['GET'])
+
+@servico_bp.route("/", methods=["GET"])
 def listar_servicos():
     """
     Endpoint para listar todos os serviços
-    
+
     Passos para implementar:
     1. Buscar todos os serviços do banco com Servico.query.all()
     2. Converter cada serviço em dicionário (para JSON)
-    3. Retornar com jsonify() 
+    3. Retornar com jsonify()
     """
-    #Vinicius - Paginação de serviços 31/03/2026
-    #Paginação de serviços para evitar sobrecarga do sistema com buscas execivas no banco de dados
-    page = request.args.get('page', default=1, type=int)
-    per_page = request.args.get('per_page', default=10, type=int)
-    
+    # Vinicius - Paginação de serviços 31/03/2026
+    # Paginação de serviços para evitar sobrecarga do sistema com buscas execivas no banco de dados
+    page = request.args.get("page", default=1, type=int)
+    per_page = request.args.get("per_page", default=10, type=int)
+
     try:
         # TODO: Buscar todos os serviços
-        #Vinicius - Paginação de serviços 31/03/2026
+        # Vinicius - Paginação de serviços 31/03/2026
         servicos = Servico.query.paginate(page=page, per_page=per_page, error_out=False)
-        
+
         # TODO: Converter para lista de dicionários
         # Utilizando 'dict comphreension'
         servicos_dict = [
             {
-                'id': s.id,
-                'nome': s.nome,
-                'preco': s.preco,
-                'duracao_minutos': s.duracao_minutos
+                "id": s.id,
+                "nome": s.nome,
+                "preco": s.preco,
+                "duracao_minutos": s.duracao_minutos,
             }
-            #Vinicius - 04/04/2026
-            #Adicionado o .items para que o list comprehension receba os itens da paginação
+            # Vinicius - 04/04/2026
+            # Adicionado o .items para que o list comprehension receba os itens da paginação
             for s in servicos.items
         ]
-        
+
         # TODO: Retornar em JSON
-        return jsonify({
-            #Vinicius - 04/04/2026
-            #Adicionado nova resposta para a rota contendo mais informações sobre a paginação
-            'servicos': servicos_dict, 
-            'total': servicos.total, 
-            'per_page': servicos.per_page,
-            'items_nessa_pagina': len(servicos_dict),
-            'pagina': servicos.page,
-            'total_paginas': servicos.pages,
-            'tem_proxima': servicos.has_next,
-            'tem_pagina_anterior': servicos.has_prev
-        })
-        
+        return jsonify(
+            {
+                # Vinicius - 04/04/2026
+                # Adicionado nova resposta para a rota contendo mais informações sobre a paginação
+                "servicos": servicos_dict,
+                "total": servicos.total,
+                "per_page": servicos.per_page,
+                "items_nessa_pagina": len(servicos_dict),
+                "pagina": servicos.page,
+                "total_paginas": servicos.pages,
+                "tem_proxima": servicos.has_next,
+                "tem_pagina_anterior": servicos.has_prev,
+            }
+        )
+
         pass
-    
+
     except Exception as e:
-        return jsonify({'erro': str(e)}), 500
+        return jsonify({"erro": str(e)}), 500
 
 
-@servico_bp.route('/criar-servico', methods=['POST'])
+@servico_bp.route("/criar-servico", methods=["POST"])
 def criar_servico():
-    dados = request.get_json()
-    #Vinicius - 01/04/2026
-    #Adicinado barbeiro_id como campo obrigatório, para acompanhar o model Servico
+    # Vinicius - 01/04/2026
+    # Adicinado barbeiro_id como campo obrigatório, para acompanhar o model Servico
     try:
-        dados_servico = {
-            'nome': dados.get('nome').lower(),
-            'preco': dados.get('preco'),
-            'duracao_minutos': dados.get('duracao_minutos'),
-            'barbeiro_id': dados.get('barbeiro_id')
-        }
-        # Validando dados obrigatórios
-        if (dados['nome'] is None or 
-            dados['preco'] is None or 
-            dados['duracao_minutos'] is None or
-            dados['barbeiro_id'] is None):
-            return jsonify({'erro': 'Campos nome, preco, duracao_minutos e barbeiro_id são obrigatórios'}), 400
-        
-        #Vinicius - 31/03/2026
-        #Verificar se o serviço já existe para evitar criação de repetidos
-        if Servico.query.filter_by(nome=dados_servico.get('nome').lower()).first():
-            return jsonify({'erro': 'Serviço já cadastrado'}), 409
-        
+        # Vinicius - 05/04/2026
+        # Adicionado validação de payload para garantir que os dados enviados estejam corretos
+        data = ServicoSchema(**request.get_json())
+        # Vinicius - 31/03/2026
+        # Verificar se o serviço já existe
+        if Servico.query.filter_by(nome=data.nome).first():
+            return jsonify({"erro": "Serviço já cadastrado"}), 409
+
         # Criar serviço e salvar no banco
-        servico = Servico(**dados_servico)
+        servico = Servico(**data.model_dump())
         db.session.add(servico)
         db.session.commit()
-        return jsonify({'servico': {
-            'id': servico.id,
-            'nome': servico.nome,
-            'preco': servico.preco,
-            'duracao_minutos': servico.duracao_minutos,
-            'msg': 'Serviço criado com sucesso'
-        }}), 201
+        return (
+            jsonify(
+                {
+                    "servico": {
+                        "id": servico.id,
+                        "nome": servico.nome,
+                        "preco": servico.preco,
+                        "duracao_minutos": servico.duracao_minutos,
+                        "msg": "Serviço criado com sucesso",
+                    }
+                }
+            ),
+            201,
+        )
+    except ValidationError as e:
+        return jsonify({"erro": "Erro ao criar serviço: " + str(e)}), 400
     except Exception as e:
-        return jsonify({'erro': 'Erro ao criar serviço: ' + str(e)}), 500
+        return jsonify({"erro": "Erro ao criar serviço: " + str(e)}), 500
 
-@servico_bp.route('/editar-servico/<int:id>', methods=['PUT'])
+
+# Vinicius - 08/04/2026
+# Mudança de metodo para PATCH, para ser mais semantico com a ação de editar
+# Refatoração da rota editar_servico, para utilizar o schema ServicoUpdateSchema e atualizar dinamicamente os campos do serviço
+@servico_bp.route("/editar-servico/<int:id>", methods=["PATCH"])
 def editar_servico(id):
     try:
+        # 1. Captura o JSON da requisição
+        body = request.get_json()
+
+        # 2. Validação inicial: O Pydantic verifica tipos e campos extras
+        try:
+            # Pydantic valida o dicionário
+            schema = ServicoUpdateSchema(**body)
+        except Exception as e:
+            return {"error": "Dados inválidos", "detalhes": str(e)}, 400
+
+        # 3. Transforma em dicionário pegando APENAS o que foi enviado
+        update_data = schema.model_dump(exclude_unset=True)
+
+        # 4. Condição: Se o dicionário estiver vazio, não há o que atualizar
+        if not update_data:
+            return {"message": "Nenhuma alteração enviada."}, 400
+
+        # 5. Busca o usuário no banco
         servico = Servico.query.get(id)
         if not servico:
-            return jsonify({'erro': 'Serviço não encontrado'}), 404
+            return {"error": "Serviço não encontrado"}, 404
 
-        dados_edicao = request.get_json()
-        if 'nome' in dados_edicao:
-            servico.nome = dados_edicao['nome']
-        if 'preco' in dados_edicao:
-            servico.preco = dados_edicao['preco']
-        if 'duracao_minutos' in dados_edicao:
-            servico.duracao_minutos = dados_edicao['duracao_minutos']
-        
+        # 6. Algoritmo de Atualização Dinâmica
+        # Em vez de fazer: user.nome = update_data['nome'] manual para cada campo...
+        for key, value in update_data.items():
+            setattr(servico, key, value)  # Atualiza o atributo dinamicamente
+
+        # 7. Persiste no banco
         db.session.commit()
-        return jsonify({'servico': {
-            'id': servico.id,
-            'nome': servico.nome,
-            'preco': servico.preco,
-            'duracao_minutos': servico.duracao_minutos,
-            'msg': 'Serviço editado com sucesso'
-        }}), 200
-    except Exception as e:
-        return jsonify({'erro': 'Erro ao editar serviço: ' + str(e)}), 500
 
-@servico_bp.route('/deletar-servico/<int:id>', methods=['DELETE'])
+        return {
+            "message": "Serviço atualizado com sucesso!",
+            "campos_alterados": list(update_data.keys()),
+        }, 200
+
+    except Exception as e:
+        return jsonify({"erro": "Erro ao editar serviço: " + str(e)}), 500
+
+
+@servico_bp.route("/deletar-servico/<int:id>", methods=["DELETE"])
 def deletar_servico(id):
     try:
         servico = Servico.query.get(id)
         if not servico:
-            return jsonify({'erro': 'Serviço não encontrado'}), 404
-        
+            return jsonify({"erro": "Serviço não encontrado"}), 404
+
         db.session.delete(servico)
         db.session.commit()
-        return jsonify({'msg': 'Serviço deletado com sucesso'}), 200
+        return jsonify({"msg": "Serviço deletado com sucesso"}), 200
     except Exception as e:
-        return jsonify({'erro': 'Erro ao deletar serviço: ' + str(e)}), 500
-    
-@servico_bp.route('/buscar-servico/<int:id>', methods=['GET'])
+        return jsonify({"erro": "Erro ao deletar serviço: " + str(e)}), 500
+
+
+@servico_bp.route("/buscar-servico/<int:id>", methods=["GET"])
 def buscar_servico(id):
     try:
         servico = Servico.query.get(id)
         if not servico:
-            return jsonify({'erro': 'Serviço não encontrado'}), 404
-        
+            return jsonify({"erro": "Serviço não encontrado"}), 404
+
         servico_dict = {
-            'id': servico.id,
-            'nome': servico.nome,
-            'preco': servico.preco,
-            'duracao_minutos': servico.duracao_minutos
+            "id": servico.id,
+            "nome": servico.nome,
+            "preco": servico.preco,
+            "duracao_minutos": servico.duracao_minutos,
         }
-        return jsonify({'servico': servico_dict}), 200
+        return jsonify({"servico": servico_dict}), 200
     except Exception as e:
-        return jsonify({'erro': 'Erro ao buscar serviço: ' + str(e)}), 500
+        return jsonify({"erro": "Erro ao buscar serviço: " + str(e)}), 500
