@@ -20,9 +20,10 @@ export async function createCliente(cliente: Omit<Cliente, 'id'>): Promise<Clien
     throw error.response?.data?.erro || 'Erro ao criar cliente';
   }
 }
+
 export async function updateCliente(id: number, cliente: Partial<Cliente>): Promise<boolean> {
   try {
-    await api.put(`/clientes/editar-cliente/${id}`, cliente);
+    await api.patch(`/clientes/editar-cliente/${id}`, cliente);
     return true;
   } catch (error) {
     console.error("Erro ao atualizar cliente:", error);

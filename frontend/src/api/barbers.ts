@@ -23,7 +23,7 @@ export async function createBarbeiro(barbeiro: Omit<Barbeiro, 'id'>): Promise<Ba
 
 export async function updateBarbeiro(id: number, barbeiro: Partial<Barbeiro>): Promise<boolean> {
   try {
-    await api.put(`/barbeiros/editar-barbeiro/${id}`, barbeiro);
+    await api.patch(`/barbeiros/editar-barbeiro/${id}`, barbeiro);
     return true;
   } catch (error) {
     console.error("Erro ao atualizar barbeiro:", error);

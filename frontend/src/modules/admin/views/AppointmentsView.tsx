@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { getAgendamentos, deleteAgendamento } from '../../../api/appointments';
 import { getClientes } from '../../../api/clients';
 import { getServicos } from '../../../api/services';
-import type { Agendamento, Cliente, Servico } from '../../../types';
+import { getBarbeiros } from '../../../api/barbers';
+import type { Agendamento, Cliente, Servico, Barbeiro } from '../../../types';
 import { Calendar, Clock, User, Scissors } from 'lucide-react';
 import AppointmentModal from '../../../components/ui/modals/AppointmentModal/AppointmentModal';
 import { useToast } from '../../../components/ui/Toast';
@@ -15,6 +16,7 @@ export default function AppointmentsView() {
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [servicos, setServicos] = useState<Servico[]>([]);
+  const [barbeiros, setBarbeiros] = useState<Barbeiro[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -24,14 +26,16 @@ export default function AppointmentsView() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [agendData, clientData, serviceData] = await Promise.all([
+      const [agendData, clientData, serviceData, barberData] = await Promise.all([
         getAgendamentos(),
         getClientes(),
-        getServicos()
+        getServicos(),
+        getBarbeiros()
       ]);
       setAgendamentos(agendData);
       setClientes(clientData);
       setServicos(serviceData);
+      setBarbeiros(barberData);
     } catch (e) {
       showToast('Erro ao carregar dados da agenda.', 'error');
     } finally {
@@ -67,7 +71,7 @@ export default function AppointmentsView() {
     {
       header: 'Horário',
       render: (agend: Agendamento) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600, color: '#a78bfa' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontWeight: 600, color: '#a78bfa' }}>
           <Clock size={14} />
           {agend.data_agendamento ? new Date(agend.data_agendamento).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
         </div>
@@ -76,27 +80,40 @@ export default function AppointmentsView() {
     },
     {
       header: 'Cliente',
-      render: (agend: Agendamento) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <User size={14} color="#64748b" />
-          #{agend.cliente_id} {/* Futuramente nome do cliente via Join */}
-        </div>
-      )
+      render: (agend: Agendamento) => {
+        const cliente = clientes.find(c => c.id === agend.cliente_id);
+        return (
+          <div className="text-capitalize" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
+            <User size={14} color="#64748b" />
+            {cliente ? cliente.nome : 'Carregando...'} #{agend.cliente_id} {/* Futuramente nome do cliente via Join */}
+          </div>
+        );
+      },
+      align: 'center'
     },
     {
       header: 'Profissional',
-      render: (agend: Agendamento) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Scissors size={14} color="#64748b" />
-          #{agend.barbeiro_id}
-        </div>
-      )
+      render: (agend: Agendamento) => {
+        const barbeiro = barbeiros.find(b => b.id === agend.barbeiro_id);
+        return (
+          <div className="text-capitalize" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
+            <Scissors size={14} color="#64748b" />
+            {barbeiro ? barbeiro.nome : 'Carregando...'} #{agend.barbeiro_id}
+          </div>
+        );
+      },
+      align: 'center'
     },
     {
       header: 'Serviço',
-      render: (agend: Agendamento) => (
-        <span className="badge">#{agend.servico_id}</span>
-      ),
+      render: (agend: Agendamento) => {
+        const servico = servicos.find(s => s.id === agend.servico_id);
+        return (
+          <span className="badge text-capitalize">
+            {servico ? servico.nome : 'Carregando...'} #{agend.servico_id}
+          </span>
+        );
+      },
       align: 'center'
     },
     {

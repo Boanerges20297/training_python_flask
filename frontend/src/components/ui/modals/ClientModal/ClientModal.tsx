@@ -3,7 +3,7 @@ import { createCliente, updateCliente } from '../../../../api/clients';
 import type { Cliente } from '../../../../types';
 import { User, Phone, Mail, Plus, Edit2, Lock } from 'lucide-react';
 import Modal from '../../Modal';
-import Input from '../../Input';
+import Input, { cleanPhone } from '../../Input';
 import Button from '../../Button';
 import './ClientModal.css';
 
@@ -69,14 +69,19 @@ const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, onSuccess, c
 
     try {
       if (clienteParaEditar) {
-        const successEdit = await updateCliente(clienteParaEditar.id, {
+        const payload = {
           nome: formData.nome,
           email: formData.email,
-          telefone: formData.telefone
-        });
+          telefone: cleanPhone(formData.telefone)
+        };
+        const successEdit = await updateCliente(clienteParaEditar.id, payload);
         if (!successEdit) throw new Error("Erro ao atualizar cliente.");
       } else {
-        await createCliente(formData);
+        const payload = {
+          ...formData,
+          telefone: cleanPhone(formData.telefone)
+        };
+        await createCliente(payload);
       }
 
       setSuccess(true);

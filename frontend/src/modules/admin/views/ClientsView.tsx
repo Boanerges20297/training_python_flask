@@ -8,6 +8,7 @@ import { useToast } from '../../../components/ui/Toast';
 import ActionButtons from '../../../components/ui/ActionButtons';
 import DataTable from '../../../components/ui/DataTable';
 import type { Column } from '../../../components/ui/DataTable';
+import { formatPhone } from '../../../components/ui/Input';
 
 export default function ClientsView() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -67,13 +68,13 @@ export default function ClientsView() {
   const columns: Column<Cliente>[] = [
     { 
       header: 'Nome', 
-      render: (cliente: Cliente) => <span style={{ fontWeight: 600 }}>{cliente.nome}</span> 
+      render: (cliente: Cliente) => <span className="text-capitalize" style={{ fontWeight: 600 }}>{cliente.nome}</span> 
     },
     { 
       header: 'Contato', 
       render: (cliente: Cliente) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Phone size={14} color="#60a5fa" /> {cliente.telefone}
+          <Phone size={14} color="#60a5fa" /> {formatPhone(cliente.telefone)}
         </div>
       ),
       align: 'center'

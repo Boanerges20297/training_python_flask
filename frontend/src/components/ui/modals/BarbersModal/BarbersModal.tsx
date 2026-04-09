@@ -3,7 +3,7 @@ import { createBarbeiro, updateBarbeiro } from '../../../../api/barbers';
 import type { Barbeiro } from '../../../../types';
 import { User, Phone, Mail, Plus, Edit2, Award, Lock, ToggleLeft, ToggleRight } from 'lucide-react';
 import Modal from '../../Modal';
-import Input from '../../Input';
+import Input, { cleanPhone } from '../../Input';
 import Button from '../../Button';
 import './BarbersModal.css';
 
@@ -70,11 +70,21 @@ const BarbersModal: React.FC<BarbersModalProps> = ({ isOpen, onClose, onSuccess,
 
     try {
       if (barbeiroParaEditar) {
-        const { senha, ...updateData } = formData; // Na edição não enviamos a senha
-        const successEdit = await updateBarbeiro(barbeiroParaEditar.id!, updateData);
+        // Removemos senha (não editável aqui) e ativo (não aceito pelo Schema de Update do Back)
+        const { senha, ativo, ...updateData } = formData; 
+        const payload = {
+          ...updateData,
+          telefone: cleanPhone(formData.telefone)
+        };
+        
+        const successEdit = await updateBarbeiro(barbeiroParaEditar.id!, payload);
         if (!successEdit) throw new Error("Erro ao atualizar dados do barbeiro.");
       } else {
-        await createBarbeiro(formData);
+        const payload = {
+          ...formData,
+          telefone: cleanPhone(formData.telefone)
+        };
+        await createBarbeiro(payload);
       }
 
       setSuccess(true);

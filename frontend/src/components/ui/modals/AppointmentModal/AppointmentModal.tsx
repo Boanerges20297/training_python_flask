@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createAgendamento } from '../../../../api/appointments';
 import type { Cliente, Servico } from '../../../../types';
 import { User, ShoppingBag, Calendar, FileText, Plus } from 'lucide-react';
@@ -32,6 +32,14 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({ cliente_id: '', servico_id: '', data_agendamento: '', observacoes: '' });
+      setSuccess(false);
+      setError(null);
+    }
+  }, [isOpen]);
   // # Gabriel (Dev 1) - Obtém a data e hora atual no formato ISO simplificado para o atributo 'min'
   const today = new Date().toISOString().slice(0, 16);
 
@@ -48,15 +56,26 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
     setError(null);
 
     try {
+      const selectedDate = new Date(formData.data_agendamento);
+      const hour = selectedDate.getHours();
+
+      if (hour < 8 || hour >= 20) {
+        throw "A barbearia funciona apenas das 08h às 20h.";
+      }
+
+      // Busca o barbeiro_id atrelado ao serviço selecionado
+      const selectedService = servicos.find(s => s.id === parseInt(formData.servico_id));
+      if (!selectedService) throw "Serviço não encontrado.";
+
       const payload = {
         cliente_id: parseInt(formData.cliente_id),
         servico_id: parseInt(formData.servico_id),
+        barbeiro_id: selectedService.barbeiro_id,
         data_agendamento: formData.data_agendamento,
         observacoes: formData.observacoes,
-        barbeiro_id: 1 // Usando ID padrão conforme simplificação
       };
 
-      if (!payload.cliente_id || !payload.servico_id || !payload.data_agendamento) {
+      if (!payload.cliente_id || !payload.servico_id || !payload.barbeiro_id || !payload.data_agendamento) {
         throw "Preencha todos os campos obrigatórios.";
       }
 
@@ -93,7 +112,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
 
       <div className="modal-body-content">
         <form onSubmit={handleSubmit} className="modern-form">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
             <div className="form-group-modern">
               <label>Cliente</label>
               <Input

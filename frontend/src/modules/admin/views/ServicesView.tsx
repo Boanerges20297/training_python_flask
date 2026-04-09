@@ -13,6 +13,7 @@ export default function ServicesView() {
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [servicoParaEditar, setServicoParaEditar] = useState<Servico | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState<number | null>(null);
   const { showToast } = useToast();
@@ -34,6 +35,12 @@ export default function ServicesView() {
   }, []);
 
   const handleNewService = () => {
+    setServicoParaEditar(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEditClick = (servico: Servico) => {
+    setServicoParaEditar(servico);
     setIsModalOpen(true);
   };
 
@@ -60,12 +67,12 @@ export default function ServicesView() {
   const columns: Column<Servico>[] = [
     {
       header: 'Serviço',
-      render: (servico: Servico) => <span style={{ fontWeight: 600 }}>{servico.nome}</span>
+      render: (servico: Servico) => <span className="text-capitalize" style={{ fontWeight: 600 }}>{servico.nome}</span>
     },
     {
       header: 'Preço',
       render: (servico: Servico) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
           <DollarSign size={14} color="#10b981" />
           R$ {Number(servico.preco).toFixed(2)}
         </div>
@@ -75,7 +82,7 @@ export default function ServicesView() {
     {
       header: 'Duração',
       render: (servico: Servico) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
           <Clock size={14} color="#10b981" />
           {servico.duracao_minutos} min
         </div>
@@ -95,6 +102,7 @@ export default function ServicesView() {
       header: 'Ações',
       render: (servico: Servico) => (
         <ActionButtons 
+          onEdit={() => handleEditClick(servico)}
           onDelete={() => handleDeleteClick(servico.id!)}
           theme="green"
         />
@@ -121,8 +129,12 @@ export default function ServicesView() {
 
       <ServiceModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setServicoParaEditar(null);
+        }}
         onSuccess={fetchServicos}
+        servicoParaEditar={servicoParaEditar}
       />
 
       <ConfirmDialog

@@ -8,6 +8,7 @@ import { useToast } from '../../../components/ui/Toast';
 import ActionButtons from '../../../components/ui/ActionButtons';
 import DataTable from '../../../components/ui/DataTable';
 import type { Column } from '../../../components/ui/DataTable';
+import { formatPhone } from '../../../components/ui/Input';
 
 export default function BarbersView() {
   const [barbeiros, setBarbeiros] = useState<Barbeiro[]>([]);
@@ -62,28 +63,37 @@ export default function BarbersView() {
   const columns: Column<Barbeiro>[] = [
     {
       header: '',
-      render: (barbeiro: Barbeiro) => (
-        <Circle size={8} fill={barbeiro.ativo ? '#10b981' : '#ef4444'} color="transparent" />
-      ),
+      render: (barbeiro: Barbeiro) => {
+        // Garantimos que o círculo mude de cor tratando o valor como booleano
+        const isActive = !!barbeiro.ativo;
+        return (
+          <Circle size={8} fill={isActive ? '#10b981' : '#ef4444'} color="transparent" />
+        );
+      },
       style: { width: '40px' }
     },
     {
-      header: 'Nome / Especialidade',
+      header: 'Nome',
       render: (barbeiro: Barbeiro) => (
-        <div>
-          <div style={{ fontWeight: 600, color: '#f8fafc' }}>{barbeiro.nome}</div>
-          <div style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <Award size={12} color="#f59e0b" /> {barbeiro.especialidade}
-          </div>
+        <div className="text-capitalize" style={{ fontWeight: 600, color: '#f8fafc' }}>{barbeiro.nome}</div>
+      ),
+      align: 'left'
+    },
+    {
+      header: 'Especialidade',
+      render: (barbeiro: Barbeiro) => (
+        <div className="text-capitalize" style={{ fontSize: '0.85rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}>
+          <Award size={20} color="#f59e0b" /> {barbeiro.especialidade}
         </div>
-      )
+      ),
+      align: 'center'
     },
     {
       header: 'Contato',
       render: (barbeiro: Barbeiro) => (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '0.85rem' }}>
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px' }}>
-            <Phone size={12} color="#f59e0b" /> {barbeiro.telefone}
+            <Phone size={12} color="#f59e0b" /> {formatPhone(barbeiro.telefone)}
           </div>
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', color: '#64748b' }}>
             <Mail size={12} color="#64748b" /> {barbeiro.email}

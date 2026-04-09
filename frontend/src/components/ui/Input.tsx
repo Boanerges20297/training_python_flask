@@ -35,6 +35,26 @@ export const formatCurrency = (value: string | number) => {
   }).format(floatValue);
 };
 
+/**
+ * Converte "R$ 1.250,50" em um número float 1250.50 pronto para o banco.
+ */
+export const cleanCurrency = (value: string): number => {
+  if (!value) return 0;
+  // Remove R$, pontos e troca vírgula por ponto
+  const cleanValue = value
+    .replace(/\D/g, "")
+    .replace(/(\d+)(\d{2})$/, "$1.$2");
+  return parseFloat(cleanValue) || 0;
+};
+
+/**
+ * Remove parênteses, espaços e hifens do telefone para salvar apenas números.
+ */
+export const cleanPhone = (value: string): string => {
+  if (!value) return "";
+  return value.replace(/\D/g, "");
+};
+
 const Input = forwardRef<any, InputProps>(
   ({ as = 'input', mask = 'none', icon, label, error, onChange, className, type, value, children, ...props }, ref) => {
     
