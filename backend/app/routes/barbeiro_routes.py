@@ -1,0 +1,288 @@
+# Vinicius - 09/04/2026
+# Criação do arquivo de rotas do barbeiro para CRUD
+from flask import Blueprint, jsonify, request
+from app.models.barbeiro import Barbeiro
+from app.models.agendamento import Agendamento
+from app import db
+from app.utils.decorators import admin_required
+from app.schemas.barbeiro_schema import BarbeiroSchema, BarbeiroUpdateSchema
+
+barbeiros_bp = Blueprint("barbeiros", __name__, url_prefix="/api/barbeiros")
+
+
+# Vinicius - 09/04/2026
+# Foi reutilizado o codigo de rotas de cliente e adaptado para barbeiro
+@barbeiros_bp.route("/", methods=["GET"])
+def listar_barbeiros():
+    try:
+        # Capturar parâmetros de paginação (com valores padrão)
+        pagina = request.args.get("pagina", 1, type=int)
+        per_page = request.args.get("per_page", 10, type=int)
+        # Capturar parâmetros de busca
+        nome = request.args.get("nome", type=str)
+        email = request.args.get("email", type=str)
+        telefone = request.args.get("telefone", type=str)
+        servicoId = request.args.get("servicoId", type=int)
+        ativo = request.args.get("ativo", type=bool)
+
+        query = Barbeiro.query
+        # Vinicius - 04/04/2026
+        # Caso seja passado telefone e email, retorna um objeto, pois são campos unicos
+        if telefone or email:
+            if telefone:
+                query = query.filter_by(telefone=telefone)
+            if email:
+                query = query.filter_by(email=email)
+
+            barbeiro = query.first()
+            if not barbeiro:
+                return jsonify({"erro": "Barbeiro não encontrado"}), 404
+
+            return (
+                jsonify(
+                    {
+                        "barbeiro": {
+                            "id": barbeiro.id,
+                            "nome": barbeiro.nome,
+                            "telefone": barbeiro.telefone,
+                            "email": barbeiro.email,
+                        }
+                    }
+                ),
+                200,
+            )
+
+        # Caso seja passado nome, retorna uma lista com outros dados de paginação, pois nome não é unico
+        if nome:
+            query = query.filter(Barbeiro.nome.ilike(f"%{nome}%"))
+
+        # Vinicius - 09/04/2026
+        # Caso seja passado servicoId, retorna uma lista, pois pode ter varios barbeiros com o mesmo servico
+        if servicoId:
+            query = query.filter_by(servico_id=servicoId)
+
+        # Vinicius - 04/04/2026
+        # Troca do nome da variavel para 'clientes' para melhor identificação
+        barbeiros = query.paginate(page=pagina, per_page=per_page, error_out=False)
+
+        barbeiros_dict = [
+            {"id": b.id, "nome": b.nome, "telefone": b.telefone, "email": b.email}
+            # Vinicius - 04/04/2026
+            # Adicionado o .items para que o list comprehension receba os itens da paginação
+            for b in barbeiros.items
+        ]
+        # Retornar em JSON com chave 'clientes'
+        return jsonify(
+            {
+                "barbeiros": barbeiros_dict,
+                # Vinicius - 04/04/2026
+                # Adicionado formatação para melhor visualização dos dados de paginação e variaveis total e items_nessa_pagina para deixar a resposta mais completa
+                "total": barbeiros.total,
+                "items_nessa_pagina": len(barbeiros_dict),
+                "pagina": barbeiros.page,
+                "per_page": barbeiros.per_page,
+                "tem_proxima": barbeiros.has_next,
+                "tem_pagina_anterior": barbeiros.has_prev,
+            }
+        )
+    except Exception as e:
+        return jsonify({"erro": "Não foi possível listar os barbeiros: " + str(e)}), 500
+
+
+@barbeiros_bp.route("/criar-barbeiro", methods=["POST"])
+# Rota somente para administradores, comentado para evitar erros na hora de testes
+# @admin_required
+def criar_barbeiro():
+    try:
+        # Vinicius - 08/04/2026
+        # Adicionado validação de payload para garantir que os dados enviados estejam corretos
+        try:
+            data = ClienteSchema(**request.get_json())
+        except Exception as e:
+            return jsonify({"erro": "Erro ao incluir cliente: " + str(e)}), 400
+        # Vinicius - 08/04/2026
+        # Removido validações feitas pelo Josue, que agora serão validadas pelo schema
+
+        # Criar cliente e salvar no banco
+        cliente = Cliente(**data.model_dump())
+        # Vinicius - 04/04/2026
+        # Utilizando o metodo do mixin para hashear a senha em texto simples antes de efetuar o commit no banco
+        cliente.senha = data.senha
+        db.session.add(cliente)
+        db.session.commit()
+        return (
+            jsonify(
+                {
+                    "cliente": {
+                        "id": cliente.id,
+                        "nome": cliente.nome,
+                        "telefone": cliente.telefone,
+                        "email": cliente.email,
+                        "msg": "Cliente criado com sucesso",
+                    }
+                }
+            ),
+            201,
+        )
+    except Exception as e:
+        return jsonify({"erro": "Erro ao incluir cliente: " + str(e)}), 500
+
+
+# Vinicius - 08/04/2026
+# Modificado o metodo de PUT para PATCH, pois PATCH é usado para atualizar apenas os campos enviados
+@barbeiros_bp.route("/editar-barbeiro/<int:id>", methods=["PATCH"])
+# Rota para somente os barbeiros logados e administradores, futuramente será adicionado essa verificação de role
+# O barbeiro só pode editar os seus proprios dados, o admin pode editar todos
+# @barbeiro_required
+# @admin_required
+def editar_barbeiro(id):
+    try:
+        # 1. Captura o JSON da requisição
+        body = request.get_json()
+
+        # 2. Validação inicial: O Pydantic verifica tipos e campos extras
+        try:
+            # Pydantic valida o dicionário
+            schema = BarbeiroUpdateSchema(**body)
+        except Exception as e:
+            return {"error": "Dados inválidos", "detalhes": str(e)}, 400
+
+        # 3. Transforma em dicionário pegando APENAS o que foi enviado
+        update_data = schema.model_dump(exclude_unset=True)
+
+        # 4. Condição: Se o dicionário estiver vazio, não há o que atualizar
+        if not update_data:
+            return {"message": "Nenhuma alteração enviada."}, 400
+
+        # 5. Busca o usuário no banco
+        barbeiro = Barbeiro.query.get(id)
+        if not barbeiro:
+            return {"error": "Barbeiro não encontrado"}, 404
+
+        # 6. Algoritmo de Atualização Dinâmica
+        # Em vez de fazer: user.nome = update_data['nome'] manual para cada campo...
+        for key, value in update_data.items():
+            # Vinicius - 08/04/2026
+            # Adicionado tratamento para senha, pois ela precisa ser hasheada
+            if key == "senha":
+                barbeiro.senha = value
+            else:
+                setattr(barbeiro, key, value)  # Atualiza o atributo dinamicamente
+
+        # 7. Persiste no banco
+        db.session.commit()
+
+        return {
+            "message": "Barbeiro atualizado com sucesso!",
+            "campos_alterados": list(update_data.keys()),
+        }, 200
+
+    except Exception as e:
+        return jsonify({"erro": "Erro ao editar barbeiro: " + str(e)}), 500
+
+
+# Vinicius - 09/04/2026
+# Rota simples para deletar um barbeiro
+# Futuramente será usado desativar em vez de deletar por completo
+@barbeiros_bp.route("/deletar-barbeiro/<int:id>", methods=["DELETE"])
+# Rota somente para administradores, comentado para evitar erros na hora de testes
+# @admin_required
+def deletar_barbeiro(id):
+    try:
+        barbeiro = Barbeiro.query.get(id)
+        if not barbeiro:
+            return jsonify({"erro": "Barbeiro não encontrado"}), 404
+
+        db.session.delete(barbeiro)
+        db.session.commit()
+        return jsonify({"msg": "Barbeiro deletado com sucesso"}), 200
+    except Exception as e:
+        return jsonify({"erro": "Erro ao deletar barbeiro: " + str(e)}), 500
+
+
+# Vinicius - 09/04/2026
+# Rota simples para buscar um barbeiro pelo seu ID
+@barbeiros_bp.route("/buscar-barbeiro/<int:id>", methods=["GET"])
+def buscar_barbeiro(id):
+    try:
+        barbeiro = Barbeiro.query.get(id)
+        if not barbeiro:
+            return jsonify({"erro": "Barbeiro não encontrado"}), 404
+
+        barbeiro_dict = {
+            "id": barbeiro.id,
+            "nome": barbeiro.nome,
+            "telefone": barbeiro.telefone,
+            "email": barbeiro.email,
+        }
+        return jsonify({"barbeiro": barbeiro_dict}), 200
+    except Exception as e:
+        return jsonify({"erro": "Erro ao buscar barbeiro: " + str(e)}), 500
+
+
+# Vinicius - 09/04/2026
+# Rota para buscar os agendamentos de um barbeiro
+@barbeiros_bp.route("/<int:id>/agendamentos", methods=["GET"])
+# Rota somente para barbeiros logados e administradores, futuramente será adicionado essa verificação de role
+# O barbeiro só pode ver os seus proprios agendamentos, o admin pode ver todos
+# @barbeiro_required
+# @admin_required
+def buscar_agendamentos_barbeiro(id):
+    try:
+        # Vinicius - 09/04/2026
+        # Busca o barbeiro pelo seu ID
+        barbeiro = Barbeiro.query.get(id)
+        if not barbeiro:
+            return jsonify({"erro": "Barbeiro não encontrado"}), 404
+
+        # Vinicius - 09/04/2026
+        # Captura os parâmetros de paginação
+        page = request.args.get("page", 1, type=int)
+        per_page = request.args.get("per_page", 10, type=int)
+
+        # Vinicius - 09/04/2026
+        # Busca os agendamentos do barbeiro
+        agendamentos = Agendamento.query.filter_by(barbeiro_id=id).paginate(
+            page=page, per_page=per_page, error_out=False
+        )
+
+        # Vinicius - 09/04/2026
+        # Verifica se foi encontrado algum agendamento
+        if not agendamentos:
+            return (
+                jsonify({"erro": "Nenhum agendamento encontrado para o barbeiro"}),
+                404,
+            )
+
+        # Vinicius - 09/04/2026
+        # Transforma os agendamentos em dicionários
+        agendamentos_dict = [
+            {
+                "id": a.id,
+                "cliente_id": a.cliente_id,
+                "barbeiro_id": a.barbeiro_id,
+                "data_hora": a.data_hora,
+                "servico": a.servico,
+            }
+            for a in agendamentos
+        ]
+        # Vinicius - 09/04/2026
+        # Retorna os agendamentos em JSON
+        return (
+            jsonify(
+                {
+                    "agendamentos": agendamentos_dict,
+                    "total": agendamentos.total,
+                    "pagina": agendamentos.page,
+                    "per_page": agendamentos.per_page,
+                    "tem_proxima": agendamentos.has_next,
+                    "tem_pagina_anterior": agendamentos.has_prev,
+                }
+            ),
+            200,
+        )
+    except Exception as e:
+        return (
+            jsonify({"erro": "Erro ao buscar agendamentos do barbeiro: " + str(e)}),
+            500,
+        )

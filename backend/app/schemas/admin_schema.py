@@ -5,21 +5,28 @@ from pydantic import BaseModel, Field, EmailStr, field_validator
 
 
 class AdminSchema(BaseModel):
-    nome: str = Field(..., max_length=100, description="Nome do administrador")
-    email: EmailStr = Field(..., max_length=100, description="E-mail do administrador")
-    senha: str = Field(
-        ..., min_length=6, description="Senha de acesso do administrador"
+    nome: str = Field(
+        ..., min_length=3, max_length=100, description="Nome do administrador"
     )
+    email: EmailStr = Field(
+        ..., min_length=10, max_length=100, description="E-mail do administrador"
+    )
+    senha: str = Field(
+        ...,
+        min_length=6,
+        max_length=256,
+        description="Senha de acesso do administrador",
+    )
+
     role: str = Field(
         default="gerente",
-        max_length=20,
+        max_length=10,
         description="Nível de permissão (admin ou gerente)",
     )
-    ativo: bool = Field(default=True, description="Status da conta (ativo ou inativo)")
 
     model_config = {"extra": "forbid", "str_lowercase": True}
 
-    @field_validator("nome", "role", mode="before")
+    @field_validator("nome", mode="before")
     @classmethod
     def str_validator(cls, value):
         if isinstance(value, str):
