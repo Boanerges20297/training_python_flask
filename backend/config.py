@@ -4,22 +4,51 @@ from datetime import timedelta
 # Pega o caminho da raiz do projeto
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
+
 class Config:
     """Configurações gerais da aplicação"""
-    
+
     # SQLite - banco de dados local em arquivo no diretório instances
     # Usamos o caminho absoluto para garantir que o Flask encontre o arquivo
-    SQLALCHEMY_DATABASE_URI = f'sqlite:///{os.path.join(BASE_DIR, "instances", "barba_byte.db")}'
-    
+    SQLALCHEMY_DATABASE_URI = (
+        f'sqlite:///{os.path.join(BASE_DIR, "instances", "barba_byte.db")}'
+    )
+
     # Desabilita avisos desnecessários
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    
+
     # Chave secreta para sessões e cookies (importante!)
     # Em produção, use uma chave forte gerada aleatoriamente
-    SECRET_KEY = os.environ.get('vsmm04994mSKKFIeieio3kl') or 'dev-key-mudar-em-producao'
-    
+    SECRET_KEY = (
+        os.environ.get("vsmm04994mSKKFIeieio3kl") or "dev-key-mudar-em-producao"
+    )
+
     # Tempo de sessão (quanto tempo fica logado sem atividade)
     PERMANENT_SESSION_LIFETIME = timedelta(days=3)
-    
+
     # JSON - configurações para respostas JSON
     JSON_SORT_KEYS = False  # Não ordena as chaves (mais legível)
+
+    # Vinicius - 02/04/2026
+    # Modo desenvolvimento
+    DEBUG = True
+
+    # Vinicius - 02/04/2026
+    # Configuração do Rate Limiter
+    # Variavel para habilitar/desabilitar o rate limiter
+    RATELIMIT_ENABLED = False
+    # Variavel para configurar o storage do rate limiter
+    RATELIMIT_STORAGE_URL = "memory://"
+    # Variavel para configurar o limite padrão de requisições por minuto
+    RATELIMIT_DEFAULT_LIMIT = "3/minute"
+    # Variavel para configurar a estratégia do rate limiter
+    RATELIMIT_STRATEGY = "fixed-window"
+    # Variavel para configurar se os headers do rate limiter devem ser habilitados
+    RATELIMIT_HEADERS_ENABLED = True
+
+    # Desabilitar verificação de payload:
+    VALIDATE_PAYLOAD = False
+
+    # Vinicius - 09/04/2026
+    # Chave secreta para o JWT
+    JWT_SECRET_KEY = "chave-secreta-do-jwt-mudar-em-producao"
