@@ -1,6 +1,7 @@
 from flask import Flask, jsonify
-from config import Config
+from config import DevelopmentConfig, ProductionConfig
 from app.extensions import db, limiter, jwt, cors
+from app.jwt_callbacks import register_jwt_handlers
 import os
 
 
@@ -27,16 +28,18 @@ def create_app():
         pass
 
     # 2. Carregar configurações do config.py
-    app.config.from_object(Config)
+    app.config.from_object(DevelopmentConfig)
 
     # Vinicius - 02/04/2026
     # Inicializa o rate limiter
-    if Config.RATELIMIT_ENABLED:
+    if app.config["RATELIMIT_ENABLED"]:
         limiter.init_app(app)
 
     jwt.init_app(app)
     cors.init_app(app)
     db.init_app(app)
+
+    register_jwt_handlers(jwt)
 
     # 4. Registrar blueprints (Rotas Modulares)
     from app.routes.client_routes import clientes_bp

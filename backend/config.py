@@ -26,10 +26,6 @@ class Config:
     # JSON - configurações para respostas JSON
     JSON_SORT_KEYS = False  # Não ordena as chaves (mais legível)
 
-    # Vinicius - 02/04/2026
-    # Configuração do Rate Limiter
-    # Variavel para configurar o storage do rate limiter
-    RATELIMIT_STORAGE_URL = "memory://"
     # Variavel para configurar o limite padrão de requisições por minuto
     RATELIMIT_DEFAULT_LIMIT = "3/minute"
     # Variavel para configurar a estratégia do rate limiter
@@ -37,17 +33,34 @@ class Config:
     # Variavel para configurar se os headers do rate limiter devem ser habilitados
     RATELIMIT_HEADERS_ENABLED = True
 
+    JWT_TOKEN_LOCATION = ["cookies"]
+    JWT_COOKIE_CSRF_PROTECT = True
+    JWT_ACCESS_COOKIE_PATH = "/"
+    JWT_REFRESH_COOKIE_PATH = "/api/auth/refresh"
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=15)
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=7)
+
 
 class DevelopmentConfig(Config):
     """Configurações de desenvolvimento"""
 
     DEBUG = True
+
+    SQLALCHEMY_DATABASE_URI = (
+        f'sqlite:///{os.path.join(BASE_DIR, "instances", "barba_byte.db")}'
+    )
+
     # Variavel para habilitar/desabilitar o rate limiter
     RATELIMIT_ENABLED = False
+    RATELIMIT_STORAGE_URL = "memory://"
     # Desabilitar verificação de payload:
     VALIDATE_PAYLOAD = False
-    # Chave secreta para o JWT
+
+    SECURITY_JWT_ENABLED = False
+    JWT_COOKIE_SAMESITE = "Lax"
+    JWT_COOKIE_SECURE = False
     JWT_SECRET_KEY = "chave-secreta-do-jwt-mudar-em-producao"
+
     SECRET_KEY = "chave-secreta"
 
 
@@ -56,7 +69,17 @@ class ProductionConfig(Config):
 
     DEBUG = False
     # Variavel para habilitar/desabilitar o rate limiter
+
+    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
+
     RATELIMIT_ENABLED = True
+    RATELIMIT_STORAGE_URL = os.environ.get("REDIS_URL")
+
     VALIDATE_PAYLOAD = True
+
+    SECURITY_JWT_ENABLED = True
+    JWT_COOKIE_SECURE = True
+    JWT_COOKIE_SAMESITE = "Strict"
     JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
+
     SECRET_KEY = os.environ.get("SECRET_KEY")
