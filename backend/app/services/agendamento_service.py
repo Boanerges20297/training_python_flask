@@ -1,7 +1,8 @@
 from app import db
-from app.models.agendamento_model import Agendamento
-from app.schemas.agendamento_schema import AgendamentoCreate
-from datetime import datetime
+from app.models.agendamento import Agendamento
+from app.schemas.agendamento_schema import AgendamentoCreate, AgendamentoUpdateSchema
+from app.models.servico import Servico
+from datetime import datetime, timedelta
 
 
 class AgendamentoService:
@@ -105,7 +106,7 @@ class AgendamentoService:
 
     @staticmethod
     def editar_agendamento(
-        agendamento_id: int, dados: AgendamentoUpdate
+        agendamento_id: int, dados: AgendamentoUpdateSchema
     ) -> Agendamento:
         # Renomeei para agendamento_atual para evitar confusão no loop lá embaixo
         agendamento_atual = Agendamento.query.get_or_404(agendamento_id)
