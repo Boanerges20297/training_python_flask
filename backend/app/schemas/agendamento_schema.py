@@ -15,6 +15,7 @@ class AgendamentoBase(BaseModel):
     )
     barbeiro_id: int = Field(..., gt=0, description="ID único do barbeiro")
     servico_id: int = Field(..., gt=0, description="ID único do serviço")
+    cliente_id: int = Field(..., gt=0)
 
 
 # --- Contratos de Entrada (Inputs) ---
@@ -24,7 +25,6 @@ class AgendamentoCreate(AgendamentoBase):
     Recebe os campos base + dados específicos de quem está agendando.
     """
 
-    cliente_id: int = Field(..., gt=0)
     observacoes: Optional[str] = Field(None, max_length=500, description="Notas extras")
 
 
@@ -42,6 +42,7 @@ class AgendamentoResponse(AgendamentoBase):
         description="Status atual (pendente, confirmado, concluido, cancelado)",
     )
     data_criacao: datetime = Field(..., description="Data de registro no sistema")
+    observacoes: str = Field(..., max_length=500, description="Notas extras")
 
     model_config = ConfigDict(from_attributes=True)
 

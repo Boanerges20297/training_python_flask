@@ -1,6 +1,10 @@
 from app import db
 from app.models.agendamento import Agendamento
-from app.schemas.agendamento_schema import AgendamentoCreate, AgendamentoUpdateSchema
+from app.schemas.agendamento_schema import (
+    AgendamentoCreate,
+    AgendamentoUpdateSchema,
+    AgendamentoResponse,
+)
 from app.models.servico import Servico
 from datetime import datetime, timedelta
 
@@ -13,7 +17,7 @@ class AgendamentoService:
     """
 
     @staticmethod
-    def criar_agendamento(dados: AgendamentoCreate) -> Agendamento:
+    def criar_agendamento(dados: AgendamentoCreate) -> AgendamentoResponse:
         """
         Entrada: Objeto AgendamentoCreate validado pelo Pydantic.
         Processamento:
@@ -107,7 +111,7 @@ class AgendamentoService:
     @staticmethod
     def editar_agendamento(
         agendamento_id: int, dados: AgendamentoUpdateSchema
-    ) -> Agendamento:
+    ) -> AgendamentoResponse:
         # Renomeei para agendamento_atual para evitar confusão no loop lá embaixo
         agendamento_atual = Agendamento.query.get_or_404(agendamento_id)
 
