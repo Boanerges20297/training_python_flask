@@ -5,7 +5,7 @@ from app.models.cliente import Cliente
 from app.models.barbeiro import Barbeiro
 from app import db
 from datetime import datetime, timedelta
-from app.schemas.agendamento_schema import AgendamentoSchema, AgendamentoUpdateSchema
+from app.schemas.agendamento_schema import AgendamentoCreate, AgendamentoUpdateSchema
 from pydantic import ValidationError
 
 agendamento_bp = Blueprint("agendamento", __name__, url_prefix="/api/agendamento")

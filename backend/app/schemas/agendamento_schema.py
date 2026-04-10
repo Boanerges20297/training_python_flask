@@ -63,7 +63,7 @@ class AgendamentoListResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class AgendamentoUpdate(BaseModel):
+class AgendamentoUpdateSchema(BaseModel):
     """
     Schema para atualização parcial (PATCH).
     Todos os campos são opcionais para permitir que apenas
