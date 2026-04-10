@@ -17,12 +17,6 @@ class Config:
     # Desabilita avisos desnecessários
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    # Chave secreta para sessões e cookies (importante!)
-    # Em produção, use uma chave forte gerada aleatoriamente
-    SECRET_KEY = (
-        os.environ.get("vsmm04994mSKKFIeieio3kl") or "dev-key-mudar-em-producao"
-    )
-
     # Tempo de sessão (quanto tempo fica logado sem atividade)
     PERMANENT_SESSION_LIFETIME = timedelta(days=3)
 
@@ -30,13 +24,7 @@ class Config:
     JSON_SORT_KEYS = False  # Não ordena as chaves (mais legível)
 
     # Vinicius - 02/04/2026
-    # Modo desenvolvimento
-    DEBUG = True
-
-    # Vinicius - 02/04/2026
     # Configuração do Rate Limiter
-    # Variavel para habilitar/desabilitar o rate limiter
-    RATELIMIT_ENABLED = False
     # Variavel para configurar o storage do rate limiter
     RATELIMIT_STORAGE_URL = "memory://"
     # Variavel para configurar o limite padrão de requisições por minuto
@@ -46,9 +34,26 @@ class Config:
     # Variavel para configurar se os headers do rate limiter devem ser habilitados
     RATELIMIT_HEADERS_ENABLED = True
 
+
+class DevelopmentConfig(Config):
+    """Configurações de desenvolvimento"""
+
+    DEBUG = True
+    # Variavel para habilitar/desabilitar o rate limiter
+    RATELIMIT_ENABLED = False
     # Desabilitar verificação de payload:
     VALIDATE_PAYLOAD = False
-
-    # Vinicius - 09/04/2026
     # Chave secreta para o JWT
     JWT_SECRET_KEY = "chave-secreta-do-jwt-mudar-em-producao"
+    SECRET_KEY = "chave-secreta"
+
+
+class ProductionConfig(Config):
+    """Configurações de produção"""
+
+    DEBUG = False
+    # Variavel para habilitar/desabilitar o rate limiter
+    RATELIMIT_ENABLED = True
+    VALIDATE_PAYLOAD = True
+    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
+    SECRET_KEY = os.environ.get("SECRET_KEY")
