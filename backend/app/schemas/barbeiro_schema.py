@@ -14,11 +14,11 @@ class BarbeiroSchema(BaseModel):
     )
     email: EmailStr = Field(..., max_length=100, description="E-mail do barbeiro")
     telefone: str = Field(
-        ..., max_length=20, description="Telefone de contato do barbeiro"
+        ..., min_length=10, max_length=20, description="Telefone de contato do barbeiro"
     )
     senha: str = Field(..., min_length=6, description="Senha de acesso do barbeiro")
 
-    model_config = {"extra": "forbid", "str_lowercase": True}
+    model_config = {"extra": "forbid"}
 
     @field_validator("nome", "especialidade", mode="before")
     @classmethod
@@ -34,6 +34,12 @@ class BarbeiroSchema(BaseModel):
             raise ValueError(
                 "Telefone inválido (deve conter apenas números e símbolos como +, -, (), espaços)"
             )
+        # Remove caracteres comuns de máscara para validar apenas os números
+        value = re.sub(r"\D", "", value)
+
+        # Remove os espaços em branco, caso tenha, do telefone
+        value = value.strip()
+
         return value
 
 
@@ -64,7 +70,9 @@ class BarbeiroUpdateSchema(BaseModel):
         description="Senha de acesso do barbeiro",
     )
 
-    model_config = {"extra": "forbid", "str_lowercase": True}
+    # Vinicius - 09/04/2026
+    # Removido o str_lowercase devido que poderia dar problemas (ex: deixar caracteres da senha em minúsculo)
+    model_config = {"extra": "forbid"}
 
     @field_validator("nome", "especialidade", mode="before")
     @classmethod
@@ -78,6 +86,7 @@ class BarbeiroUpdateSchema(BaseModel):
     def validar_telefone(cls, value):
         # Remove caracteres comuns de máscara para validar apenas os números
         numeros = re.sub(r"\D", "", value)
+        print(numeros)
 
         # Validação: Um telefone brasileiro tem entre 10 (fixo) e 11 (celular) dígitos
         if not (10 <= len(numeros) <= 11):

@@ -23,7 +23,7 @@ class ClienteSchema(BaseModel):
         description="Senha do cliente (mínimo 6 caracteres)",
     )
 
-    model_config = {"extra": "forbid", "str_lowercase": True}
+    model_config = {"extra": "forbid"}
 
     @field_validator("nome", mode="before")
     @classmethod
@@ -53,7 +53,7 @@ class ClienteUpdateSchema(BaseModel):
         default=None, min_length=3, max_length=100, description="Nome do serviço"
     )
     telefone: str | None = Field(
-        default=None, min_length=11, max_length=20, description="Telefone do serviço"
+        default=None, min_length=10, max_length=20, description="Telefone do serviço"
     )
     email: EmailStr | None = Field(
         default=None, min_length=10, max_length=100, description="Email do serviço"
@@ -66,8 +66,9 @@ class ClienteUpdateSchema(BaseModel):
     )
 
     # Adicionado 'extra': 'forbid' para que o campo não aceite campos extras
-    # Adicionado 'str_lowercase': True para que o campo string seja convertido para minúsculo
-    model_config = {"extra": "forbid", "str_lowercase": True}
+    # Vinicius - 09/04/2026
+    # Removido o str_lowercase devido que poderia dar problemas (ex: deixar caracteres da senha em minúsculo)
+    model_config = {"extra": "forbid"}
 
     # Adicionado 'str_validator' para validar os campos string, fazendo com que todos os campos string sejam convertidos para minúsculo
     @field_validator("nome", mode="before")
@@ -84,9 +85,8 @@ class ClienteUpdateSchema(BaseModel):
         # Remove caracteres comuns de máscara para validar apenas os números
         numeros = re.sub(r"\D", "", value)
 
-        # Validação: Um telefone brasileiro tem entre 10 (fixo) e 11 (celular) dígitos
-        if not (10 <= len(numeros) <= 11):
-            raise ValueError("O telefone deve conter entre 10 e 11 dígitos (com DDD)")
+        # Remove os espaços em branco, caso tenha, do telefone
+        value = value.strip()
 
         # Opcional: Você pode retornar apenas os números limpos para o banco
         return numeros

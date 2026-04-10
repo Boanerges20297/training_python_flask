@@ -118,6 +118,7 @@ def criar_barbeiro():
                         "nome": barbeiro.nome,
                         "telefone": barbeiro.telefone,
                         "email": barbeiro.email,
+                        "especialidade": barbeiro.especialidade,
                         "msg": "Barbeiro criado com sucesso",
                     }
                 }
@@ -126,6 +127,7 @@ def criar_barbeiro():
         )
     except Exception as e:
         return jsonify({"erro": "Erro ao incluir barbeiro: " + str(e)}), 500
+
 
 # Vinicius - 08/04/2026
 # Modificado o metodo de PUT para PATCH, pois PATCH é usado para atualizar apenas os campos enviados

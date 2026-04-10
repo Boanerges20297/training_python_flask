@@ -24,16 +24,18 @@ class AdminSchema(BaseModel):
         description="Nível de permissão (admin ou gerente)",
     )
 
-    model_config = {"extra": "forbid", "str_lowercase": True}
+    # Vinicius - 09/04/2026
+    # Removido o str_lowercase devido que poderia dar problemas (ex: deixar caracteres da senha em minúsculo)
+    model_config = {"extra": "forbid"}
 
-    @field_validator("nome", mode="before")
+    @field_validator("nome", "role", mode="before")
     @classmethod
     def str_validator(cls, value):
         if isinstance(value, str):
             return value.lower()
         return value
 
-    @field_validator("role")
+    @field_validator("role", mode="before")
     @classmethod
     def validar_role(cls, value):
         if value not in ["admin", "gerente"]:
