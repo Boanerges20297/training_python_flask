@@ -1,64 +1,106 @@
 from flask import Blueprint, request, jsonify
-from app.models.admin import Admin
-from app import db
-from datetime import datetime
-from pydantic import ValidationError
-from app.schemas.auth_schema import LoginSchema
+from flask_jwt_extended import (
+    set_access_cookies,
+    set_refresh_cookies,
+    unset_jwt_cookies,
+    jwt_required,
+    get_jwt_identity,
+    get_jwt,
+)
+
+# Importamos o nosso novo serviço
+from app.services.auth_service import AuthService, AuthServiceException
+from app.utils.error_formatter import formatar_erros_pydantic
+from app.schemas.auth_schema import LoginRequest
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
 
 @auth_bp.route("/login", methods=["POST"])
 def login():
-    # Vinicius - 08/04/2026
-    # Adicionado try except para evitar que o sistema caia caso o payload seja inválido
     try:
-        # Vinicius - 08/04/2026
-        # Adicionado validação de payload para garantir que os dados enviados estejam corretos
-        data = LoginSchema(**request.get_json())
+        try:
+            data = LoginRequest(**request.get_json())
+        except Exception as e:
+            erros = formatar_erros_pydantic(e)
+            return jsonify(erros), 400
 
-        admin = Admin.query.filter_by(email=data.email).first()
+        # 1. Delega a regra de negócio para o Serviço
+        auth_data = AuthService.authenticate_user(data)
 
-        # Referencia qual função em Admin? função não encontrada verificar_senha
-        # Vinicius - 04/04/2026
-        # Referência à função herdada do mixin (HashSenhaMixin) no modelo Admin
-        if admin and admin.verificar_senha(data.senha):
-            if not admin.ativo:
-                return jsonify({"erro": "Conta desativada"}), 403
+        # 2. Lida com a falha (Regra de HTTP)
+        if not auth_data:
+            return jsonify({"msg": "Credenciais inválidas"}), 401
 
-            # Atualizar último login
-            admin.ultimo_login = datetime.utcnow()
-            db.session.commit()
+        # 3. Lida com o sucesso (Monta a resposta e injeta cookies)
+        response = jsonify(
+            {"msg": "Login realizado com sucesso", "user": auth_data["user"]}
+        )
 
-            # No futuro poderiamos usar JWT aqui, mas por agora retornamos um token simples
-            return (
-                jsonify(
-                    {
-                        "msg": "Login bem-sucedido",
-                        "usuario": {
-                            "id": admin.id,
-                            "nome": admin.nome,
-                            "email": admin.email,
-                            "role": admin.role,
-                        },
-                        "token": "mock-session-token-abc-123",
-                    }
-                ),
-                200,
-            )
+        set_access_cookies(response, auth_data["access_token"])
+        set_refresh_cookies(response, auth_data["refresh_token"])
 
-        return jsonify({"erro": "Email ou senha inválidos"}), 401
+        return response, 200
 
-    # Vinicius - 08/04/2026
-    # Adicionado tratamento de erro para ValidationError
-    except ValidationError as e:
-        return jsonify({"erro": "Erro ao incluir cliente: " + str(e)}), 400
-    # Vinicius - 08/04/2026
-    # Adicionado tratamento de erro para Exception
+    except AuthServiceException as e:
+        return jsonify({"Erro": str(e)}), 401
+
     except Exception as e:
-        return jsonify({"erro": "Erro ao incluir cliente: " + str(e)}), 500
+        return (
+            jsonify({"Erro": "Erro ao fazer login, entre em contato com o suporte."}),
+            500,
+        )
+
+
+@auth_bp.route("/refresh", methods=["POST"])
+@jwt_required(refresh=True)
+def refresh():
+    try:
+        # Extrai os dados do request atual
+        current_user_id = get_jwt_identity()
+        role = get_jwt().get("role")
+
+        # Delega a criação para o Serviço
+        new_access_token = AuthService.renew_access_token(current_user_id, role)
+
+        response = jsonify({"msg": "Sessão renovada silenciosamente"})
+        set_access_cookies(response, new_access_token)
+
+        return response, 200
+
+    except Exception as e:
+        return (
+            jsonify(
+                {"Erro": "Erro ao renovar sessão, entre em contato com o suporte."}
+            ),
+            500,
+        )
 
 
 @auth_bp.route("/logout", methods=["POST"])
+@jwt_required()
 def logout():
-    return jsonify({"msg": "Logout realizado com sucesso"}), 200
+    try:
+        # Extrai o ID do token e manda o Serviço revogar
+        jti = get_jwt()["jti"]
+        AuthService.revoke_token(jti)
+
+        # Limpa os cookies (Regra de HTTP)
+        response = jsonify({"msg": "Logout efetuado. Cookies limpos."})
+        unset_jwt_cookies(response)
+
+        return response, 200
+    except Exception as e:
+        return (
+            jsonify({"Erro": "Erro ao fazer logout, entre em contato com o suporte."}),
+            500,
+        )
+
+
+@auth_bp.route("/protected", methods=["GET"])
+@jwt_required()
+def protected():
+    # Acessa os dados do usuário logado
+    current_user_id = get_jwt_identity()
+    role = get_jwt().get("role")
+    return jsonify(logged_in_as=current_user_id, role=role), 200
