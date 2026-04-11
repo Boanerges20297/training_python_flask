@@ -27,6 +27,10 @@ class TokenResponse(BaseModel):
     refresh_token: str = Field(description="Token de refresh")
 
 
+# Vinicius 11/04/2026
+# Excluido o AuthServiceResponse para seguir sentido no codigo
 class LoginResponse(BaseModel):
     msg: str = Field(description="Mensagem de sucesso")
     user: UserResponse
+    # Vinicius 11/04/2026
+    # Removido o tokens do LoginResponse e deixar a responsabilidade somente para o TokenResponse
