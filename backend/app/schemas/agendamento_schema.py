@@ -77,3 +77,12 @@ class AgendamentoUpdateSchema(BaseModel):
     observacoes: Optional[str] = Field(None, max_length=500)
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class AgendamentoUpdateStatusSchema(BaseModel):
+    status: str = Field(
+        ...,
+        max_length=20,
+        description="Status atual (pendente, confirmado, concluido, cancelado)",
+    )
+    model_config = ConfigDict(from_attributes=True)

@@ -3,7 +3,11 @@ from app.models.agendamento_model import Agendamento
 from app.models.servico_model import Servico
 from app.models.cliente_model import Cliente
 from app.models.barbeiro_model import Barbeiro
-from app.schemas.agendamento_schema import AgendamentoCreate
+from app.schemas.agendamento_schema import (
+    AgendamentoCreate,
+    AgendamentoUpdateStatusSchema,
+    AgendamentoUpdateSchema,
+)
 from datetime import datetime, timedelta
 from config import Config
 
@@ -135,7 +139,7 @@ class AgendamentoService:
         return novo_agendamento
 
     @staticmethod
-    def listar_agendamentos(page: int, per_page: int) -> AgendamentoListResponse:
+    def listar_agendamentos(page: int, per_page: int) -> list[Agendamento]:
         """
         Listagem com paginação simples para o front-end.
         Retorna o objeto de paginação do Flask-SQLAlchemy.
@@ -147,8 +151,49 @@ class AgendamentoService:
         return paginacao
 
     @staticmethod
+    def buscar_agendamento(
+        agendamento_id: int, role: str, current_user_id: int
+    ) -> Agendamento:
+        """
+        Busca um agendamento pelo ID.
+        """
+        # Vinicius - 11/04/2026
+        # Adicionado verificações de acesso negado para barbeiro e cliente
+        if role != "admin":
+            if role == "barbeiro":
+                # Verifica se o agendamento está vinculado ao id do barbeiro, se não, não pode alterar agendamento dos outros barbeiros
+                if (
+                    Agendamento.query.filter_by(
+                        barbeiro_id=current_user_id, id=agendamento_id
+                    ).first()
+                    is None
+                ):
+                    raise AcessoNegadoError(
+                        "Acesso negado. O barbeiro só pode buscar agendamentos de seus clientes."
+                    )
+            if role == "cliente":
+                # Verifica se o agendamento está vinculado ao id do cliente, se não, não pode alterar agendamento dos outros clientes
+                if (
+                    Agendamento.query.filter_by(
+                        cliente_id=current_user_id, id=agendamento_id
+                    ).first()
+                    is None
+                ):
+                    raise AcessoNegadoError(
+                        "Acesso negado. O cliente só pode buscar agendamentos seus."
+                    )
+
+        agendamento = Agendamento.query.get(agendamento_id)
+        if not agendamento:
+            raise ValueError("Agendamento não encontrado")
+        return agendamento
+
+    @staticmethod
     def editar_agendamento(
-        agendamento_id: int, dados: AgendamentoUpdate, role: str, current_user_id: int
+        agendamento_id: int,
+        dados: AgendamentoUpdateSchema,
+        role: str,
+        current_user_id: int,
     ) -> Agendamento:
 
         # Vinicius - 11/04/2026
@@ -276,7 +321,12 @@ class AgendamentoService:
         return agendamento_atual
 
     @staticmethod
-    def atualizar_status(agendamento_id: int, novo_status: str) -> Agendamento:
+    def atualizar_status(
+        agendamento_id: int,
+        dados: AgendamentoUpdateStatusSchema,
+        role: str,
+        current_user_id: int,
+    ) -> Agendamento:
         """
         Descrição Metodológica de Transição de Estado.
         - Entrada: ID do agendamento e a string do novo status desejado.
@@ -286,6 +336,32 @@ class AgendamentoService:
             3. Aplica a mudança de estado no banco de dados.
         - Saída: Objeto Agendamento com o status atualizado.
         """
+        # Vinicius - 11/04/2026
+        # Adicionado verificações de acesso negado para barbeiro e cliente
+        if role != "admin":
+            if role == "barbeiro":
+                # Verifica se o agendamento está vinculado ao id do barbeiro, se não, não pode alterar agendamento dos outros barbeiros
+                if (
+                    Agendamento.query.filter_by(
+                        barbeiro_id=current_user_id, id=agendamento_id
+                    ).first()
+                    is None
+                ):
+                    raise AcessoNegadoError(
+                        "Acesso negado. O barbeiro só pode alterar status de agendamentos para seus clientes."
+                    )
+            if role == "cliente":
+                # Verifica se o agendamento está vinculado ao id do cliente, se não, não pode alterar agendamento dos outros clientes
+                if (
+                    Agendamento.query.filter_by(
+                        cliente_id=current_user_id, id=agendamento_id
+                    ).first()
+                    is None
+                ):
+                    raise AcessoNegadoError(
+                        "Acesso negado. O cliente só pode alterar status de seus próprios agendamentos."
+                    )
+
         agendamento = Agendamento.query.get_or_404(agendamento_id)
 
         # 1. Lista de status permitidos (Segurança)
@@ -296,8 +372,8 @@ class AgendamentoService:
             Agendamento.STATUS_CONCLUIDO,
         ]
 
-        if novo_status not in STATUS_PERMITIDOS:
-            raise ValueError(f"Status '{novo_status}' é inválido.")
+        if dados.status not in STATUS_PERMITIDOS:
+            raise ValueError(f"Status '{dados.status}' é inválido.")
 
         # 2. Regra de Negócio: Imutabilidade de estados finais
         # Se já está concluído ou cancelado, não deve voltar atrás (evita fraudes/erros)
@@ -310,7 +386,7 @@ class AgendamentoService:
             )
 
         # 3. Atualização
-        agendamento.status = novo_status
+        agendamento.status = dados.status
         db.session.commit()
 
         return agendamento
@@ -321,6 +397,9 @@ class AgendamentoService:
         Atenção: Use apenas para erros administrativos graves.
         Remove permanentemente o dado do banco.
         """
+        # Vinicius - 11/04/2026
+        # Adicionado verificações de acesso negado para barbeiro e cliente
+
         agendamento = Agendamento.query.get_or_404(agendamento_id)
         db.session.delete(agendamento)
         db.session.commit()
