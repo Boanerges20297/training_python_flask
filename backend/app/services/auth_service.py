@@ -8,6 +8,7 @@ from app.schemas.auth_schema import (
     UserResponse,
     TokenResponse,
 )
+from app.extensions import app_logger
 
 MOCK_BLOCKLIST = set()
 
@@ -38,9 +39,11 @@ class AuthService:
             user = cliente
             role = "cliente"
         else:
+            app_logger.warning("Tentativa de login com email não encontrado", extra={"email_tentado": email})
             raise AuthServiceException("Credenciais inválidas")
 
         if user and not user.verificar_senha(senha):
+            app_logger.warning("Tentativa de login falhou por senha incorreta", extra={"email_tentado": email, "role": role})
             raise AuthServiceException("Credenciais inválidas")
 
         user_id = str(user.id)
@@ -76,6 +79,7 @@ class AuthService:
     @staticmethod
     def revoke_token(jti: str) -> None:
         """Adiciona o ID do token na Blocklist (futuro Redis)."""
+        app_logger.info("Token JWT revogado via Logout", extra={"jti": jti})
         MOCK_BLOCKLIST.add(jti)
 
     # Vinicius 11/04/2026
