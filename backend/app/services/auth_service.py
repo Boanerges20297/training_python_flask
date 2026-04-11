@@ -1,8 +1,10 @@
 from flask_jwt_extended import create_access_token, create_refresh_token
 from app.models.admin import Admin
 from app.models.barbeiro import Barbeiro
-from app.models.cliente import Cliente
-from app.schemas.auth_schema import LoginRequest, LoginResponse
+from app.models.cliente import Cliente          #josue minima alteração
+from app.schemas.auth_schema import LoginRequest, LoginResponse, AuthServiceResponse
+
+
 
 MOCK_BLOCKLIST = set()
 

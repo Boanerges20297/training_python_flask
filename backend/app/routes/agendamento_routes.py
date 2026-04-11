@@ -16,7 +16,8 @@ def criar_agendamento():
     try:
         # Vinicius - 05/04/2026
         # Adicionado validação de payload para garantir que os dados enviados estejam corretos
-        data = AgendamentoSchema(**request.get_json())
+        #josue minima alteração
+        data = AgendamentoCreate(**request.get_json())
         # Se existir um agendamento entre a data de inicio e fim do serviço, retornar erro
         # Vinicius - 05/04/2026
         # Adicionado verificação se o serviço existe
