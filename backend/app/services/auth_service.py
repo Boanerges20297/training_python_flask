@@ -2,7 +2,7 @@ from flask_jwt_extended import create_access_token, create_refresh_token
 from app.models.admin import Admin
 from app.models.barbeiro import Barbeiro
 from app.models.cliente import Cliente
-from app.schemas.auth_schema import LoginRequest, LoginResponse
+from app.schemas.auth_schema import LoginRequest, LoginResponse, AuthServiceResponse, UserResponse, TokenResponse
 
 MOCK_BLOCKLIST = set()
 
@@ -45,11 +45,10 @@ class AuthService:
             identity=user_id, additional_claims=additional_claims
         )
 
-        return {
-            "user": {"id": user_id, "role": role},
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-        }
+        return AuthServiceResponse(
+            user=UserResponse(id=user_id, role=role),
+            tokens=TokenResponse(access_token=access_token, refresh_token=refresh_token)
+        )
 
     @staticmethod
     def renew_access_token(current_user_id, role):

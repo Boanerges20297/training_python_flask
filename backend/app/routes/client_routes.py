@@ -2,8 +2,8 @@
 from flask import Blueprint, jsonify, request
 from app.models.cliente import Cliente
 from app import db
-from app.utils.decorators import role_required
-from flask_jwt_extended import jwt_required
+from app.utils.decorators import admin_required
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from app.schemas.client_schema import ClienteSchema, ClienteUpdateSchema
 
 clientes_bp = Blueprint("clientes", __name__, url_prefix="/api/clientes")
@@ -130,7 +130,19 @@ def criar_cliente():
 # Vinicius - 08/04/2026
 # Modificado o metodo de PUT para PATCH, pois PATCH é usado para atualizar apenas os campos enviados
 @clientes_bp.route("/editar-cliente/<int:id>", methods=["PATCH"])
+@jwt_required()
 def editar_cliente(id):
+    current_user_id = int(get_jwt_identity())
+    role = get_jwt().get("role")
+
+    if role != "admin" and current_user_id != id:
+        return (
+            jsonify(
+                {"erro": "Acesso negado. Você só pode editar o seu próprio perfil."}
+            ),
+            403,
+        )
+
     try:
         # 1. Captura o JSON da requisição
         body = request.get_json()
@@ -177,7 +189,8 @@ def editar_cliente(id):
 
 
 @clientes_bp.route("/deletar-cliente/<int:id>", methods=["DELETE"])
-@role_required(["admin"])
+@jwt_required()
+@admin_required
 def deletar_cliente(id):
     try:
         cliente = Cliente.query.get(id)

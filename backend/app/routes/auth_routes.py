@@ -34,11 +34,11 @@ def login():
 
         # 3. Lida com o sucesso (Monta a resposta e injeta cookies)
         response = jsonify(
-            {"msg": "Login realizado com sucesso", "user": auth_data["user"]}
+            {"msg": "Login realizado com sucesso", "user": auth_data.user.model_dump()}
         )
 
-        set_access_cookies(response, auth_data["access_token"])
-        set_refresh_cookies(response, auth_data["refresh_token"])
+        set_access_cookies(response, auth_data.tokens.access_token)
+        set_refresh_cookies(response, auth_data.tokens.refresh_token)
 
         return response, 200
 
@@ -97,10 +97,3 @@ def logout():
         )
 
 
-@auth_bp.route("/protected", methods=["GET"])
-@jwt_required()
-def protected():
-    # Acessa os dados do usuário logado
-    current_user_id = get_jwt_identity()
-    role = get_jwt().get("role")
-    return jsonify(logged_in_as=current_user_id, role=role), 200
