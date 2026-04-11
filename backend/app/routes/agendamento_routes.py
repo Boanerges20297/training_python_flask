@@ -7,16 +7,28 @@ from app import db
 from datetime import datetime, timedelta
 from app.schemas.agendamento_schema import AgendamentoCreate, AgendamentoUpdateSchema
 from pydantic import ValidationError
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 
 agendamento_bp = Blueprint("agendamento", __name__, url_prefix="/api/agendamento")
 
 
 @agendamento_bp.route("/criar-agendamento", methods=["POST"])
+@jwt_required()
 def criar_agendamento():
     try:
+        current_user_id = int(get_jwt_identity())
+        role = get_jwt().get('role')
+
         # Vinicius - 05/04/2026
         # Adicionado validação de payload para garantir que os dados enviados estejam corretos
-        data = AgendamentoSchema(**request.get_json())
+        data = AgendamentoCreate(**request.get_json())
+        
+        if role != 'admin':
+            if role == 'barbeiro' and data.barbeiro_id != current_user_id:
+                return jsonify({"erro": "Acesso negado. O barbeiro só pode agendar para si."}), 403
+            if role not in ['admin', 'barbeiro'] and data.cliente_id != current_user_id:
+                return jsonify({"erro": "Acesso negado. Cliente só pode agendar para si."}), 403
+
         # Se existir um agendamento entre a data de inicio e fim do serviço, retornar erro
         # Vinicius - 05/04/2026
         # Adicionado verificação se o serviço existe
@@ -119,8 +131,12 @@ def listar_agendamento():
 # Mudança de metodo para PATCH, para ser mais semantico com a ação de editar
 # Refatoração da rota editar_agendamento, para utilizar o schema AgendamentoSchema e atualizar dinamicamente os campos do agendamento
 @agendamento_bp.route("/editar-agendamento/<int:id>", methods=["PATCH"])
+@jwt_required()
 def editar_agendamento(id):
     try:
+        current_user_id = int(get_jwt_identity())
+        role = get_jwt().get('role')
+
         # 1. Captura o JSON da requisição
         body = request.get_json()
 
@@ -142,6 +158,12 @@ def editar_agendamento(id):
         agendamento = Agendamento.query.get(id)
         if not agendamento:
             return {"error": "Agendamento não encontrado"}, 404
+
+        if role != 'admin':
+            if role == 'barbeiro' and agendamento.barbeiro_id != current_user_id:
+                return {"error": "Acesso negado. Você só pode modificar seus agendamentos."}, 403
+            elif role not in ['admin', 'barbeiro'] and agendamento.cliente_id != current_user_id:
+                return {"error": "Acesso negado. Você só pode modificar seus próprios agendamentos."}, 403
 
         # 6. Algoritmo de Atualização Dinâmica
         # Em vez de fazer: user.nome = update_data['nome'] manual para cada campo...
@@ -185,11 +207,21 @@ def editar_agendamento(id):
 
 
 @agendamento_bp.route("/deletar-agendamento/<int:id>", methods=["DELETE"])
+@jwt_required()
 def deletar_agendamento(id):
     try:
+        current_user_id = int(get_jwt_identity())
+        role = get_jwt().get('role')
+
         agendamento = Agendamento.query.get(id)
         if not agendamento:
             return jsonify({"erro": "Agendamento não encontrado"}), 404
+
+        if role != 'admin':
+            if role == 'barbeiro' and agendamento.barbeiro_id != current_user_id:
+                return jsonify({"erro": "Acesso negado."}), 403
+            elif role not in ['admin', 'barbeiro'] and agendamento.cliente_id != current_user_id:
+                return jsonify({"erro": "Acesso negado."}), 403
 
         db.session.delete(agendamento)
         db.session.commit()
