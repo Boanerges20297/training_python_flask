@@ -36,7 +36,7 @@ class AgendamentoService:
             Agendamento.data_agendamento < termino_proposto,
         )
 
-        if ignorar_agendamento_id:
+        if ignorar_agendamento_id is not None:
             query = query.filter(Agendamento.id != ignorar_agendamento_id)
 
         conflitos_potenciais = query.all()
@@ -65,11 +65,14 @@ class AgendamentoService:
         Saída: Instância do modelo Agendamento.
         """
         if role != "admin":
-            if role == "barbeiro" and data.barbeiro_id != current_user_id:
+            if role == "barbeiro" and dados.barbeiro_id != current_user_id:
                 raise AcessoNegadoError(
                     "Acesso negado. O barbeiro só pode agendar para si."
                 )
-            if role not in ["admin", "barbeiro"] and data.cliente_id != current_user_id:
+            if (
+                role not in ["admin", "barbeiro"]
+                and dados.cliente_id != current_user_id
+            ):
                 raise AcessoNegadoError(
                     "Acesso negado. Cliente só pode agendar para si."
                 )
@@ -85,29 +88,26 @@ class AgendamentoService:
         if Barbeiro.query.get(dados.barbeiro_id) is None:
             raise ValueError("Barbeiro não encontrado.")
 
+        inicio_proposto = dados.data_agendamento
+        termino_proposto = inicio_proposto + timedelta(minutes=servico.duracao_minutos)
+
         # 0.1 Validação de Regra de Negócio: Horário Comercial
-        # Usamos variáveis exclusivas para checar a hora (int/float)
-        hora_inicio = dados.data_agendamento.hour
-        hora_fim = hora_inicio + (servico.duracao_minutos / 60)
+        hora_inicio_decimal = inicio_proposto.hour + (inicio_proposto.minute / 60)
+        hora_fim_decimal = termino_proposto.hour + (termino_proposto.minute / 60)
 
         if (
-            hora_inicio < Config.HORARIO_ABERTURA
-            or hora_fim > Config.HORARIO_FECHAMENTO
+            hora_inicio_decimal < Config.HORARIO_ABERTURA
+            or hora_fim_decimal > Config.HORARIO_FECHAMENTO
         ):
             raise ValueError(
                 f"Horário inválido. Funcionamos das {Config.HORARIO_ABERTURA:02d}:00 às {Config.HORARIO_FECHAMENTO:02d}:00."
             )
 
         # 1. Validação de Regra de Negócio: Data Passada
-        if dados.data_agendamento < datetime.utcnow():
+        if inicio_proposto < datetime.utcnow():
             raise ValueError(
                 "Não é possível realizar agendamentos para datas passadas."
             )
-
-        # --- PREPARAÇÃO PARA A REGRA DE CONFLITO ---
-        # Garantimos que inicio_proposto e termino_proposto sejam DATETIMES completos
-        inicio_proposto = dados.data_agendamento
-        termino_proposto = inicio_proposto + timedelta(minutes=servico.duracao_minutos)
 
         # 2. Validação de Regra de Negócio: Conflito de Horário
         AgendamentoService._verificar_conflitos(
@@ -195,76 +195,78 @@ class AgendamentoService:
         dados_para_atualizar = dados.model_dump(exclude_unset=True)
 
         # Vinicius - 11/04/2026
-        # Se mudou data, barbeiro OU serviço (pois o serviço muda a duração)
+        # Verificação para caso algum barbeiro ou cliente tente alterar o cliente do agendamento, seja barrado
+        if "cliente_id" in dados_para_atualizar:
+            if role == "admin":
+                cliente_proposto_id = dados_para_atualizar.get("cliente_id")
+                if Cliente.query.get(cliente_proposto_id) is None:
+                    raise ValueError("Cliente não encontrado.")
+            else:
+                raise ValueError(
+                    "Apenas admins podem editar os clientes de agendamentos."
+                )
+
+        # Se mudou data, barbeiro OU serviço (pois o serviço muda a duração e aciona verificação de conflitos)
         if any(
             dado in dados_para_atualizar
-            for dado in ["data_agendamento", "barbeiro_id", "servico_id", "cliente_id"]
+            for dado in ["data_agendamento", "barbeiro_id", "servico_id"]
         ):
-
             # 1. Montamos os dados propostos (Usamos o dado novo, se não tiver, usamos o que já tá no banco)
-            # Vinicius - 11/04/2026
-            # E também verificamos se os dados existem no banco, para evitar salvar dados invalidos
-            barbeiro_proposto = dados_para_atualizar.get(
+            barbeiro_proposto_id = dados_para_atualizar.get(
                 "barbeiro_id", agendamento_atual.barbeiro_id
             )
-            if Barbeiro.query.get(barbeiro_proposto) is None:
+            if Barbeiro.query.get(barbeiro_proposto_id) is None:
                 raise ValueError("Barbeiro não encontrado.")
 
             servico_proposto_id = dados_para_atualizar.get(
                 "servico_id", agendamento_atual.servico_id
             )
-            if Servico.query.get(servico_proposto_id) is None:
+            servico_proposto = Servico.query.get(servico_proposto_id)
+            if servico_proposto is None:
                 raise ValueError("Serviço não encontrado.")
 
-            # Vinicius - 11/04/2026
-            # Verificação para caso algum barbeiro ou cliente tente alterar o cliente do agendamento, seja barrado
-            if "cliente_id" in dados_para_atualizar:
-                if role == "admin":
-                    cliente_proposto_id = dados_para_atualizar.get(
-                        "cliente_id", agendamento_atual.cliente_id
-                    )
-                    if Cliente.query.get(cliente_proposto_id) is None:
-                        raise ValueError("Cliente não encontrado.")
-                else:
+            if ["servico_id", "data_agendamento"] in dados_para_atualizar:
+                # 0.1 Validação de Regra de Negócio
+                inicio_proposto = dados_para_atualizar.get(
+                    "data_agendamento", agendamento_atual.data_agendamento
+                )
+                termino_proposto = inicio_proposto + timedelta(
+                    minutes=servico_proposto.duracao_minutos
+                )
+
+                # 1. Validação de Regra de Negócio: Data Passada
+                if inicio_proposto < datetime.utcnow():
                     raise ValueError(
-                        "Apenas admins podem editar os clientes de agendamentos."
+                        "Não é possível realizar agendamentos para datas passadas."
                     )
 
-            # 0.1 Validação de Regra de Negócio
-            # Usamos variáveis exclusivas para checar a hora (int/float)
-            inicio_proposto = dados_para_atualizar.get(
-                "data_agendamento", agendamento_atual.data_agendamento
-            )
-            termino_proposto = inicio_proposto + timedelta(
-                minutes=servico.duracao_minutos
-            )
-
-            # 1. Validação de Regra de Negócio: Data Passada
-            if inicio_proposto < datetime.utcnow():
-                raise ValueError(
-                    "Não é possível realizar agendamentos para datas passadas."
+                # Vinicius - 11/04/2026
+                # Validação de Regra de Negócio: Horário Comercial
+                hora_inicio_decimal = inicio_proposto.hour + (
+                    inicio_proposto.minute / 60
+                )
+                hora_fim_decimal = termino_proposto.hour + (
+                    termino_proposto.minute / 60
                 )
 
-            # Vinicius - 11/04/2026
-            # Validação de Regra de Negócio: Horário Comercial
-            if (
-                inicio_proposto.hour < Config.HORARIO_ABERTURA
-                or termino_proposto.hour > Config.HORARIO_FECHAMENTO
-            ):
-                raise ValueError(
-                    f"Horário inválido. Funcionamos das {Config.HORARIO_ABERTURA:02d}:00 às {Config.HORARIO_FECHAMENTO:02d}:00."
-                )
+                if (
+                    hora_inicio_decimal < Config.HORARIO_ABERTURA
+                    or hora_fim_decimal > Config.HORARIO_FECHAMENTO
+                ):
+                    raise ValueError(
+                        f"Horário inválido. Funcionamos das {Config.HORARIO_ABERTURA:02d}:00 às {Config.HORARIO_FECHAMENTO:02d}:00."
+                    )
 
-            # 2. Busca de Conflitos e Validação Matemática
-            try:
-                AgendamentoService._verificar_conflitos(
-                    barbeiro_id=barbeiro_proposto,
-                    inicio_proposto=inicio_proposto,
-                    termino_proposto=termino_proposto,
-                    ignorar_agendamento_id=agendamento_id,
-                )
-            except ConflitoHorarioError as e:
-                raise ValueError(str(e))
+                # 2. Busca de Conflitos e Validação Matemática
+                try:
+                    AgendamentoService._verificar_conflitos(
+                        barbeiro_id=barbeiro_proposto_id,
+                        inicio_proposto=inicio_proposto,
+                        termino_proposto=termino_proposto,
+                        ignorar_agendamento_id=agendamento_id,
+                    )
+                except ConflitoHorarioError as e:
+                    raise ValueError(str(e))
 
         # Atualiza os dados de fato
         for campo, valor in dados_para_atualizar.items():
