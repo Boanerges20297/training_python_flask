@@ -40,6 +40,9 @@ class Config:
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=15)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=7)
 
+    HORARIO_ABERTURA = 8
+    HORARIO_FECHAMENTO = 20
+
 
 class DevelopmentConfig(Config):
     """Configurações de desenvolvimento"""
