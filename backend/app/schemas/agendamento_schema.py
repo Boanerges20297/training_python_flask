@@ -30,6 +30,8 @@ class AgendamentoCreate(AgendamentoBase):
 
     observacoes: Optional[str] = Field(None, max_length=500, description="Notas extras")
 
+    model_config = ConfigDict(extra="forbid")
+
 
 # --- Contratos de Saída (Responses) ---
 class AgendamentoResponse(AgendamentoBase):
@@ -45,7 +47,8 @@ class AgendamentoResponse(AgendamentoBase):
         description="Status atual (pendente, confirmado, concluido, cancelado)",
     )
     data_criacao: datetime = Field(..., description="Data de registro no sistema")
-    observacoes: str = Field(..., max_length=500, description="Notas extras")
+
+    observacoes: str | None = Field(..., max_length=500, description="Notas extras")
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -62,7 +65,7 @@ class AgendamentoListResponse(BaseModel):
     has_next: bool = Field(..., description="Tem próxima página?")
     has_prev: bool = Field(..., description="Tem página anterior?")
 
-    data: List[AgendamentoResponse] = Field(..., description="Lista de agendamentos")
+    data: AgendamentoResponse = Field(..., description="Lista de agendamentos")
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -80,4 +83,13 @@ class AgendamentoUpdateSchema(BaseModel):
     cliente_id: Optional[int] = Field(None, gt=0)
     observacoes: Optional[str] = Field(None, max_length=500)
 
+    model_config = ConfigDict(extra="forbid", from_attributes=True)
+
+
+class AgendamentoUpdateStatusSchema(BaseModel):
+    status: str = Field(
+        ...,
+        max_length=20,
+        description="Status atual (pendente, confirmado, concluido, cancelado)",
+    )
     model_config = ConfigDict(from_attributes=True)

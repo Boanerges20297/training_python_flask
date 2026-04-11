@@ -4,7 +4,8 @@ from flask import Blueprint, jsonify, request
 from app.models.barbeiro import Barbeiro
 from app.models.agendamento import Agendamento
 from app import db
-from app.utils.decorators import admin_required
+from app.utils.decorators import admin_required, barbeiro_required
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from app.schemas.barbeiro_schema import BarbeiroSchema, BarbeiroUpdateSchema
 
 barbeiros_bp = Blueprint("barbeiros", __name__, url_prefix="/api/barbeiros")
@@ -90,8 +91,8 @@ def listar_barbeiros():
 
 
 @barbeiros_bp.route("/criar-barbeiro", methods=["POST"])
-# Rota somente para administradores, comentado para evitar erros na hora de testes
-# @admin_required
+@jwt_required()
+@admin_required
 def criar_barbeiro():
     try:
         # Vinicius - 08/04/2026
@@ -132,11 +133,18 @@ def criar_barbeiro():
 # Vinicius - 08/04/2026
 # Modificado o metodo de PUT para PATCH, pois PATCH é usado para atualizar apenas os campos enviados
 @barbeiros_bp.route("/editar-barbeiro/<int:id>", methods=["PATCH"])
-# Rota para somente os barbeiros logados e administradores, futuramente será adicionado essa verificação de role
-# O barbeiro só pode editar os seus proprios dados, o admin pode editar todos
-# @barbeiro_required
-# @admin_required
+@jwt_required()
 def editar_barbeiro(id):
+    current_user_id = int(get_jwt_identity())
+    role = get_jwt().get("role")
+
+    # O barbeiro só pode editar a si próprio, admin edita qualquer um
+    if role != "admin" and current_user_id != id:
+        return (
+            jsonify({"erro": "Acesso negado. Você só pode editar o próprio perfil."}),
+            403,
+        )
+
     try:
         # 1. Captura o JSON da requisição
         body = request.get_json()
@@ -186,8 +194,8 @@ def editar_barbeiro(id):
 # Rota simples para deletar um barbeiro
 # Futuramente será usado desativar em vez de deletar por completo
 @barbeiros_bp.route("/deletar-barbeiro/<int:id>", methods=["DELETE"])
-# Rota somente para administradores, comentado para evitar erros na hora de testes
-# @admin_required
+@jwt_required()
+@admin_required
 def deletar_barbeiro(id):
     try:
         barbeiro = Barbeiro.query.get(id)
@@ -224,11 +232,20 @@ def buscar_barbeiro(id):
 # Vinicius - 09/04/2026
 # Rota para buscar os agendamentos de um barbeiro
 @barbeiros_bp.route("/<int:id>/agendamentos", methods=["GET"])
-# Rota somente para barbeiros logados e administradores, futuramente será adicionado essa verificação de role
-# O barbeiro só pode ver os seus proprios agendamentos, o admin pode ver todos
-# @barbeiro_required
-# @admin_required
+@jwt_required()
 def buscar_agendamentos_barbeiro(id):
+    current_user_id = int(get_jwt_identity())
+    role = get_jwt().get("role")
+
+    # O barbeiro só pode ver os seus próprios registros, o admin pode ver de todos
+    if role != "admin" and current_user_id != id:
+        return (
+            jsonify(
+                {"erro": "Acesso negado. Você só pode ver os próprios agendamentos."}
+            ),
+            403,
+        )
+
     try:
         # Vinicius - 09/04/2026
         # Busca o barbeiro pelo seu ID

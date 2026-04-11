@@ -1,39 +1,53 @@
 from functools import wraps
-from flask import request, jsonify
-from flask_jwt_extended import verify_jwt_in_request, get_jwt
+from flask import jsonify  # type: ignore
+from flask_jwt_extended import verify_jwt_in_request, get_jwt, get_jwt_identity  # type: ignore
+
+# Vinicius 11/04/2026
+# Removido loggers deste arquivo, será implementado em outro local e em outra hora
 
 
-def role_required(allowed_roles):
+def role_required(cargos_permitidos):
     """
-    Decorador para proteger rotas baseado em roles (cargos).
-    Aceita uma lista de strings. Ex: @role_required(["admin", "barbeiro"])
+    Decorator para proteção de rotas baseada em 'role'.
+
+    Metodologia:
+    1. Entrada: Requisição HTTP contendo JWT no header Authorization.
+    2. Processamento: Validação do token (`verify_jwt_in_request`), extração das permissões (`get_jwt().get('role')`) e do UUID do usuário (`get_jwt_identity`).
+    3. Verificação: Se a role no token não pertencer à lista definida, barraremos com 403.
+    4. Saída: Executa a rota na aprovação ou rejeita.
+
+    Args:
+        cargos_permitidos (list): Uma lista de strings com os cargos permitidos.
     """
 
-    def wrapper(fn):
-        @wraps(fn)
-        def decorator(*args, **kwargs):
-            # 1. Verifica se o token existe e é válido na requisição (Autenticação)
-            # Se não for válido, o Flask-JWT já vai barrar e mandar erro 401 aqui mesmo.
+    def decorator(funcao_principal):
+        @wraps(funcao_principal)
+        def funcao_empacotada(*args, **kwargs):
+            # 1. Garante a validação de presença do JWT no request (assim dispensa o uso de @jwt_required em conjunto nos casos mais abertos, mas é boa prática mantê-lo)
             verify_jwt_in_request()
 
-            # 2. Abre o payload do token (onde guardamos o cargo)
-            claims = get_jwt()
-            user_role = claims.get("role")
+            # 2. Extrai dados críticos sem vazar detalhes sensíveis nas funções
+            current_user = get_jwt_identity()
+            token_data = get_jwt()
+            role_usuario = token_data.get("role")
 
-            # 3. Verifica se a role do usuário está na lista de permitidos (Autorização)
-            if user_role not in allowed_roles:
+            # 3. Verificamos as roles
+            if role_usuario not in cargos_permitidos:
                 return (
-                    jsonify(
-                        {
-                            "msg": "Acesso negado. Você não tem permissão para realizar esta ação."
-                        }
-                    ),
+                    jsonify({"message": "Acesso negado, permissão insuficiente"}),
                     403,
                 )
 
-            # 4. Se passou em tudo, executa a rota normal
-            return fn(*args, **kwargs)
+            # 4. Se passar pela autorização, executamos a função original
+            return funcao_principal(*args, **kwargs)
 
-        return decorator
+        return funcao_empacotada
 
-    return wrapper
+    return decorator
+
+
+# Atalhos padronizados para cargos específicos
+admin_required = role_required(["admin"])
+barbeiro_required = role_required(["barbeiro"])
+cliente_required = role_required(["cliente"])
+barbeiro_required = role_required(["barbeiro"])

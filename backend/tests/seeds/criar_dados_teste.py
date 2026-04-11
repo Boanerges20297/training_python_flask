@@ -21,7 +21,9 @@ with app.app_context():
         nome='João Silva', 
         especialidade='Corte clássico', 
         email='joao@barba.com', 
-        telefone='11999999999')
+        telefone='11999999999',
+        senha='123@123'  # Adicionar senha
+    )
     # Abaixo, adicionamos o barbeiro ao banco de dados
     # 'session' é a sessão de banco de dados atual
     # 'commit' salva as mudanças no banco
