@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify, request
 from app.models.barbeiro import Barbeiro
 from app.models.agendamento import Agendamento
 from app import db
-from app.utils.decorators import admin_required
+from app.utils.decorators import role_required
 from app.schemas.barbeiro_schema import BarbeiroSchema, BarbeiroUpdateSchema
 
 barbeiros_bp = Blueprint("barbeiros", __name__, url_prefix="/api/barbeiros")

@@ -2,7 +2,8 @@
 from flask import Blueprint, jsonify, request
 from app.models.cliente import Cliente
 from app import db
-from app.utils.decorators import admin_required
+from app.utils.decorators import role_required
+from flask_jwt_extended import jwt_required
 from app.schemas.client_schema import ClienteSchema, ClienteUpdateSchema
 
 clientes_bp = Blueprint("clientes", __name__, url_prefix="/api/clientes")
@@ -176,7 +177,7 @@ def editar_cliente(id):
 
 
 @clientes_bp.route("/deletar-cliente/<int:id>", methods=["DELETE"])
-@admin_required
+@role_required(["admin"])
 def deletar_cliente(id):
     try:
         cliente = Cliente.query.get(id)
