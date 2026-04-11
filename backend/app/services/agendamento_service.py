@@ -17,7 +17,7 @@ class AgendamentoService:
     """
 
     @staticmethod
-    def criar_agendamento(dados: AgendamentoCreate) -> AgendamentoResponse:
+    def criar_agendamento(dados: AgendamentoCreate) -> Agendamento:
         """
         Entrada: Objeto AgendamentoCreate validado pelo Pydantic.
         Processamento:
@@ -97,7 +97,7 @@ class AgendamentoService:
         return novo_agendamento
 
     @staticmethod
-    def listar_agendamentos(page: int, per_page: int) -> AgendamentoListResponse:
+    def listar_agendamentos(page: int, per_page: int) -> list[Agendamento]:
         """
         Listagem com paginação simples para o front-end.
         Retorna o objeto de paginação do Flask-SQLAlchemy.
@@ -111,7 +111,7 @@ class AgendamentoService:
     @staticmethod
     def editar_agendamento(
         agendamento_id: int, dados: AgendamentoUpdateSchema
-    ) -> AgendamentoResponse:
+    ) -> Agendamento:
         # Renomeei para agendamento_atual para evitar confusão no loop lá embaixo
         agendamento_atual = Agendamento.query.get_or_404(agendamento_id)
 

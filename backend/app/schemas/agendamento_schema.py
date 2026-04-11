@@ -1,3 +1,6 @@
+# Vinicius - 11/04/2026
+# Arquivo de schema para o agendamento
+
 from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 from typing import List, Optional
