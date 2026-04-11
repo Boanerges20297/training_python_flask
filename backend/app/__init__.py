@@ -41,6 +41,12 @@ def create_app():
 
     register_jwt_handlers(jwt)
 
+    # Inicializa o Logger (Logging Estruturado)
+    # Tem que ser importado aqui por causa do cache db/jwt 
+    from app.extensions import app_logger
+    from app.utils.logger_setup import setup_logger
+    setup_logger(app, app_logger)
+
     # 4. Registrar blueprints (Rotas Modulares)
     from app.routes.client_routes import clientes_bp
     from app.routes.servico_routes import servico_bp

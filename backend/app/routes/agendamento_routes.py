@@ -22,6 +22,7 @@ from app.utils.error_formatter import formatar_erros_pydantic
 from pydantic import ValidationError
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from app.utils.decorators import admin_required, role_required
+from app.extensions import app_logger
 
 agendamento_bp = Blueprint("agendamento", __name__, url_prefix="/api/agendamento")
 
@@ -37,6 +38,7 @@ def criar_agendamento():
             data = AgendamentoCreate(**request.get_json())
         except ValidationError as e:
             erros = formatar_erros_pydantic(e)
+            app_logger.warning("Falha de validação ao criar agendamento (Pydantic)", extra={"erros_validacao": erros})
             return jsonify(erros), 400
         # Vinicius - 11/04/2026
         # Passado toda a logica do agendamento para o service (conflitos, validações, etc)
@@ -56,6 +58,7 @@ def criar_agendamento():
     except ValueError as e:
         return jsonify({"erro": "Erro ao criar agendamento: " + str(e)}), 400
     except Exception as e:
+        app_logger.error("Erro estrutural 500 ao criar agendamento", extra={"erro_detalhe": str(e)}, exc_info=True)
         return jsonify({"erro": "Erro ao criar agendamento: " + str(e)}), 500
 
 
@@ -92,6 +95,7 @@ def listar_agendamento():
         return jsonify(response.model_dump()), 200
 
     except Exception as e:
+        app_logger.error("Erro estrutural 500 ao listar agendamentos", extra={"erro_detalhe": str(e)}, exc_info=True)
         return (
             jsonify({"erro": "Não foi possível listar os agendamentos: " + str(e)}),
             500,
@@ -113,6 +117,7 @@ def editar_agendamento(id):
             dados = AgendamentoUpdateSchema(**request.get_json())
         except Exception as e:
             erros = formatar_erros_pydantic(e)
+            app_logger.warning("Falha de validação Pydantic ao editar", extra={"erros_validacao": erros, "agendamento_id": id})
             return jsonify(erros), 400
 
         # 2. Envia para o service para editar o agendamento
@@ -132,6 +137,7 @@ def editar_agendamento(id):
     except ValueError as e:
         return jsonify({"erro": "Erro ao editar agendamento: " + str(e)}), 400
     except Exception as e:
+        app_logger.error(f"Erro estrutural 500 ao editar agendamento {id}", extra={"erro_detalhe": str(e)}, exc_info=True)
         return jsonify({"erro": "Erro ao editar agendamento: " + str(e)}), 500
 
 
@@ -147,6 +153,7 @@ def atualizar_status(id):
             dados = AgendamentoUpdateStatusSchema(**request.get_json())
         except Exception as e:
             erros = formatar_erros_pydantic(e)
+            app_logger.warning("Falha de validação Pydantic ao atualizar status", extra={"erros_validacao": erros, "agendamento_id": id})
             return jsonify(erros), 400
 
         # 2. Envia para o service para editar o agendamento
@@ -168,6 +175,7 @@ def atualizar_status(id):
             {"erro": "Erro ao atualizar status do agendamento: " + str(e)}
         ), (404 if "não encontrado" in str(e).lower() else 400)
     except Exception as e:
+        app_logger.error(f"Erro estrutural 500 ao atualizar status {id}", extra={"erro_detalhe": str(e)}, exc_info=True)
         return (
             jsonify({"erro": "Erro ao atualizar status do agendamento: " + str(e)}),
             500,
@@ -194,6 +202,7 @@ def deletar_agendamento(id):
             404 if "não encontrado" in str(e).lower() else 400
         )
     except Exception as e:
+        app_logger.error(f"Erro 500 crítico ao deletar agendamento {id}", extra={"erro_detalhe": str(e)}, exc_info=True)
         return jsonify({"erro": "Erro ao deletar agendamento: " + str(e)}), 500
 
 
@@ -218,4 +227,5 @@ def buscar_agendamento(id):
             404 if "não encontrado" in str(e).lower() else 400
         )
     except Exception as e:
+        app_logger.error(f"Erro 500 estrutural apontado ao buscar id {id}", extra={"erro_detalhe": str(e)}, exc_info=True)
         return jsonify({"erro": "Erro ao buscar agendamento: " + str(e)}), 500

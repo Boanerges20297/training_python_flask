@@ -8,9 +8,12 @@ from config import DevelopmentConfig, ProductionConfig
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 
+import logging
+
 jwt = JWTManager()
 cors = CORS()
 db = SQLAlchemy()
+app_logger = logging.getLogger("barbabyte")
 limiter = Limiter(
     key_func=get_usuario_ou_ip,
     storage_uri=DevelopmentConfig.RATELIMIT_STORAGE_URL,
