@@ -13,8 +13,12 @@ class AuthServiceException(Exception):
 
 
 class AuthService:
+    # Vinicius 11/04/2026
+    # Adicionado tipagem para o método authenticate_user
     @staticmethod
-    def authenticate_user(login_request: LoginRequest) -> AuthServiceResponse:
+    def authenticate_user(
+        login_request: LoginRequest,
+    ) -> dict[dict[int, str], dict[str, str]]:
         """Busca o usuário e gera os tokens se a senha bater."""
         email = login_request.email
         senha = login_request.senha
@@ -47,23 +51,29 @@ class AuthService:
 
         return {
             "user": {"id": user_id, "role": role},
-            "access_token": access_token,
-            "refresh_token": refresh_token,
+            "tokens": {"access_token": access_token, "refresh_token": refresh_token},
         }
 
     @staticmethod
-    def renew_access_token(current_user_id, role):
+    # Vinicius 11/04/2026
+    # Adicionado tipagem para o método renew_access_token
+    @staticmethod
+    def renew_access_token(current_user_id: str, role: str) -> str:
         """Gera um novo access token baseado nos dados do refresh token."""
         return create_access_token(
             identity=current_user_id, additional_claims={"role": role}
         )
 
+    # Vinicius 11/04/2026
+    # Adicionado tipagem para o método revoke_token
     @staticmethod
-    def revoke_token(jti):
+    def revoke_token(jti: str) -> None:
         """Adiciona o ID do token na Blocklist (futuro Redis)."""
         MOCK_BLOCKLIST.add(jti)
 
+    # Vinicius 11/04/2026
+    # Adicionado tipagem para o método is_token_revoked
     @staticmethod
-    def is_token_revoked(jti):
+    def is_token_revoked(jti: str) -> bool:
         """Verifica se o token está na blocklist."""
         return jti in MOCK_BLOCKLIST

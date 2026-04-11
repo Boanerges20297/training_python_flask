@@ -11,7 +11,7 @@ from flask_jwt_extended import (
 # Importamos o nosso novo serviço
 from app.services.auth_service import AuthService, AuthServiceException
 from app.utils.error_formatter import formatar_erros_pydantic
-from app.schemas.auth_schema import LoginRequest
+from app.schemas.auth_schema import LoginRequest, TokenResponse, LoginResponse
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
@@ -33,12 +33,21 @@ def login():
             return jsonify({"msg": "Credenciais inválidas"}), 401
 
         # 3. Lida com o sucesso (Monta a resposta e injeta cookies)
-        response = jsonify(
-            {"msg": "Login realizado com sucesso", "user": auth_data["user"]}
+        # Vinicius 11/04/2026
+        # Modificado o codigo para utilizar LoginResponse e TokenResponse para seguir o padrão do projeto
+        login_response = LoginResponse(
+            msg="Login realizado com sucesso", user=auth_data["user"]
         )
 
-        set_access_cookies(response, auth_data["access_token"])
-        set_refresh_cookies(response, auth_data["refresh_token"])
+        tokens = TokenResponse(
+            access_token=auth_data["tokens"]["access_token"],
+            refresh_token=auth_data["tokens"]["refresh_token"],
+        )
+
+        response = jsonify(login_response.model_dump())
+
+        set_access_cookies(response, tokens.access_token)
+        set_refresh_cookies(response, tokens.refresh_token)
 
         return response, 200
 
@@ -95,12 +104,3 @@ def logout():
             jsonify({"Erro": "Erro ao fazer logout, entre em contato com o suporte."}),
             500,
         )
-
-
-@auth_bp.route("/protected", methods=["GET"])
-@jwt_required()
-def protected():
-    # Acessa os dados do usuário logado
-    current_user_id = get_jwt_identity()
-    role = get_jwt().get("role")
-    return jsonify(logged_in_as=current_user_id, role=role), 200

@@ -27,12 +27,6 @@ class TokenResponse(BaseModel):
     refresh_token: str = Field(description="Token de refresh")
 
 
-class AuthServiceResponse(BaseModel):
-    user: UserResponse = Field(description="Dados do usuário")
-    tokens: TokenResponse = Field(description="Tokens de acesso e refresh")
-
-
 class LoginResponse(BaseModel):
     msg: str = Field(description="Mensagem de sucesso")
     user: UserResponse
-    tokens: TokenResponse
