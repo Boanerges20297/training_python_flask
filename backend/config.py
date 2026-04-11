@@ -50,6 +50,8 @@ class DevelopmentConfig(Config):
         f'sqlite:///{os.path.join(BASE_DIR, "instances", "barba_byte.db")}'
     )
 
+    FRONTEND_URL = "*"
+
     # Variavel para habilitar/desabilitar o rate limiter
     RATELIMIT_ENABLED = False
     RATELIMIT_STORAGE_URL = "memory://"
@@ -74,6 +76,8 @@ class ProductionConfig(Config):
     # Variavel para habilitar/desabilitar o rate limiter
 
     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
+
+    FRONTEND_URL = os.environ.get("FRONTEND_URL")
 
     RATELIMIT_ENABLED = True
     RATELIMIT_STORAGE_URL = os.environ.get("REDIS_URL")
