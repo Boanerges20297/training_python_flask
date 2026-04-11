@@ -220,81 +220,65 @@ class AgendamentoService:
     ) -> Agendamento:
 
         # Vinicius - 11/04/2026
-        # Adicionado verificações de acesso negado para barbeiro e cliente
-        if role != "admin":
-            if role == "barbeiro":
-                # Verifica se o agendamento está vinculado ao id do barbeiro, se não, não pode alterar agendamento dos outros barbeiros
-                if (
-                    Agendamento.query.filter_by(
-                        barbeiro_id=current_user_id, id=agendamento_id
-                    ).first()
-                    is None
-                ):
-                    raise AcessoNegadoError(
-                        "Acesso negado. O barbeiro só pode editar agendamentos para seus clientes."
-                    )
-            if role == "cliente":
-                # Verifica se o agendamento está vinculado ao id do cliente, se não, não pode alterar agendamento dos outros clientes
-                if (
-                    Agendamento.query.filter_by(
-                        cliente_id=current_user_id, id=agendamento_id
-                    ).first()
-                    is None
-                ):
-                    raise AcessoNegadoError(
-                        "Acesso negado. Cliente só pode editar agendamentos para si."
-                    )
-
-        # Renomeei para agendamento_atual para evitar confusão no loop lá embaixo
-        # Vinicius - 11/04/2026
-        # Verificação para saber se um agendamento está cancelado ou concluído
+        # Refatoração completa da função editar_agendamento
+        # 1. Busca do Agendamento Atual
         agendamento_atual = Agendamento.query.get(agendamento_id)
         if not agendamento_atual:
-            raise ValueError("Agendamento não encontrado.")
+            raise AgendamentoNaoEncontradoError("Agendamento não encontrado.")
 
+        # 2. Verificação de Acesso (Autorização)
+        if role == "barbeiro" and agendamento_atual.barbeiro_id != current_user_id:
+            raise AcessoNegadoError(
+                "Acesso negado. O barbeiro só pode editar agendamentos de seus clientes."
+            )
+        if role == "cliente" and agendamento_atual.cliente_id != current_user_id:
+            raise AcessoNegadoError(
+                "Acesso negado. Cliente só pode editar agendamentos para si."
+            )
+
+        # 3. Verificação de Status Final (Imutabilidade Parcial)
         if agendamento_atual.status in [
             Agendamento.STATUS_CONCLUIDO,
             Agendamento.STATUS_CANCELADO,
         ]:
             raise ValueError(
-                f"Não é possível editar um agendamento {agendamento_atual.status}."
+                f"Não é possível editar um agendamento com status '{agendamento_atual.status}'."
             )
 
-        # Vinicius - 11/04/2026
-        # Recebe os dados do agendamento que serão atualizados
+        # 4. Extração dos Dados a Atualizar
         dados_para_atualizar = dados.model_dump(exclude_unset=True)
+        if not dados_para_atualizar:
+            raise ValueError("Nenhum dado para atualizar.")
 
-        # Vinicius - 11/04/2026
-        # Verificação para caso algum barbeiro ou cliente tente alterar o cliente do agendamento, seja barrado
+        # 5. Validação de Alteração de Cliente (Apenas admin permitidos)
         if "cliente_id" in dados_para_atualizar:
-            if role == "admin":
-                cliente_proposto_id = dados_para_atualizar.get("cliente_id")
-                if Cliente.query.get(cliente_proposto_id) is None:
-                    raise ValueError("Cliente não encontrado.")
-            else:
+            if role != "admin":
                 raise ValueError(
-                    "Apenas admins podem editar os clientes de agendamentos."
+                    "Apenas admins podem editar os clientes de agendamentos já criados."
                 )
+            if Cliente.query.get(dados_para_atualizar["cliente_id"]) is None:
+                raise ValueError("Cliente proposto não encontrado.")
 
-        # Se mudou data, barbeiro OU serviço (pois o serviço muda a duração e aciona verificação de conflitos)
-        if any(
-            dado in dados_para_atualizar
-            for dado in ["data_agendamento", "barbeiro_id", "servico_id"]
-        ):
-            # 1. Montamos os dados propostos (Usamos o dado novo, se não tiver, usamos o que já tá no banco)
+        # 6. Validação de Alteração Crítica (Data, Barbeiro, Serviço)
+        # Qualquer mudança nestes campos altera as restrições de tempo
+        campos_criticos = {"data_agendamento", "barbeiro_id", "servico_id"}
+        if any(campo in dados_para_atualizar for campo in campos_criticos):
             barbeiro_proposto_id = dados_para_atualizar.get(
                 "barbeiro_id", agendamento_atual.barbeiro_id
             )
-            if Barbeiro.query.get(barbeiro_proposto_id) is None:
-                raise ValueError("Barbeiro não encontrado.")
+            if (
+                "barbeiro_id" in dados_para_atualizar
+                and Barbeiro.query.get(barbeiro_proposto_id) is None
+            ):
+                raise ValueError("Barbeiro proposto não encontrado.")
 
             servico_proposto_id = dados_para_atualizar.get(
                 "servico_id", agendamento_atual.servico_id
             )
             servico_proposto = Servico.query.get(servico_proposto_id)
             if servico_proposto is None:
-                raise ValueError("Serviço não encontrado.")
-            # 0.1 Validação de Regra de Negócio
+                raise ValueError("Serviço proposto não encontrado.")
+
             inicio_proposto = dados_para_atualizar.get(
                 "data_agendamento", agendamento_atual.data_agendamento
             )
@@ -302,14 +286,13 @@ class AgendamentoService:
                 minutes=servico_proposto.duracao_minutos
             )
 
-            # 1. Validação de Regra de Negócio: Data Passada
+            # Regra de Negócio: Data Passada
             if inicio_proposto < datetime.utcnow():
                 raise ValueError(
                     "Não é possível realizar agendamentos para datas passadas."
                 )
 
-            # Vinicius - 11/04/2026
-            # Validação de Regra de Negócio: Horário Comercial
+            # Regra de Negócio: Horário Comercial
             hora_inicio_decimal = inicio_proposto.hour + (inicio_proposto.minute / 60)
             hora_fim_decimal = termino_proposto.hour + (termino_proposto.minute / 60)
 
@@ -321,7 +304,7 @@ class AgendamentoService:
                     f"Horário inválido. Funcionamos das {Config.HORARIO_ABERTURA:02d}:00 às {Config.HORARIO_FECHAMENTO:02d}:00."
                 )
 
-            # 2. Busca de Conflitos e Validação Matemática
+            # Busca de Conflitos e Validação de Sobreposição de Horários
             try:
                 AgendamentoService._verificar_conflitos(
                     barbeiro_id=barbeiro_proposto_id,
@@ -332,7 +315,7 @@ class AgendamentoService:
             except ConflitoHorarioError as e:
                 raise ValueError(str(e))
 
-        # Atualiza os dados de fato
+        # 7. Atualização do Objeto e Persistência
         for campo, valor in dados_para_atualizar.items():
             setattr(agendamento_atual, campo, valor)
 

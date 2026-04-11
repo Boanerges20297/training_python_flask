@@ -92,4 +92,4 @@ class AgendamentoUpdateStatusSchema(BaseModel):
         max_length=20,
         description="Status atual (pendente, confirmado, concluido, cancelado)",
     )
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, extra="forbid")

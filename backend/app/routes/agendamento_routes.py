@@ -21,6 +21,7 @@ from app.services.agendamento_service import (
 from app.utils.error_formatter import formatar_erros_pydantic
 from pydantic import ValidationError
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
+from app.utils.decorators import admin_required, role_required
 
 agendamento_bp = Blueprint("agendamento", __name__, url_prefix="/api/agendamento")
 
@@ -174,7 +175,7 @@ def atualizar_status(id):
 
 
 @agendamento_bp.route("/<int:id>", methods=["DELETE"])
-@jwt_required()
+@admin_required
 def deletar_agendamento(id):
     try:
         current_user_id = int(get_jwt_identity())
