@@ -27,6 +27,8 @@ class AgendamentoCreate(AgendamentoBase):
     cliente_id: int = Field(..., gt=0)
     observacoes: Optional[str] = Field(None, max_length=500, description="Notas extras")
 
+    model_config = ConfigDict(extra="forbid")
+
 
 # --- Contratos de Saída (Responses) ---
 class AgendamentoResponse(AgendamentoBase):
@@ -76,7 +78,7 @@ class AgendamentoUpdateSchema(BaseModel):
     cliente_id: Optional[int] = Field(None, gt=0)
     observacoes: Optional[str] = Field(None, max_length=500)
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(extra="forbid", from_attributes=True)
 
 
 class AgendamentoUpdateStatusSchema(BaseModel):

@@ -1,8 +1,8 @@
 from app import db
-from app.models.agendamento_model import Agendamento
-from app.models.servico_model import Servico
-from app.models.cliente_model import Cliente
-from app.models.barbeiro_model import Barbeiro
+from app.models.agendamento import Agendamento
+from app.models.servico import Servico
+from app.models.cliente import Cliente
+from app.models.barbeiro import Barbeiro
 from app.schemas.agendamento_schema import (
     AgendamentoCreate,
     AgendamentoUpdateStatusSchema,

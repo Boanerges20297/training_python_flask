@@ -16,20 +16,25 @@ from app.services.agendamento_service import (
     ConflitoHorarioError,
     AcessoNegadoError,
 )
+from app.utils.error_formatter import formatar_erros_pydantic
 from pydantic import ValidationError
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 
 agendamento_bp = Blueprint("agendamento", __name__, url_prefix="/api/agendamento")
 
 
-@agendamento_bp.route("/criar-agendamento", methods=["POST"])
+@agendamento_bp.route("", methods=["POST"])
 @jwt_required()
 def criar_agendamento():
     try:
         current_user_id = int(get_jwt_identity())
         role = get_jwt().get("role")
 
-        data = AgendamentoCreate(**request.get_json())
+        try:
+            data = AgendamentoCreate(**request.get_json())
+        except ValidationError as e:
+            erros = formatar_erros_pydantic(e)
+            return jsonify(erros), 400
         # Vinicius - 11/04/2026
         # Passado toda a logica do agendamento para o service (conflitos, validações, etc)
         agendamento_novo = AgendamentoService.criar_agendamento(
@@ -51,7 +56,7 @@ def criar_agendamento():
         return jsonify({"erro": "Erro ao criar agendamento: " + str(e)}), 500
 
 
-@agendamento_bp.route("/listar-agendamento", methods=["GET"])
+@agendamento_bp.route("", methods=["GET"])
 def listar_agendamento():
     try:
         # Vinicius - 11/04/2026
@@ -76,7 +81,7 @@ def listar_agendamento():
 # Vinicius - 08/04/2026
 # Mudança de metodo para PATCH, para ser mais semantico com a ação de editar
 # Refatoração da rota editar_agendamento, para utilizar o schema AgendamentoSchema e atualizar dinamicamente os campos do agendamento
-@agendamento_bp.route("/editar-agendamento/<int:id>", methods=["PATCH"])
+@agendamento_bp.route("/<int:id>", methods=["PATCH"])
 @jwt_required()
 def editar_agendamento(id):
     try:
@@ -148,7 +153,7 @@ def deletar_agendamento(id):
         return jsonify({"erro": "Erro ao deletar agendamento: " + str(e)}), 500
 
 
-@agendamento_bp.route("/buscar-agendamento/<int:id>", methods=["GET"])
+@agendamento_bp.route("/buscar/<int:id>", methods=["GET"])
 @jwt_required()
 def buscar_agendamento(id):
     try:
