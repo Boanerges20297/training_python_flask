@@ -34,11 +34,8 @@ class Config:
     RATELIMIT_HEADERS_ENABLED = True
 
     JWT_TOKEN_LOCATION = ["cookies"]
-    JWT_COOKIE_CSRF_PROTECT = False
     JWT_ACCESS_COOKIE_PATH = "/"
     JWT_REFRESH_COOKIE_PATH = "/api/auth/refresh"
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=15)
-    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=7)
 
     HORARIO_ABERTURA = 8
     HORARIO_FECHAMENTO = 20
@@ -63,6 +60,9 @@ class DevelopmentConfig(Config):
     JWT_COOKIE_SAMESITE = "Lax"
     JWT_COOKIE_SECURE = False
     JWT_SECRET_KEY = "chave-secreta-do-jwt-mudar-em-producao"
+    JWT_COOKIE_CSRF_PROTECT = False
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=999)
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=999)
 
     SECRET_KEY = "chave-secreta"
 
@@ -84,5 +84,8 @@ class ProductionConfig(Config):
     JWT_COOKIE_SECURE = True
     JWT_COOKIE_SAMESITE = "Strict"
     JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
+    JWT_COOKIE_CSRF_PROTECT = True
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=15)
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=7)
 
     SECRET_KEY = os.environ.get("SECRET_KEY")

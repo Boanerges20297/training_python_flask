@@ -65,7 +65,7 @@ class AgendamentoListResponse(BaseModel):
     has_next: bool = Field(..., description="Tem próxima página?")
     has_prev: bool = Field(..., description="Tem página anterior?")
 
-    data: AgendamentoResponse = Field(..., description="Lista de agendamentos")
+    data: List[AgendamentoResponse] = Field(..., description="Lista de agendamentos")
 
     model_config = ConfigDict(from_attributes=True)
 

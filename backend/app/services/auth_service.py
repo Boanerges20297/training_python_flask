@@ -5,7 +5,6 @@ from app.models.cliente import Cliente
 from app.schemas.auth_schema import (
     LoginRequest,
     LoginResponse,
-    AuthServiceResponse,
     UserResponse,
     TokenResponse,
 )
@@ -24,7 +23,7 @@ class AuthService:
     @staticmethod
     def authenticate_user(
         login_request: LoginRequest,
-    ) -> dict[dict[int, str], dict[str, str]]:
+    ) -> dict[UserResponse, TokenResponse]:
         """Busca o usuário e gera os tokens se a senha bater."""
         email = login_request.email
         senha = login_request.senha
@@ -55,12 +54,12 @@ class AuthService:
             identity=user_id, additional_claims=additional_claims
         )
 
-        return AuthServiceResponse(
-            user=UserResponse(id=user_id, role=role),
-            tokens=TokenResponse(
+        return {
+            "user": UserResponse(id=user_id, role=role),
+            "tokens": TokenResponse(
                 access_token=access_token, refresh_token=refresh_token
             ),
-        )
+        }
 
     @staticmethod
     # Vinicius 11/04/2026

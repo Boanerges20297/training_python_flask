@@ -20,6 +20,10 @@ class AcessoNegadoError(Exception):
     pass
 
 
+class AgendamentoNaoEncontradoError(Exception):
+    pass
+
+
 class AgendamentoService:
     """
     Este módulo centraliza a lógica de negócios para agendamentos.
@@ -139,15 +143,34 @@ class AgendamentoService:
         return novo_agendamento
 
     @staticmethod
-    def listar_agendamentos(page: int, per_page: int) -> list[Agendamento]:
+    def listar_agendamentos(
+        page: int, per_page: int, role: str, current_user_id: int
+    ) -> list[Agendamento]:
         """
         Listagem com paginação simples para o front-end.
         Retorna o objeto de paginação do Flask-SQLAlchemy.
         """
         # O .paginate do Flask-SQLAlchemy já cuida do has_next e has_prev
-        paginacao = Agendamento.query.order_by(
-            Agendamento.data_agendamento.desc()
-        ).paginate(page=page, per_page=per_page, error_out=False)
+        # Vinicius - 11/04/2026
+        # Caso o usuário seja admin, ele pode ver todos os agendamentos
+        # Caso o usuário seja barbeiro, ele pode ver apenas seus agendamentos
+        # Caso o usuário seja cliente, ele pode ver apenas seus agendamentos
+        if role == "admin":
+            paginacao = Agendamento.query.order_by(
+                Agendamento.data_agendamento.desc()
+            ).paginate(page=page, per_page=per_page, error_out=False)
+        elif role == "barbeiro":
+            paginacao = (
+                Agendamento.query.filter_by(barbeiro_id=current_user_id)
+                .order_by(Agendamento.data_agendamento.desc())
+                .paginate(page=page, per_page=per_page, error_out=False)
+            )
+        elif role == "cliente":
+            paginacao = (
+                Agendamento.query.filter_by(cliente_id=current_user_id)
+                .order_by(Agendamento.data_agendamento.desc())
+                .paginate(page=page, per_page=per_page, error_out=False)
+            )
         return paginacao
 
     @staticmethod
@@ -225,7 +248,9 @@ class AgendamentoService:
         # Renomeei para agendamento_atual para evitar confusão no loop lá embaixo
         # Vinicius - 11/04/2026
         # Verificação para saber se um agendamento está cancelado ou concluído
-        agendamento_atual = Agendamento.query.get_or_404(dados.id)
+        agendamento_atual = Agendamento.query.get(agendamento_id)
+        if not agendamento_atual:
+            raise ValueError("Agendamento não encontrado.")
 
         if agendamento_atual.status in [
             Agendamento.STATUS_CONCLUIDO,
@@ -269,49 +294,43 @@ class AgendamentoService:
             servico_proposto = Servico.query.get(servico_proposto_id)
             if servico_proposto is None:
                 raise ValueError("Serviço não encontrado.")
+            # 0.1 Validação de Regra de Negócio
+            inicio_proposto = dados_para_atualizar.get(
+                "data_agendamento", agendamento_atual.data_agendamento
+            )
+            termino_proposto = inicio_proposto + timedelta(
+                minutes=servico_proposto.duracao_minutos
+            )
 
-            if ["servico_id", "data_agendamento"] in dados_para_atualizar:
-                # 0.1 Validação de Regra de Negócio
-                inicio_proposto = dados_para_atualizar.get(
-                    "data_agendamento", agendamento_atual.data_agendamento
-                )
-                termino_proposto = inicio_proposto + timedelta(
-                    minutes=servico_proposto.duracao_minutos
-                )
-
-                # 1. Validação de Regra de Negócio: Data Passada
-                if inicio_proposto < datetime.utcnow():
-                    raise ValueError(
-                        "Não é possível realizar agendamentos para datas passadas."
-                    )
-
-                # Vinicius - 11/04/2026
-                # Validação de Regra de Negócio: Horário Comercial
-                hora_inicio_decimal = inicio_proposto.hour + (
-                    inicio_proposto.minute / 60
-                )
-                hora_fim_decimal = termino_proposto.hour + (
-                    termino_proposto.minute / 60
+            # 1. Validação de Regra de Negócio: Data Passada
+            if inicio_proposto < datetime.utcnow():
+                raise ValueError(
+                    "Não é possível realizar agendamentos para datas passadas."
                 )
 
-                if (
-                    hora_inicio_decimal < Config.HORARIO_ABERTURA
-                    or hora_fim_decimal > Config.HORARIO_FECHAMENTO
-                ):
-                    raise ValueError(
-                        f"Horário inválido. Funcionamos das {Config.HORARIO_ABERTURA:02d}:00 às {Config.HORARIO_FECHAMENTO:02d}:00."
-                    )
+            # Vinicius - 11/04/2026
+            # Validação de Regra de Negócio: Horário Comercial
+            hora_inicio_decimal = inicio_proposto.hour + (inicio_proposto.minute / 60)
+            hora_fim_decimal = termino_proposto.hour + (termino_proposto.minute / 60)
 
-                # 2. Busca de Conflitos e Validação Matemática
-                try:
-                    AgendamentoService._verificar_conflitos(
-                        barbeiro_id=barbeiro_proposto_id,
-                        inicio_proposto=inicio_proposto,
-                        termino_proposto=termino_proposto,
-                        ignorar_agendamento_id=agendamento_id,
-                    )
-                except ConflitoHorarioError as e:
-                    raise ValueError(str(e))
+            if (
+                hora_inicio_decimal < Config.HORARIO_ABERTURA
+                or hora_fim_decimal > Config.HORARIO_FECHAMENTO
+            ):
+                raise ValueError(
+                    f"Horário inválido. Funcionamos das {Config.HORARIO_ABERTURA:02d}:00 às {Config.HORARIO_FECHAMENTO:02d}:00."
+                )
+
+            # 2. Busca de Conflitos e Validação Matemática
+            try:
+                AgendamentoService._verificar_conflitos(
+                    barbeiro_id=barbeiro_proposto_id,
+                    inicio_proposto=inicio_proposto,
+                    termino_proposto=termino_proposto,
+                    ignorar_agendamento_id=agendamento_id,
+                )
+            except ConflitoHorarioError as e:
+                raise ValueError(str(e))
 
         # Atualiza os dados de fato
         for campo, valor in dados_para_atualizar.items():
@@ -362,7 +381,9 @@ class AgendamentoService:
                         "Acesso negado. O cliente só pode alterar status de seus próprios agendamentos."
                     )
 
-        agendamento = Agendamento.query.get_or_404(agendamento_id)
+        agendamento = Agendamento.query.get(agendamento_id)
+        if not agendamento:
+            raise ValueError("Agendamento não encontrado.")
 
         # 1. Lista de status permitidos (Segurança)
         STATUS_PERMITIDOS = [
@@ -400,7 +421,9 @@ class AgendamentoService:
         # Vinicius - 11/04/2026
         # Adicionado verificações de acesso negado para barbeiro e cliente
 
-        agendamento = Agendamento.query.get_or_404(agendamento_id)
+        agendamento = Agendamento.query.get(agendamento_id)
+        if not agendamento:
+            raise ValueError("Agendamento não encontrado.")
         db.session.delete(agendamento)
         db.session.commit()
         return True

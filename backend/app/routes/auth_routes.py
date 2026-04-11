@@ -39,15 +39,10 @@ def login():
             msg="Login realizado com sucesso", user=auth_data["user"]
         )
 
-        tokens = TokenResponse(
-            access_token=auth_data["tokens"]["access_token"],
-            refresh_token=auth_data["tokens"]["refresh_token"],
-        )
-
         response = jsonify(login_response.model_dump())
 
-        set_access_cookies(response, tokens.access_token)
-        set_refresh_cookies(response, tokens.refresh_token)
+        set_access_cookies(response, auth_data["tokens"].access_token)
+        set_refresh_cookies(response, auth_data["tokens"].refresh_token)
 
         return response, 200
 
@@ -55,6 +50,7 @@ def login():
         return jsonify({"Erro": str(e)}), 401
 
     except Exception as e:
+        print(e)
         return (
             jsonify({"Erro": "Erro ao fazer login, entre em contato com o suporte."}),
             500,

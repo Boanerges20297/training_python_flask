@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from app.schemas.agendamento_schema import (
     AgendamentoCreate,
     AgendamentoUpdateSchema,
+    AgendamentoUpdateStatusSchema,
     AgendamentoListResponse,
     AgendamentoResponse,
 )
@@ -15,6 +16,7 @@ from app.services.agendamento_service import (
     AgendamentoService,
     ConflitoHorarioError,
     AcessoNegadoError,
+    AgendamentoNaoEncontradoError,
 )
 from app.utils.error_formatter import formatar_erros_pydantic
 from pydantic import ValidationError
@@ -65,10 +67,26 @@ def listar_agendamento():
         page = request.args.get("page", default=1, type=int)
         per_page = request.args.get("per_page", default=10, type=int)
 
-        agendamentos = AgendamentoService.listar_agendamentos(page, per_page)
+        current_user_id = int(get_jwt_identity())
+        role = get_jwt().get("role")
+
+        agendamentos = AgendamentoService.listar_agendamentos(
+            page, per_page, role, current_user_id
+        )
         # Vinicius - 11/04/2026
         # Transformado o objeto agendamento em dicionário padronizado pelo schema
-        response = AgendamentoListResponse.model_validate(agendamentos)
+        response = AgendamentoListResponse.model_validate(
+            {
+                "page": agendamentos.page,
+                "per_page": agendamentos.per_page,
+                "has_next": agendamentos.has_next,
+                "has_prev": agendamentos.has_prev,
+                "data": [
+                    AgendamentoResponse.model_validate(agendamento)
+                    for agendamento in agendamentos.items
+                ],
+            }
+        )
 
         return jsonify(response.model_dump()), 200
 
@@ -93,17 +111,25 @@ def editar_agendamento(id):
         try:
             dados = AgendamentoUpdateSchema(**request.get_json())
         except Exception as e:
-            return {"error": "Dados inválidos", "detalhes": str(e)}, 400
+            erros = formatar_erros_pydantic(e)
+            return jsonify(erros), 400
 
         # 2. Envia para o service para editar o agendamento
         agendamento_atualizado = AgendamentoService.editar_agendamento(
             id, dados, role, current_user_id
         )
+        response = AgendamentoResponse.model_validate(agendamento_atualizado)
 
-        response = AgendamentoResponse.model_dump(agendamento_atualizado)
+        return jsonify(response.model_dump()), 200
 
-        return jsonify(response), 200
-
+    except ConflitoHorarioError as e:
+        return jsonify({"erro": "Erro ao editar agendamento: " + str(e)}), 409
+    except AcessoNegadoError as e:
+        return jsonify({"erro": "Erro ao editar agendamento: " + str(e)}), 403
+    except AgendamentoNaoEncontradoError as e:
+        return jsonify({"erro": "Erro ao editar agendamento: " + str(e)}), 404
+    except ValueError as e:
+        return jsonify({"erro": "Erro ao editar agendamento: " + str(e)}), 400
     except Exception as e:
         return jsonify({"erro": "Erro ao editar agendamento: " + str(e)}), 500
 
@@ -119,17 +145,27 @@ def atualizar_status(id):
         try:
             dados = AgendamentoUpdateStatusSchema(**request.get_json())
         except Exception as e:
-            return {"error": "Dados inválidos", "detalhes": str(e)}, 400
+            erros = formatar_erros_pydantic(e)
+            return jsonify(erros), 400
 
         # 2. Envia para o service para editar o agendamento
         agendamento_atualizado = AgendamentoService.atualizar_status(
             id, dados, role, current_user_id
         )
 
-        response = AgendamentoResponse.model_dump(agendamento_atualizado)
+        response = AgendamentoResponse.model_validate(agendamento_atualizado)
 
-        return jsonify(response), 200
+        return jsonify(response.model_dump()), 200
 
+    except AcessoNegadoError as e:
+        return (
+            jsonify({"erro": "Erro ao atualizar status do agendamento: " + str(e)}),
+            403,
+        )
+    except ValueError as e:
+        return jsonify(
+            {"erro": "Erro ao atualizar status do agendamento: " + str(e)}
+        ), (404 if "não encontrado" in str(e).lower() else 400)
     except Exception as e:
         return (
             jsonify({"erro": "Erro ao atualizar status do agendamento: " + str(e)}),
@@ -150,6 +186,12 @@ def deletar_agendamento(id):
 
         return jsonify({"msg": "Agendamento deletado com sucesso"}), 200
 
+    except AcessoNegadoError as e:
+        return jsonify({"erro": "Erro ao deletar agendamento: " + str(e)}), 403
+    except ValueError as e:
+        return jsonify({"erro": "Erro ao deletar agendamento: " + str(e)}), (
+            404 if "não encontrado" in str(e).lower() else 400
+        )
     except Exception as e:
         return jsonify({"erro": "Erro ao deletar agendamento: " + str(e)}), 500
 
@@ -165,8 +207,14 @@ def buscar_agendamento(id):
         # Migrado toda a logica de negocios para dentro do services
         agendamento = AgendamentoService.buscar_agendamento(id, role, current_user_id)
 
-        response = AgendamentoResponse.model_dump(agendamento)
+        response = AgendamentoResponse.model_validate(agendamento)
 
-        return jsonify(response), 200
+        return jsonify(response.model_dump()), 200
+    except AcessoNegadoError as e:
+        return jsonify({"erro": "Erro ao buscar agendamento: " + str(e)}), 403
+    except ValueError as e:
+        return jsonify({"erro": "Erro ao buscar agendamento: " + str(e)}), (
+            404 if "não encontrado" in str(e).lower() else 400
+        )
     except Exception as e:
         return jsonify({"erro": "Erro ao buscar agendamento: " + str(e)}), 500
