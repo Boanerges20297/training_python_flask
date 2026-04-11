@@ -43,9 +43,9 @@ def criar_agendamento():
 
         # Vinicius - 11/04/2026
         # Transformado o objeto agendamento em dicionário padronizado pelo schema
-        response = AgendamentoResponse.model_dump(agendamento_novo)
+        response = AgendamentoResponse.model_validate(agendamento_novo)
 
-        return jsonify(response), 201
+        return jsonify(response.model_dump()), 201
     except ConflitoHorarioError as e:
         return jsonify({"erro": "Erro ao criar agendamento: " + str(e)}), 409
     except AcessoNegadoError as e:
@@ -57,6 +57,7 @@ def criar_agendamento():
 
 
 @agendamento_bp.route("", methods=["GET"])
+@jwt_required()
 def listar_agendamento():
     try:
         # Vinicius - 11/04/2026
@@ -67,9 +68,9 @@ def listar_agendamento():
         agendamentos = AgendamentoService.listar_agendamentos(page, per_page)
         # Vinicius - 11/04/2026
         # Transformado o objeto agendamento em dicionário padronizado pelo schema
-        response = AgendamentoListResponse.model_dump(agendamentos)
+        response = AgendamentoListResponse.model_validate(agendamentos)
 
-        return jsonify(response), 200
+        return jsonify(response.model_dump()), 200
 
     except Exception as e:
         return (

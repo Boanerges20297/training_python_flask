@@ -44,6 +44,7 @@ class AgendamentoResponse(AgendamentoBase):
         description="Status atual (pendente, confirmado, concluido, cancelado)",
     )
     data_criacao: datetime = Field(..., description="Data de registro no sistema")
+    observacoes: str | None = Field(..., max_length=500, description="Notas extras")
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -60,7 +61,7 @@ class AgendamentoListResponse(BaseModel):
     has_next: bool = Field(..., description="Tem próxima página?")
     has_prev: bool = Field(..., description="Tem página anterior?")
 
-    data: List[AgendamentoResponse] = Field(..., description="Lista de agendamentos")
+    data: AgendamentoResponse = Field(..., description="Lista de agendamentos")
 
     model_config = ConfigDict(from_attributes=True)
 
