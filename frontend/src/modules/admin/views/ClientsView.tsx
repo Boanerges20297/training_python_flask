@@ -13,17 +13,21 @@ import { formatPhone } from '../../../components/ui/Input';
 export default function ClientsView() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [clienteParaEditar, setClienteParaEditar] = useState<Cliente | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<number | null>(null);
   const { showToast } = useToast();
 
-  const fetchClientes = async () => {
+  const fetchClientes = async (currentPage = page) => {
     setLoading(true);
     try {
-      const data = await getClientes();
-      setClientes(data);
+      // Gabriel (Arquitetura) - Agora o fetch respeita a paginação do Mock
+      const response = await getClientes(currentPage, 10);
+      setClientes(response.items || []);
+      setTotalPages(response.total_paginas || 1);
     } catch (e) {
       showToast('Erro ao carregar clientes do servidor.', 'error');
     } finally {
@@ -31,9 +35,10 @@ export default function ClientsView() {
     }
   };
 
+
   useEffect(() => {
-    fetchClientes();
-  }, []);
+    fetchClientes(page);
+  }, [page]);
 
   const handleNewClient = () => {
     setClienteParaEditar(null);
@@ -73,7 +78,7 @@ export default function ClientsView() {
     { 
       header: 'Contato', 
       render: (cliente: Cliente) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
           <Phone size={14} color="#60a5fa" /> {formatPhone(cliente.telefone)}
         </div>
       ),
@@ -82,7 +87,7 @@ export default function ClientsView() {
     { 
       header: 'Email', 
       render: (cliente: Cliente) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
           <Mail size={14} color="#60a5fa" /> {cliente.email}
         </div>
       ),
@@ -120,6 +125,11 @@ export default function ClientsView() {
         emptyStateText="Nenhum cliente encontrado no sistema."
         themeColor="#3b82f6"
         buttonTheme="blue"
+        pagination={{
+          currentPage: page,
+          totalPages: totalPages,
+          onPageChange: (newPage) => setPage(newPage)
+        }}
       />
 
       <ClientModal

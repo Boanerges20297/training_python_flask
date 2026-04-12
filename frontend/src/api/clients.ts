@@ -1,14 +1,16 @@
 // Gabriel (Dev 1) - API de clientes
 import api from './config';
-import type { Cliente } from '../types';
+import type { Cliente, PaginatedResponse } from '../types';
 
-export async function getClientes(): Promise<Cliente[]> {
+export async function getClientes(page = 1, per_page = 10): Promise<PaginatedResponse<Cliente>> {
   try {
-    const response = await api.get('/clientes/');
-    return response.data.clientes || [];
+    const response = await api.get('/clientes/', {
+      params: { page, per_page }
+    });
+    return response.data; // O mock já devolve o objeto paginado
   } catch (error) {
     console.error("Error fetching clients:", error);
-    return [];
+    return { items: [], total: 0, items_nessa_pagina: 0, pagina: 1, per_page: 10, total_paginas: 1, tem_proxima: false, tem_pagina_anterior: false };
   }
 }
 

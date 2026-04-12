@@ -70,8 +70,8 @@ const BarbersModal: React.FC<BarbersModalProps> = ({ isOpen, onClose, onSuccess,
 
     try {
       if (barbeiroParaEditar) {
-        // Removemos senha (não editável aqui) e ativo (não aceito pelo Schema de Update do Back)
-        const { senha, ativo, ...updateData } = formData; 
+        // Gabriel (Arquitetura) - Removemos senha (não editável aqui)
+        const { senha, ...updateData } = formData; 
         const payload = {
           ...updateData,
           telefone: cleanPhone(formData.telefone)

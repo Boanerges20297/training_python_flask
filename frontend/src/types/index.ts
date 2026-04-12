@@ -30,3 +30,14 @@ export interface Barbeiro {
   telefone: string;
   ativo: boolean;
 }
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  items_nessa_pagina: number;
+  pagina: number;
+  per_page: number;
+  total_paginas: number;
+  tem_proxima: boolean;
+  tem_pagina_anterior: boolean;
+}

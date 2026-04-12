@@ -39,8 +39,8 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, onSuccess,
       
       const fetchBarbeiros = async () => {
         try {
-          const data = await getBarbeiros();
-          setBarbeiros(data);
+          const response = await getBarbeiros(1, 100);
+          setBarbeiros(response.items || []);
         } catch (err) {
           console.error("Erro ao carregar barbeiros:", err);
         }

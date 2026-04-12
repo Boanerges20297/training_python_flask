@@ -13,17 +13,20 @@ import { formatPhone } from '../../../components/ui/Input';
 export default function BarbersView() {
   const [barbeiros, setBarbeiros] = useState<Barbeiro[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [barbeiroParaEditar, setBarbeiroParaEditar] = useState<Barbeiro | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [barberToDelete, setBarberToDelete] = useState<number | null>(null);
   const { showToast } = useToast();
 
-  const fetchBarbeiros = async () => {
+  const fetchBarbeiros = async (currentPage = page) => {
     setLoading(true);
     try {
-      const data = await getBarbeiros();
-      setBarbeiros(data);
+      const response = await getBarbeiros(currentPage, 10);
+      setBarbeiros(response.items || []);
+      setTotalPages(response.total_paginas || 1);
     } catch (e) {
       showToast('Erro ao carregar barbeiros do servidor.', 'error');
     } finally {
@@ -32,8 +35,8 @@ export default function BarbersView() {
   };
 
   useEffect(() => {
-    fetchBarbeiros();
-  }, []);
+    fetchBarbeiros(page);
+  }, [page]);
 
   const handleEditClick = (barbeiro: Barbeiro) => {
     setBarbeiroParaEditar(barbeiro);
@@ -82,25 +85,35 @@ export default function BarbersView() {
     {
       header: 'Especialidade',
       render: (barbeiro: Barbeiro) => (
-        <div className="text-capitalize" style={{ fontSize: '0.85rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}>
-          <Award size={20} color="#f59e0b" /> {barbeiro.especialidade}
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          gap: '0.5rem',
+          fontSize: '0.85rem', 
+          color: '#94a3b8'
+        }}>
+          <Award size={14} color="#f59e0b" style={{ flexShrink: 0 }} />
+          <span className="text-capitalize">{barbeiro.especialidade}</span>
         </div>
       ),
-      align: 'center'
+      align: 'center',
+      style: { width: '200px' }
     },
     {
       header: 'Contato',
       render: (barbeiro: Barbeiro) => (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '0.85rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px' }}>
-            <Phone size={12} color="#f59e0b" /> {formatPhone(barbeiro.telefone)}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', fontSize: '0.85rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Phone size={12} color="#f59e0b" style={{ flexShrink: 0 }} /> {formatPhone(barbeiro.telefone)}
           </div>
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', color: '#64748b' }}>
-            <Mail size={12} color="#64748b" /> {barbeiro.email}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b' }}>
+            <Mail size={12} color="#64748b" style={{ flexShrink: 0 }} /> {barbeiro.email}
           </div>
         </div>
       ),
-      align: 'center'
+      align: 'center',
+      style: { width: '220px' }
     },
     {
       header: 'Status',
@@ -109,6 +122,11 @@ export default function BarbersView() {
           {barbeiro.ativo ? 'Ativo' : 'Inativo'}
         </span>
       ),
+      align: 'center'
+    },
+    {
+      header: 'ID',
+      render: (barbeiro: Barbeiro) => <span className="badge" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>#{barbeiro.id}</span>,
       align: 'center'
     },
     {
@@ -141,6 +159,11 @@ export default function BarbersView() {
         buttonTheme="amber"
         emptyStateIcon={Scissors}
         emptyStateText="Nenhum barbeiro cadastrado no time."
+        pagination={{
+          currentPage: page,
+          totalPages: totalPages,
+          onPageChange: (newPage) => setPage(newPage)
+        }}
       />
 
       <BarbersModal

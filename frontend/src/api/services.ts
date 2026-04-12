@@ -1,14 +1,16 @@
 // Gabriel (Dev 1) - API de serviços
 import api from './config';
-import type { Servico } from '../types';
+import type { Servico, PaginatedResponse } from '../types';
 
-export async function getServicos(): Promise<Servico[]> {
+export async function getServicos(page = 1, per_page = 10): Promise<PaginatedResponse<Servico>> {
   try {
-    const response = await api.get('/servicos/');
-    return response.data.servicos || [];
+    const response = await api.get('/servicos/', {
+      params: { page, per_page }
+    });
+    return response.data; // O mock já devolve o objeto paginado
   } catch (error) {
     console.error("Error fetching services:", error);
-    return [];
+    return { items: [], total: 0, items_nessa_pagina: 0, pagina: 1, per_page: 10, total_paginas: 1, tem_proxima: false, tem_pagina_anterior: false };
   }
 }
 

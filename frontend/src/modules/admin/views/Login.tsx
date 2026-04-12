@@ -21,9 +21,15 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
 
     try {
       const data = await login(email, senha);
-      // Gabriel (Dev 1) - Persistência simples e eficaz: Armazena o usuário apenas para a sessão atual
-      sessionStorage.setItem('barba_user', JSON.stringify(data.usuario));
-      onLoginSuccess(data.usuario);
+      // Gabriel (Dev 1) - Alinhado com Felipe (Task 10): Aceita 'user' (novo) ou 'usuario' (legado)
+      const userData = data.user || data.usuario;
+      
+      if (userData) {
+        sessionStorage.setItem('barba_user', JSON.stringify(userData));
+        onLoginSuccess(userData);
+      } else {
+        throw new Error('Formato de resposta inválido: Usuário não encontrado.');
+      }
     } catch (err: any) {
       setError(err.toString());
     } finally {
