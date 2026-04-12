@@ -1,64 +1,110 @@
 from flask import Blueprint, request, jsonify
-from app.models.admin import Admin
-from app import db
-from datetime import datetime
-from pydantic import ValidationError
-from app.schemas.auth_schema import LoginSchema
+from flask_jwt_extended import (
+    set_access_cookies,
+    set_refresh_cookies,
+    unset_jwt_cookies,
+    jwt_required,
+    get_jwt_identity,
+    get_jwt,
+)
+
+# Importamos o nosso novo serviço
+from app.services.auth_service import AuthService, AuthServiceException
+from app.utils.error_formatter import formatar_erros_pydantic
+from app.schemas.auth_schema import LoginRequest, TokenResponse, LoginResponse
+from app.extensions import app_logger
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
 
 @auth_bp.route("/login", methods=["POST"])
 def login():
-    # Vinicius - 08/04/2026
-    # Adicionado try except para evitar que o sistema caia caso o payload seja inválido
     try:
-        # Vinicius - 08/04/2026
-        # Adicionado validação de payload para garantir que os dados enviados estejam corretos
-        data = LoginSchema(**request.get_json())
+        try:
+            data = LoginRequest(**request.get_json())
+        except Exception as e:
+            erros = formatar_erros_pydantic(e)
+            app_logger.warning("Falha estrutural de validação no payload de Login", extra={"erros": erros})
+            return jsonify(erros), 400
 
-        admin = Admin.query.filter_by(email=data.email).first()
+        # 1. Delega a regra de negócio para o Serviço
+        auth_data = AuthService.authenticate_user(data)
 
-        # Referencia qual função em Admin? função não encontrada verificar_senha
-        # Vinicius - 04/04/2026
-        # Referência à função herdada do mixin (HashSenhaMixin) no modelo Admin
-        if admin and admin.verificar_senha(data.senha):
-            if not admin.ativo:
-                return jsonify({"erro": "Conta desativada"}), 403
+        # 2. Lida com a falha (Regra de HTTP)
+        if not auth_data:
+            return jsonify({"msg": "Credenciais inválidas"}), 401
 
-            # Atualizar último login
-            admin.ultimo_login = datetime.utcnow()
-            db.session.commit()
+        # 3. Lida com o sucesso (Monta a resposta e injeta cookies)
+        # Vinicius 11/04/2026
+        # Modificado o codigo para utilizar LoginResponse e TokenResponse para seguir o padrão do projeto
+        login_response = LoginResponse(
+            msg="Login realizado com sucesso", user=auth_data["user"]
+        )
 
-            # No futuro poderiamos usar JWT aqui, mas por agora retornamos um token simples
-            return (
-                jsonify(
-                    {
-                        "msg": "Login bem-sucedido",
-                        "usuario": {
-                            "id": admin.id,
-                            "nome": admin.nome,
-                            "email": admin.email,
-                            "role": admin.role,
-                        },
-                        "token": "mock-session-token-abc-123",
-                    }
-                ),
-                200,
-            )
+        app_logger.info("Login realizado com sucesso", extra={"email": data.email, "user_id": auth_data["user"].id, "role": auth_data["user"].role})
 
-        return jsonify({"erro": "Email ou senha inválidos"}), 401
+        response = jsonify(login_response.model_dump())
 
-    # Vinicius - 08/04/2026
-    # Adicionado tratamento de erro para ValidationError
-    except ValidationError as e:
-        return jsonify({"erro": "Erro ao incluir cliente: " + str(e)}), 400
-    # Vinicius - 08/04/2026
-    # Adicionado tratamento de erro para Exception
+        set_access_cookies(response, auth_data["tokens"].access_token)
+        set_refresh_cookies(response, auth_data["tokens"].refresh_token)
+
+        return response, 200
+
+    except AuthServiceException as e:
+        return jsonify({"Erro": str(e)}), 401
+
     except Exception as e:
-        return jsonify({"erro": "Erro ao incluir cliente: " + str(e)}), 500
+        app_logger.error("Erro interno inesperado no fluxo de Login", extra={"erro_detalhe": str(e)}, exc_info=True)
+        return (
+            jsonify({"Erro": "Erro ao fazer login, entre em contato com o suporte."}),
+            500,
+        )
+
+
+@auth_bp.route("/refresh", methods=["POST"])
+@jwt_required(refresh=True)
+def refresh():
+    try:
+        # Extrai os dados do request atual
+        current_user_id = get_jwt_identity()
+        role = get_jwt().get("role")
+
+        # Delega a criação para o Serviço
+        new_access_token = AuthService.renew_access_token(current_user_id, role)
+
+        response = jsonify({"msg": "Sessão renovada silenciosamente"})
+        set_access_cookies(response, new_access_token)
+
+        app_logger.info("Sessão renovada silenciosamente", extra={"user_id": current_user_id, "role": role})
+        return response, 200
+
+    except Exception as e:
+        app_logger.error("Falha inesperada ao tentar renovar a sessão (refresh)", extra={"user_id": get_jwt_identity(), "erro_detalhe": str(e)}, exc_info=True)
+        return (
+            jsonify(
+                {"Erro": "Erro ao renovar sessão, entre em contato com o suporte."}
+            ),
+            500,
+        )
 
 
 @auth_bp.route("/logout", methods=["POST"])
+@jwt_required()
 def logout():
-    return jsonify({"msg": "Logout realizado com sucesso"}), 200
+    try:
+        # Extrai o ID do token e manda o Serviço revogar
+        jti = get_jwt()["jti"]
+        AuthService.revoke_token(jti)
+
+        # Limpa os cookies (Regra de HTTP)
+        response = jsonify({"msg": "Logout efetuado. Cookies limpos."})
+        unset_jwt_cookies(response)
+
+        app_logger.info("Logout concluído com sucesso e cookies limpos", extra={"jti": jti, "user_id": get_jwt_identity()})
+        return response, 200
+    except Exception as e:
+        app_logger.error("Falha inesperada ao registrar o Logout", extra={"erro_detalhe": str(e)}, exc_info=True)
+        return (
+            jsonify({"Erro": "Erro ao fazer logout, entre em contato com o suporte."}),
+            500,
+        )

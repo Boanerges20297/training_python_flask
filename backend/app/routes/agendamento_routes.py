@@ -5,110 +5,97 @@ from app.models.cliente import Cliente
 from app.models.barbeiro import Barbeiro
 from app import db
 from datetime import datetime, timedelta
-from app.schemas.agendamento_schema import AgendamentoSchema, AgendamentoUpdateSchema
+from app.schemas.agendamento_schema import (
+    AgendamentoCreate,
+    AgendamentoUpdateSchema,
+    AgendamentoUpdateStatusSchema,
+    AgendamentoListResponse,
+    AgendamentoResponse,
+)
+from app.services.agendamento_service import (
+    AgendamentoService,
+    ConflitoHorarioError,
+    AcessoNegadoError,
+    AgendamentoNaoEncontradoError,
+)
+from app.utils.error_formatter import formatar_erros_pydantic
 from pydantic import ValidationError
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
+from app.utils.decorators import admin_required, role_required
+from app.extensions import app_logger
 
 agendamento_bp = Blueprint("agendamento", __name__, url_prefix="/api/agendamento")
 
 
-@agendamento_bp.route("/criar-agendamento", methods=["POST"])
+@agendamento_bp.route("", methods=["POST"])
+@jwt_required()
 def criar_agendamento():
     try:
-        # Vinicius - 05/04/2026
-        # Adicionado validação de payload para garantir que os dados enviados estejam corretos
-        data = AgendamentoSchema(**request.get_json())
-        # Se existir um agendamento entre a data de inicio e fim do serviço, retornar erro
-        # Vinicius - 05/04/2026
-        # Adicionado verificação se o serviço existe
-        if Servico.query.get(data.servico_id) is None:
-            return jsonify({"erro": "Serviço não encontrado"}), 404
-        # Vinicius - 05/04/2026
-        # Adicionado verificação se o cliente existe
-        if Cliente.query.get(data.cliente_id) is None:
-            return jsonify({"erro": "Cliente não encontrado"}), 404
-        # Vinicius - 05/04/2026
-        # Adicionado verificação se o barbeiro existe
-        if Barbeiro.query.get(data.barbeiro_id) is None:
-            return jsonify({"erro": "Barbeiro não encontrado"}), 404
+        current_user_id = int(get_jwt_identity())
+        role = get_jwt().get("role")
 
-        duracao_servico = Servico.query.get(data.servico_id).duracao_minutos
-        data_fim = data.data_agendamento + timedelta(minutes=duracao_servico)
-
-        if Agendamento.query.filter(
-            Agendamento.barbeiro_id == data.barbeiro_id,
-            Agendamento.data_agendamento >= data.data_agendamento,
-            Agendamento.data_agendamento < data_fim,
-        ).first():
-            return jsonify({"erro": "Horario indisponivel"}), 409
-
-        # Criar agendamento e salvar no banco
-        agendamento = Agendamento(**data.model_dump())
-        db.session.add(agendamento)
-        db.session.commit()
-        return (
-            jsonify(
-                {
-                    "agendamento": {
-                        "id": agendamento.id,
-                        "cliente_id": agendamento.cliente_id,
-                        "barbeiro_id": agendamento.barbeiro_id,
-                        "servico_id": agendamento.servico_id,
-                        "data_agendamento": agendamento.data_agendamento,
-                        "observacoes": agendamento.observacoes,
-                        "msg": "Agendamento criado com sucesso",
-                    }
-                }
-            ),
-            201,
+        try:
+            data = AgendamentoCreate(**request.get_json())
+        except ValidationError as e:
+            erros = formatar_erros_pydantic(e)
+            app_logger.warning("Falha de validação ao criar agendamento (Pydantic)", extra={"erros_validacao": erros})
+            return jsonify(erros), 400
+        # Vinicius - 11/04/2026
+        # Passado toda a logica do agendamento para o service (conflitos, validações, etc)
+        agendamento_novo = AgendamentoService.criar_agendamento(
+            data, role, current_user_id
         )
 
+        # Vinicius - 11/04/2026
+        # Transformado o objeto agendamento em dicionário padronizado pelo schema
+        response = AgendamentoResponse.model_validate(agendamento_novo)
+
+        return jsonify(response.model_dump()), 201
+    except ConflitoHorarioError as e:
+        return jsonify({"erro": "Erro ao criar agendamento: " + str(e)}), 409
+    except AcessoNegadoError as e:
+        return jsonify({"erro": "Erro ao criar agendamento: " + str(e)}), 403
     except ValueError as e:
         return jsonify({"erro": "Erro ao criar agendamento: " + str(e)}), 400
     except Exception as e:
+        app_logger.error("Erro estrutural 500 ao criar agendamento", extra={"erro_detalhe": str(e)}, exc_info=True)
         return jsonify({"erro": "Erro ao criar agendamento: " + str(e)}), 500
 
 
-@agendamento_bp.route("/listar-agendamento", methods=["GET"])
+@agendamento_bp.route("", methods=["GET"])
+@jwt_required()
 def listar_agendamento():
-    # Vinicius - Paginação de Agendamentos 31/03/2026
-    # Adicionado paginação para evitar sobrecarga do sistema com buscas execivas no banco de dados
-    page = request.args.get("page", default=1, type=int)
-    per_page = request.args.get("per_page", default=10, type=int)
     try:
-        # Vinicius - Paginação de Agendamentos 31/03/2026
-        # Vinicius - 04/04/2026
-        # Troca do nome da variavel para 'agendamentos' para melhor identificação
-        agendamentos = Agendamento.query.paginate(
-            page=page, per_page=per_page, error_out=False
+        # Vinicius - 11/04/2026
+        # Migrado toda a logica de negocios para dentro do services
+        page = request.args.get("page", default=1, type=int)
+        per_page = request.args.get("per_page", default=10, type=int)
+
+        current_user_id = int(get_jwt_identity())
+        role = get_jwt().get("role")
+
+        agendamentos = AgendamentoService.listar_agendamentos(
+            page, per_page, role, current_user_id
         )
-        agendamento_dict = [
+        # Vinicius - 11/04/2026
+        # Transformado o objeto agendamento em dicionário padronizado pelo schema
+        response = AgendamentoListResponse.model_validate(
             {
-                "id": a.id,
-                "cliente_id": a.cliente_id,
-                "barbeiro_id": a.barbeiro_id,
-                "servico_id": a.servico_id,
-                "data_agendamento": a.data_agendamento,
-                "observacoes": a.observacoes,
-            }
-            # Vinicius - 04/04/2026
-            # Adicionado o .items para que o list comprehension receba os itens da paginação
-            for a in agendamentos.items
-        ]
-        # Retornar em JSON com chave 'agendamentos'
-        # Vinicius - 04/04/2026
-        # Adicionado formatação para melhor visualização dos dados de paginação e variaveis total e items_nessa_pagina para deixar a resposta mais completa
-        return jsonify(
-            {
-                "agendamentos": agendamento_dict,
-                "total": agendamentos.total,
-                "items_nessa_pagina": len(agendamento_dict),
-                "pagina": agendamentos.page,
+                "page": agendamentos.page,
                 "per_page": agendamentos.per_page,
-                "tem_proxima": agendamentos.has_next,
-                "tem_pagina_anterior": agendamentos.has_prev,
+                "has_next": agendamentos.has_next,
+                "has_prev": agendamentos.has_prev,
+                "data": [
+                    AgendamentoResponse.model_validate(agendamento)
+                    for agendamento in agendamentos.items
+                ],
             }
         )
+
+        return jsonify(response.model_dump()), 200
+
     except Exception as e:
+        app_logger.error("Erro estrutural 500 ao listar agendamentos", extra={"erro_detalhe": str(e)}, exc_info=True)
         return (
             jsonify({"erro": "Não foi possível listar os agendamentos: " + str(e)}),
             500,
@@ -118,106 +105,127 @@ def listar_agendamento():
 # Vinicius - 08/04/2026
 # Mudança de metodo para PATCH, para ser mais semantico com a ação de editar
 # Refatoração da rota editar_agendamento, para utilizar o schema AgendamentoSchema e atualizar dinamicamente os campos do agendamento
-@agendamento_bp.route("/editar-agendamento/<int:id>", methods=["PATCH"])
+@agendamento_bp.route("/<int:id>", methods=["PATCH"])
+@jwt_required()
 def editar_agendamento(id):
     try:
-        # 1. Captura o JSON da requisição
-        body = request.get_json()
+        current_user_id = int(get_jwt_identity())
+        role = get_jwt().get("role")
 
-        # 2. Validação inicial: O Pydantic verifica tipos e campos extras
+        # 1. Captura o JSON da requisição e Validação inicial: O Pydantic verifica tipos e campos extras
         try:
-            # Pydantic valida o dicionário
-            schema = AgendamentoUpdateSchema(**body)
+            dados = AgendamentoUpdateSchema(**request.get_json())
         except Exception as e:
-            return {"error": "Dados inválidos", "detalhes": str(e)}, 400
+            erros = formatar_erros_pydantic(e)
+            app_logger.warning("Falha de validação Pydantic ao editar", extra={"erros_validacao": erros, "agendamento_id": id})
+            return jsonify(erros), 400
 
-        # 3. Transforma em dicionário pegando APENAS o que foi enviado
-        update_data = schema.model_dump(exclude_unset=True)
+        # 2. Envia para o service para editar o agendamento
+        agendamento_atualizado = AgendamentoService.editar_agendamento(
+            id, dados, role, current_user_id
+        )
+        response = AgendamentoResponse.model_validate(agendamento_atualizado)
 
-        # 4. Condição: Se o dicionário estiver vazio, não há o que atualizar
-        if not update_data:
-            return {"message": "Nenhuma alteração enviada."}, 400
+        return jsonify(response.model_dump()), 200
 
-        # 5. Busca o usuário no banco
-        agendamento = Agendamento.query.get(id)
-        if not agendamento:
-            return {"error": "Agendamento não encontrado"}, 404
-
-        # 6. Algoritmo de Atualização Dinâmica
-        # Em vez de fazer: user.nome = update_data['nome'] manual para cada campo...
-        # Verificações a mais para evitar atualizar dados para valores invalidos
-        for key, value in update_data.items():
-            match key:
-                case "cliente_id":
-                    if Cliente.query.get(value) is None:
-                        return {"error": "Cliente não encontrado"}, 404
-                case "barbeiro_id":
-                    if Barbeiro.query.get(value) is None:
-                        return {"error": "Barbeiro não encontrado"}, 404
-                case "servico_id":
-                    if Servico.query.get(value) is None:
-                        return {"error": "Serviço não encontrado"}, 404
-                case "data_agendamento":
-                    if Agendamento.query.filter(
-                        Agendamento.barbeiro_id == agendamento.barbeiro_id,
-                        Agendamento.data_agendamento >= value,
-                        Agendamento.data_agendamento
-                        < value
-                        + timedelta(
-                            minutes=Servico.query.get(
-                                agendamento.servico_id
-                            ).duracao_minutos
-                        ),
-                    ).first():
-                        return {"error": "Horario indisponivel"}, 409
-            setattr(agendamento, key, value)  # Atualiza o atributo dinamicamente
-
-        # 7. Persiste no banco
-        db.session.commit()
-
-        return {
-            "message": "Agendamento atualizado com sucesso!",
-            "campos_alterados": list(update_data.keys()),
-        }, 200
-
+    except ConflitoHorarioError as e:
+        return jsonify({"erro": "Erro ao editar agendamento: " + str(e)}), 409
+    except AcessoNegadoError as e:
+        return jsonify({"erro": "Erro ao editar agendamento: " + str(e)}), 403
+    except AgendamentoNaoEncontradoError as e:
+        return jsonify({"erro": "Erro ao editar agendamento: " + str(e)}), 404
+    except ValueError as e:
+        return jsonify({"erro": "Erro ao editar agendamento: " + str(e)}), 400
     except Exception as e:
+        app_logger.error(f"Erro estrutural 500 ao editar agendamento {id}", extra={"erro_detalhe": str(e)}, exc_info=True)
         return jsonify({"erro": "Erro ao editar agendamento: " + str(e)}), 500
 
 
-@agendamento_bp.route("/deletar-agendamento/<int:id>", methods=["DELETE"])
+@agendamento_bp.route("/status/<int:id>", methods=["PATCH"])
+@jwt_required()
+def atualizar_status(id):
+    try:
+        current_user_id = int(get_jwt_identity())
+        role = get_jwt().get("role")
+
+        # 1. Captura o JSON da requisição e Validação inicial: O Pydantic verifica tipos e campos extras
+        try:
+            dados = AgendamentoUpdateStatusSchema(**request.get_json())
+        except Exception as e:
+            erros = formatar_erros_pydantic(e)
+            app_logger.warning("Falha de validação Pydantic ao atualizar status", extra={"erros_validacao": erros, "agendamento_id": id})
+            return jsonify(erros), 400
+
+        # 2. Envia para o service para editar o agendamento
+        agendamento_atualizado = AgendamentoService.atualizar_status(
+            id, dados, role, current_user_id
+        )
+
+        response = AgendamentoResponse.model_validate(agendamento_atualizado)
+
+        return jsonify(response.model_dump()), 200
+
+    except AcessoNegadoError as e:
+        return (
+            jsonify({"erro": "Erro ao atualizar status do agendamento: " + str(e)}),
+            403,
+        )
+    except ValueError as e:
+        return jsonify(
+            {"erro": "Erro ao atualizar status do agendamento: " + str(e)}
+        ), (404 if "não encontrado" in str(e).lower() else 400)
+    except Exception as e:
+        app_logger.error(f"Erro estrutural 500 ao atualizar status {id}", extra={"erro_detalhe": str(e)}, exc_info=True)
+        return (
+            jsonify({"erro": "Erro ao atualizar status do agendamento: " + str(e)}),
+            500,
+        )
+
+
+@agendamento_bp.route("/<int:id>", methods=["DELETE"])
+@admin_required
 def deletar_agendamento(id):
     try:
-        agendamento = Agendamento.query.get(id)
-        if not agendamento:
-            return jsonify({"erro": "Agendamento não encontrado"}), 404
+        current_user_id = int(get_jwt_identity())
+        role = get_jwt().get("role")
 
-        db.session.delete(agendamento)
-        db.session.commit()
+        # Vinicius - 11/04/2026
+        # Migrado toda a logica de negocios para dentro do services
+        agendamento = AgendamentoService.deletar_registro_fisico(id)
 
-        return jsonify({"msg": "Agendamento deletado com sucesso"})
+        return jsonify({"msg": "Agendamento deletado com sucesso"}), 200
+
+    except AcessoNegadoError as e:
+        return jsonify({"erro": "Erro ao deletar agendamento: " + str(e)}), 403
+    except ValueError as e:
+        return jsonify({"erro": "Erro ao deletar agendamento: " + str(e)}), (
+            404 if "não encontrado" in str(e).lower() else 400
+        )
     except Exception as e:
+        app_logger.error(f"Erro 500 crítico ao deletar agendamento {id}", extra={"erro_detalhe": str(e)}, exc_info=True)
         return jsonify({"erro": "Erro ao deletar agendamento: " + str(e)}), 500
 
 
-@agendamento_bp.route("/buscar-agendamento/<int:id>", methods=["GET"])
+@agendamento_bp.route("/buscar/<int:id>", methods=["GET"])
+@jwt_required()
 def buscar_agendamento(id):
     try:
-        agendamento = Agendamento.query.get(id)
-        if not agendamento:
-            return jsonify({"erro": "Agendamento não encontrado"}), 404
+        current_user_id = int(get_jwt_identity())
+        role = get_jwt().get("role")
 
-        agendamento_dict = {
-            "id": agendamento.id,
-            "cliente_id": agendamento.cliente_id,
-            "barbeiro_id": agendamento.barbeiro_id,
-            "servico_id": agendamento.servico_id,
-            "data_agendamento": agendamento.data_agendamento,
-            "observacoes": agendamento.observacoes,
-        }
+        # Vinicius - 11/04/2026
+        # Migrado toda a logica de negocios para dentro do services
+        agendamento = AgendamentoService.buscar_agendamento(id, role, current_user_id)
 
-        return jsonify({"agendamento": agendamento_dict})
+        response = AgendamentoResponse.model_validate(agendamento)
+
+        return jsonify(response.model_dump()), 200
+    except AcessoNegadoError as e:
+        return jsonify({"erro": "Erro ao buscar agendamento: " + str(e)}), 403
+    except ValueError as e:
+        return jsonify({"erro": "Erro ao buscar agendamento: " + str(e)}), (
+            404 if "não encontrado" in str(e).lower() else 400
+        )
     except Exception as e:
+        app_logger.error(f"Erro 500 estrutural apontado ao buscar id {id}", extra={"erro_detalhe": str(e)}, exc_info=True)
         return jsonify({"erro": "Erro ao buscar agendamento: " + str(e)}), 500
-
-
-# Não foi adicionado a classe AgendamentoUpdateSchema pois os mesmos dados são enviados no schema AgendamentoSchema

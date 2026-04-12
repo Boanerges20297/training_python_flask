@@ -1,30 +1,14 @@
 from flask import Flask, jsonify
-from flask_sqlalchemy import SQLAlchemy
-from flask_limiter import Limiter
-from app.utils.ratelimiter import get_usuario_ou_ip
-from config import Config
-from flask_jwt_extended import JWTManager
-
-# Inicializa o banco de dados (vai ser usado pelos modelos)
-# Criamos aqui, fora de qualquer função, para importar nos modelos
-db = SQLAlchemy()
-
-# Vinicius - 02/04/2026
-# Inicializa o rate limiter
-limiter = Limiter(
-    key_func=get_usuario_ou_ip,
-    storage_uri=Config.RATELIMIT_STORAGE_URL,
-    strategy=Config.RATELIMIT_STRATEGY,
-    headers_enabled=Config.RATELIMIT_HEADERS_ENABLED,
-    default_limits=Config.RATELIMIT_DEFAULT_LIMIT,
-)
+from config import DevelopmentConfig, ProductionConfig
+from app.extensions import db, limiter, jwt, cors
+from app.jwt_callbacks import register_jwt_handlers
+import os
 
 
 def create_app():
     """
     FACTORY PATTERN - Cria e configura a aplicação Flask
     """
-    import os
 
     # 1. Criar a app Flask
     # Definimos explicitamente o caminho da pasta de instância para o diretório "instances"
@@ -44,44 +28,25 @@ def create_app():
         pass
 
     # 2. Carregar configurações do config.py
-    from config import Config
-
-    app.config.from_object(Config)
+    app.config.from_object(DevelopmentConfig)
 
     # Vinicius - 02/04/2026
     # Inicializa o rate limiter
-    if Config.RATELIMIT_ENABLED:
+    if app.config["RATELIMIT_ENABLED"]:
         limiter.init_app(app)
 
-    # Vinicius - 02/04/2026
-    # Funcao de erro para o rate limiter
-    @app.errorhandler(429)
-    def ratelimit_handler(e):
-        return (
-            jsonify(
-                {
-                    "erro": "Limite de requisições excedido",
-                    "mensagem": "Você excedeu o limite de requisições",
-                    "detalhes": str(e.description),
-                }
-            ),
-            429,
-        )
-
-    # felipe inicio
-    # 2.1 configurar secret key do jwt
-    jwt = JWTManager()
     jwt.init_app(app)
-    app.config["JWT_SECRET_KEY"] = Config.JWT_SECRET_KEY
-    # felipe fim
-
-    # 2.5 Habilitar CORS
-    from flask_cors import CORS
-
-    CORS(app)
-
-    # 3. Inicializar banco de dados
     db.init_app(app)
+    cors.init_app(app, resources={r"/api/*": {"origins": app.config["FRONTEND_URL"]}})
+
+    register_jwt_handlers(jwt)
+
+    # Inicializa o Logger (Logging Estruturado)
+    # Tem que ser importado aqui por causa do cache db/jwt
+    from app.extensions import app_logger
+    from app.utils.logger_setup import setup_logger
+
+    setup_logger(app, app_logger)
 
     # 4. Registrar blueprints (Rotas Modulares)
     from app.routes.client_routes import clientes_bp
@@ -89,21 +54,18 @@ def create_app():
     from app.routes.agendamento_routes import agendamento_bp
     from app.routes.auth_routes import auth_bp
     from app.routes.tests_routes import tests_bp
-
-    # Vinicius - 09/04/2026
-    # Importa as rotas de barbeiro
     from app.routes.barbeiro_routes import barbeiros_bp
+    from app.routes.admin_routes import admin_bp
 
     app.register_blueprint(clientes_bp)
     app.register_blueprint(servico_bp)
     app.register_blueprint(agendamento_bp)
     app.register_blueprint(auth_bp)
-    # Vinicius - 09/04/2026
-    # Registra as rotas de barbeiro
     app.register_blueprint(barbeiros_bp)
+    app.register_blueprint(admin_bp)
     # Vinicius - 02/04/2026
     # Se tiver em ambiente de desenvolvimento, importe tests_bp
-    if Config.DEBUG == True:
+    if app.config["DEBUG"] == True:
         app.register_blueprint(tests_bp)
 
     # 5. Criar as tabelas no banco (quando a app inicia)
@@ -124,3 +86,16 @@ def create_app():
         )
 
     return app
+
+    @app.errorhandler(429)
+    def ratelimit_handler(e):
+        return (
+            jsonify(
+                {
+                    "erro": "Limite de requisições excedido",
+                    "mensagem": "Você excedeu o limite de requisições",
+                    "detalhes": str(e.description),
+                }
+            ),
+            429,
+        )
