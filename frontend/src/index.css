@@ -188,18 +188,20 @@ body {
   background: #0f172a;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .content-header {
   height: 70px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 2rem;
-  background: rgba(15, 23, 42, 0.8);
+  background: rgba(15, 23, 42, 0.9);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  z-index: 10;
 }
 
 .breadcrumb {
@@ -234,6 +236,7 @@ body {
 .content-body {
   padding: 2rem;
   flex: 1;
+  overflow-y: auto;
 }
 
 /* UI COMPONENTS (CARDS, TABLES, ETC) */

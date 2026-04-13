@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { createAgendamento } from '../../../../api/appointments';
-import type { Cliente, Servico } from '../../../../types';
-import { User, ShoppingBag, Calendar, FileText, Plus } from 'lucide-react';
+import { createAgendamento, updateAgendamento } from '../../../../api/appointments';
+import type { Cliente, Servico, Agendamento } from '../../../../types';
+import { User, ShoppingBag, Calendar, FileText, Plus, Edit2 } from 'lucide-react';
 import Modal from '../../Modal';
 import Input from '../../Input';
 import Button from '../../Button';
@@ -13,15 +13,17 @@ interface AppointmentModalProps {
   onSuccess: () => void;
   clientes: Cliente[];
   servicos: Servico[];
+  agendamentoParaEditar?: Agendamento | null;
 }
 
-// # Gabriel (Dev 1) - Refatorado para usar o Modal genérico com personalização Purple/Large.
+// # Gabriel (Dev 1) - Refatorado para suportar criação e edição de agendamentos.
 const AppointmentModal: React.FC<AppointmentModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
   clientes,
-  servicos
+  servicos,
+  agendamentoParaEditar
 }) => {
   const [formData, setFormData] = useState({
     cliente_id: '',
@@ -35,11 +37,25 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      setFormData({ cliente_id: '', servico_id: '', data_agendamento: '', observacoes: '' });
+      if (agendamentoParaEditar) {
+        // Formata a data para o formato aceito pelo datetime-local
+        const dataFormatada = agendamentoParaEditar.data_agendamento
+          ? agendamentoParaEditar.data_agendamento.slice(0, 16)
+          : '';
+        setFormData({
+          cliente_id: String(agendamentoParaEditar.cliente_id),
+          servico_id: String(agendamentoParaEditar.servico_id),
+          data_agendamento: dataFormatada,
+          observacoes: agendamentoParaEditar.observacoes || ''
+        });
+      } else {
+        setFormData({ cliente_id: '', servico_id: '', data_agendamento: '', observacoes: '' });
+      }
       setSuccess(false);
       setError(null);
     }
-  }, [isOpen]);
+  }, [isOpen, agendamentoParaEditar]);
+
   // # Gabriel (Dev 1) - Obtém a data e hora atual no formato ISO simplificado para o atributo 'min'
   const today = new Date().toISOString().slice(0, 16);
 
@@ -47,7 +63,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
     e.preventDefault();
 
     // # Gabriel (Dev 1) - Reforçando regra aqui no front: Validação de data retroativa
-    if (formData.data_agendamento < today) {
+    if (!agendamentoParaEditar && formData.data_agendamento < today) {
       setError("Não é possível agendar horários no passado.");
       return;
     }
@@ -79,7 +95,13 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
         throw "Preencha todos os campos obrigatórios.";
       }
 
-      await createAgendamento(payload as any);
+      if (agendamentoParaEditar) {
+        const ok = await updateAgendamento(agendamentoParaEditar.id, payload);
+        if (!ok) throw "Erro ao atualizar agendamento.";
+      } else {
+        await createAgendamento(payload as any);
+      }
+
       setSuccess(true);
       setTimeout(() => {
         onSuccess();
@@ -88,7 +110,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
         setFormData({ cliente_id: '', servico_id: '', data_agendamento: '', observacoes: '' });
       }, 1500);
     } catch (err: any) {
-      const msg = err.response?.data?.message || err || 'Erro ao agendar horário.';
+      const msg = err.response?.data?.message || err || 'Erro ao processar agendamento.';
       setError(msg);
     } finally {
       setIsSubmitting(false);
@@ -99,14 +121,14 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Agendar Horário"
+      title={agendamentoParaEditar ? "Editar Agendamento" : "Agendar Horário"}
       variant="purple"
-      subtitle='Escolha o cliente, o serviço e o horário.'
+      subtitle={agendamentoParaEditar ? 'Atualize os dados do agendamento.' : 'Escolha o cliente, o serviço e o horário.'}
       size="lg"
       feedback={success ? {
         type: 'success',
-        title: 'Agendado!',
-        message: 'O horário foi reservado com sucesso.'
+        title: agendamentoParaEditar ? 'Atualizado!' : 'Agendado!',
+        message: agendamentoParaEditar ? 'Agendamento atualizado com sucesso.' : 'O horário foi reservado com sucesso.'
       } : null}
     >
 
@@ -148,7 +170,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
               type="datetime-local"
               icon={<Calendar size={18} />}
               required
-              min={today}
+              min={agendamentoParaEditar ? undefined : today}
               max="2099-12-31T23:59"
               value={formData.data_agendamento}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, data_agendamento: e.target.value })}
@@ -190,9 +212,9 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
               size="md"
               disabled={isSubmitting}
               isLoading={isSubmitting}
-              icon={<Plus size={18} />}
+              icon={agendamentoParaEditar ? <Edit2 size={18} /> : <Plus size={18} />}
             >
-              Confirmar Agendamento
+              {agendamentoParaEditar ? 'Salvar Alterações' : 'Confirmar Agendamento'}
             </Button>
           </div>
         </form>

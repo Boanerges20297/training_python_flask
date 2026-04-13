@@ -1,7 +1,9 @@
 import React from 'react';
-import { Loader2, Plus } from 'lucide-react';
+import { Loader2, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import Button from './Button';
 import type { LucideIcon } from 'lucide-react';
+import './DataTable.css';
+
 
 export interface Column<T> {
   header: string;
@@ -26,6 +28,11 @@ export interface DataTableProps<T> {
   emptyStateIcon: LucideIcon;
   emptyStateText?: string;
   id?: string;
+  pagination?: {
+    currentPage: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
+  };
 }
 
 /*
@@ -46,7 +53,8 @@ function DataTable<T>({
   buttonSize = 'md',
   emptyStateIcon: EmptyIcon,
   emptyStateText = 'Nenhum registro encontrado no sistema.',
-  id
+  id,
+  pagination
 }: DataTableProps<T>) {
   return (
     <section className="card animate-in" id={id}>
@@ -121,6 +129,33 @@ function DataTable<T>({
               )}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Rodapé de Paginação */}
+      {pagination && pagination.totalPages > 1 && (
+        <div className="table-pagination">
+          <div className="pagination-info">
+            Página <strong>{pagination.currentPage}</strong> de {pagination.totalPages}
+          </div>
+          <div className="pagination-controls">
+            <button
+              className="pagination-btn"
+              onClick={() => pagination.onPageChange(pagination.currentPage - 1)}
+              disabled={pagination.currentPage <= 1}
+              title="Página Anterior"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button
+              className="pagination-btn"
+              onClick={() => pagination.onPageChange(pagination.currentPage + 1)}
+              disabled={pagination.currentPage >= pagination.totalPages}
+              title="Próxima Página"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
         </div>
       )}
     </section>

@@ -1,21 +1,23 @@
 // Gabriel (Dev 1) - API de agendamentos
 import api from './config';
-import type { Agendamento } from '../types';
+import type { Agendamento, PaginatedResponse } from '../types';
 
-export async function getAgendamentos(): Promise<Agendamento[]> {
+export async function getAgendamentos(page = 1, per_page = 10): Promise<PaginatedResponse<Agendamento>> {
   try {
-    const response = await api.get('/agendamento/listar-agendamento');
-    return response.data.agendamentos || [];
+    const response = await api.get('/agendamento/listar-agendamento', {
+      params: { page, per_page }
+    });
+    return response.data.dados;
   } catch (error) {
     console.error("Error fetching appointments:", error);
-    return [];
+    return { items: [], total: 0, items_nessa_pagina: 0, pagina: 1, per_page: 10, total_paginas: 1, tem_proxima: false, tem_pagina_anterior: false };
   }
 }
 
 export async function createAgendamento(agendamento: Omit<Agendamento, 'id'>): Promise<Agendamento> {
   try {
     const response = await api.post('/agendamento/criar-agendamento', agendamento);
-    return response.data.agendamento;
+    return response.data.dados.agendamento;
   } catch (error: any) {
     throw error.response?.data?.erro || 'Erro ao criar agendamento';
   }
