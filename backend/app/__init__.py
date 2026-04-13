@@ -85,7 +85,7 @@ def create_app():
             }
         )
 
-    return app
+   
 
     @app.errorhandler(429)
     def ratelimit_handler(e):
@@ -99,3 +99,5 @@ def create_app():
             ),
             429,
         )
+    # josue minima alteracao
+    return app

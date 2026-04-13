@@ -64,7 +64,7 @@ class AuthService:
             ),
         }
 
-    @staticmethod
+    #josue minima alteraçao  @staticmethod dupicado
     # Vinicius 11/04/2026
     # Adicionado tipagem para o método renew_access_token
     @staticmethod
