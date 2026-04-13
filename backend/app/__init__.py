@@ -37,7 +37,9 @@ def create_app():
 
     jwt.init_app(app)
     db.init_app(app)
-    cors.init_app(app, resources={r"/api/*": {"origins": app.config["FRONTEND_URL"]}})
+    # Configurando CORS para suportar cookies (com JWT/sessão) e aceitando o endereço do frontend
+    cors_origins = [app.config.get("FRONTEND_URL", "http://localhost:5173"), "http://localhost:5173", "http://127.0.0.1:5173"]
+    cors.init_app(app, supports_credentials=True, resources={r"/*": {"origins": list(set(cors_origins))}})
 
     register_jwt_handlers(jwt)
 
@@ -75,8 +77,6 @@ def create_app():
     # 6. Rota básica para testar se a API está online
     @app.route("/")
     def index():
-        from flask import jsonify
-
         return jsonify(
             {
                 "status": "online",
@@ -84,8 +84,6 @@ def create_app():
                 "version": "1.1.0 (Modular)",
             }
         )
-
-    return app
 
     @app.errorhandler(429)
     def ratelimit_handler(e):
@@ -99,3 +97,5 @@ def create_app():
             ),
             429,
         )
+
+    return app

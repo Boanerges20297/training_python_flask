@@ -31,11 +31,11 @@ export async function updateCliente(id: number, cliente: Partial<Cliente>): Prom
   }
 }
 
+// felipe
+// remove o cliente pelo id — autenticação via cookie JWT (withCredentials no config.ts)
 export async function deleteCliente(id: number): Promise<boolean> {
   try {
-    await api.delete(`/clientes/deletar-cliente/${id}`, {
-      headers: { 'X-Role': 'admin' }
-    });
+    await api.delete(`/clientes/deletar-cliente/${id}`);
     return true;
   } catch (error) {
     console.error("Erro ao deletar cliente:", error);

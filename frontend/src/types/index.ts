@@ -30,3 +30,31 @@ export interface Barbeiro {
   telefone: string;
   ativo: boolean;
 }
+
+// felipe
+// Tipos de autenticação
+
+// os papéis possíveis no sistema — TypeScript rejeita qualquer outro valor
+export type UserRole = 'admin' | 'barbeiro' | 'cliente';
+
+// espelho exato do objeto "usuario" retornado pelo backend no login
+export interface AuthUser {
+  id: number;
+  nome: string;
+  email: string;
+  role: UserRole; // não é string genérica — só aceita os valores de UserRole
+}
+
+// a resposta completa do POST /api/auth/login
+export interface LoginResponse {
+  msg: string;
+  usuario: AuthUser; // chave em português conforme o backend retorna
+  token: string;     // por enquanto é um mock — futuramente será JWT
+}
+
+// o estado que o AuthContext vai gerenciar internamente
+export interface AuthState {
+  user: AuthUser | null; // null = nenhum usuário logado
+  isAuthenticated: boolean;
+  isLoading: boolean;    // true enquanto verifica sessão na inicialização
+}

@@ -1,4 +1,7 @@
+// felipe
 import { useState } from 'react';
+import { useAuth } from './auth/useAuth';
+import { AuthGuard } from './auth/AuthGuard';
 import Login from './modules/admin/views/Login';
 import Sidebar from './components/layouts/Sidebar';
 import Header from './components/layouts/Header';
@@ -10,24 +13,18 @@ import BarbersView from './modules/admin/views/BarbersView';
 type Tab = 'clientes' | 'servicos' | 'agendamentos' | 'barbeiros';
 
 function App() {
-  const [user, setUser] = useState<any>(() => {
-    // # Gabriel (Dev 1) - Recuperação de sessão para o F5 não dar logout
-    const savedUser = sessionStorage.getItem('barba_user');
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
+  // felipe
+  // user e logout vêm do contexto — sem useState<any> local
+  const { user, isAuthenticated, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('clientes');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('barba_user');
-    setUser(null);
-  };
-
-  if (!user) {
-    return <Login onLoginSuccess={(u) => setUser(u)} />;
+  // felipe
+  // exibe o Login se não estiver autenticado — contexto controla a transição
+  if (!isAuthenticated) {
+    return <Login />;
   }
 
-  // Mapeia o ID da aba para um nome legível no Breadcrumb
   const tabNames: Record<Tab, string> = {
     clientes: 'Clientes',
     servicos: 'Serviços',
@@ -36,28 +33,33 @@ function App() {
   };
 
   return (
-    <div className={`app-layout ${isSidebarCollapsed ? 'collapsed' : ''}`}>
-      <Sidebar 
-        activeTab={activeTab}
-        onTabChange={(tab) => setActiveTab(tab)}
-        isCollapsed={isSidebarCollapsed}
-        onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-        user={user}
-        onLogout={handleLogout}
-      />
+    // felipe
+    // AuthGuard garante que apenas admins acessam o painel
+    <AuthGuard requiredRole="admin">
+      <div className={`app-layout ${isSidebarCollapsed ? 'collapsed' : ''}`}>
+        <Sidebar
+          activeTab={activeTab}
+          onTabChange={(tab) => setActiveTab(tab)}
+          isCollapsed={isSidebarCollapsed}
+          onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          user={user}
+          onLogout={logout}
+        />
 
-      <main className="main-content">
-        <Header activeTabName={tabNames[activeTab]} />
+        <main className="main-content">
+          <Header activeTabName={tabNames[activeTab]} />
 
-        <div className="content-body">
-          {activeTab === 'clientes' && <ClientsView />}
-          {activeTab === 'servicos' && <ServicesView />}
-          {activeTab === 'agendamentos' && <AppointmentsView />}
-          {activeTab === 'barbeiros' && <BarbersView />}
-        </div>
-      </main>
-    </div>
+          <div className="content-body">
+            {activeTab === 'clientes' && <ClientsView />}
+            {activeTab === 'servicos' && <ServicesView />}
+            {activeTab === 'agendamentos' && <AppointmentsView />}
+            {activeTab === 'barbeiros' && <BarbersView />}
+          </div>
+        </main>
+      </div>
+    </AuthGuard>
   );
 }
 
 export default App;
+

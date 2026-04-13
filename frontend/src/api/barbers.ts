@@ -31,11 +31,11 @@ export async function updateBarbeiro(id: number, barbeiro: Partial<Barbeiro>): P
   }
 }
 
+// felipe
+// remove o barbeiro pelo id — autenticação via cookie JWT (withCredentials no config.ts)
 export async function deleteBarbeiro(id: number): Promise<boolean> {
   try {
-    await api.delete(`/barbeiros/deletar-barbeiro/${id}`, {
-      headers: { 'X-Role': 'admin' }
-    });
+    await api.delete(`/barbeiros/deletar-barbeiro/${id}`);
     return true;
   } catch (error) {
     console.error("Erro ao deletar barbeiro:", error);

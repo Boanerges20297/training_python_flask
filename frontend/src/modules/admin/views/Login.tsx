@@ -1,35 +1,35 @@
 import React, { useState } from 'react';
-import { login } from '../../../api/auth';
 import { Lock, Mail, Scissors, LogIn } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
+import { useAuth } from '../../../auth/useAuth';
 
-interface LoginProps {
-  onLoginSuccess: (user: any) => void;
-}
-
-const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
+// felipe
+// Login não recebe mais props — o contexto cuida do estado de autenticação
+const Login: React.FC = () => {
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // felipe
+  // delega o login ao AuthContext — sem sessionStorage manual aqui
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
-      const data = await login(email, senha);
-      // Gabriel (Dev 1) - Persistência simples e eficaz: Armazena o usuário apenas para a sessão atual
-      sessionStorage.setItem('barba_user', JSON.stringify(data.usuario));
-      onLoginSuccess(data.usuario);
+      await login(email, senha);
+      // App.tsx detecta isAuthenticated via contexto e exibe o painel
     } catch (err: any) {
       setError(err.toString());
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="login-container">
