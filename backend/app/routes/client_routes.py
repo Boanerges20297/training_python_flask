@@ -6,11 +6,13 @@ from app import db
 from app.utils.decorators import admin_required
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from app.schemas.client_schema import ClienteSchema, ClienteUpdateSchema
+from app.utils.error_formatter import formatar_erros_pydantic
+from app.services.email_service import EmailService
 
 clientes_bp = Blueprint("clientes", __name__, url_prefix="/api/clientes")
 
 
-@clientes_bp.route("/", methods=["GET"])
+@clientes_bp.route("", methods=["GET"])
 # josue inicio
 # esse trecho fiquei um pouco confuso no comesso mas fui conseguindo captar a logica
 def listar_clientes():
@@ -91,7 +93,9 @@ def listar_clientes():
 
 
 # josue fim
-@clientes_bp.route("/criar-cliente", methods=["POST"])
+# Vinicius - 15/04/2026
+# Removido o /criar-cliente do endpoint, para ficar mais semantico com a ação de criar e padrão REST
+@clientes_bp.route("", methods=["POST"])
 def criar_cliente():
     try:
         # Vinicius - 08/04/2026
@@ -99,7 +103,10 @@ def criar_cliente():
         try:
             data = ClienteSchema(**request.get_json())
         except Exception as e:
-            return jsonify({"erro": "Erro ao incluir cliente: " + str(e)}), 400
+            # Vinicius - 15/04/2026
+            # Formatando os erros de validação para um formato mais amigável
+            erros = formatar_erros_pydantic(e)
+            return jsonify({"erros_validacao": erros}), 400
         # Vinicius - 08/04/2026
         # Removido validações feitas pelo Josue, que agora serão validadas pelo schema
 
@@ -109,6 +116,9 @@ def criar_cliente():
         # Utilizando o metodo do mixin para hashear a senha em texto simples antes de efetuar o commit no banco
         cliente.senha = data.senha
         db.session.add(cliente)
+        EmailService.enviar_email_boas_vindas(
+            destinatario=cliente.email, nome_usuario=cliente.nome
+        )
         db.session.commit()
         return (
             jsonify(
@@ -124,20 +134,25 @@ def criar_cliente():
             ),
             201,
         )
-    #josue inicio
+    # josue inicio
     # o front consegue informar ao usuário “cliente já existe” e tratar o fluxo corretamente.
     except IntegrityError:
         db.session.rollback()
-        return jsonify({"erro": "Cliente já cadastrado (email ou telefone já em uso)."}), 409
+        return (
+            jsonify({"erro": "Cliente já cadastrado (email ou telefone já em uso)."}),
+            409,
+        )
     except Exception as e:
         db.session.rollback()
         return jsonify({"erro": "Erro ao incluir cliente: " + str(e)}), 500
-    #josue fim
+    # josue fim
 
 
 # Vinicius - 08/04/2026
 # Modificado o metodo de PUT para PATCH, pois PATCH é usado para atualizar apenas os campos enviados
-@clientes_bp.route("/editar-cliente/<int:id>", methods=["PATCH"])
+# Vinicius - 15/04/2026
+# Removido o /editar-cliente do endpoint, para ficar mais semantico com a ação de editar e padrão REST
+@clientes_bp.route("/<int:id>", methods=["PATCH"])
 @jwt_required()
 def editar_cliente(id):
     current_user_id = int(get_jwt_identity())
@@ -196,7 +211,9 @@ def editar_cliente(id):
         return jsonify({"erro": "Erro ao editar cliente: " + str(e)}), 500
 
 
-@clientes_bp.route("/deletar-cliente/<int:id>", methods=["DELETE"])
+# Vinicius - 15/04/2026
+# Removido o /deletar-cliente do endpoint, para ficar mais semantico com a ação de deletar e padrão REST
+@clientes_bp.route("/<int:id>", methods=["DELETE"])
 @jwt_required()
 @admin_required
 def deletar_cliente(id):

@@ -1,4 +1,3 @@
-
 """
 DESAFIO 1: Criar API GET para listar serviços
 
@@ -33,6 +32,8 @@ from sqlalchemy.exc import IntegrityError
 
 from flask_jwt_extended import jwt_required
 from app.utils.decorators import admin_required
+from app.utils.error_formatter import formatar_erros_pydantic
+
 # ========== PASSO 2: CRIAR BLUEPRINT ==========
 # Um blueprint precisa de um nome e um prefixo de URL
 # Nome: 'servicos' (pode ser qualquer coisa)
@@ -51,7 +52,7 @@ servico_bp = Blueprint("servicos", __name__, url_prefix="/api/servicos")
 # (vazio '' porque já tem '/api/servicos' no url_prefix)
 
 
-@servico_bp.route("/", methods=["GET"])
+@servico_bp.route("", methods=["GET"])
 def listar_servicos():
     """
     Endpoint para listar todos os serviços
@@ -79,7 +80,7 @@ def listar_servicos():
                 "nome": s.nome,
                 "preco": s.preco,
                 "duracao_minutos": s.duracao_minutos,
-                "barbeiro_id": s.barbeiro_id, # Gabriel (09/04/2026) - Adicionado para que o frontend possa receber o id do barbeiro
+                "barbeiro_id": s.barbeiro_id,  # Gabriel (09/04/2026) - Adicionado para que o frontend possa receber o id do barbeiro
             }
             # Vinicius - 04/04/2026
             # Adicionado o .items para que o list comprehension receba os itens da paginação
@@ -106,9 +107,13 @@ def listar_servicos():
 
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
-#josue alteraçao minima
-#proteger criar serviços
-@servico_bp.route("/criar-servico", methods=["POST"])
+
+
+# josue alteraçao minima
+# proteger criar serviços
+# Vinicius - 15/04/2026
+# Removido o /criar-servico do endpoint, para ficar mais semantico com a ação de criar e padrão REST
+@servico_bp.route("", methods=["POST"])
 @jwt_required()
 @admin_required
 def criar_servico():
@@ -117,10 +122,15 @@ def criar_servico():
     try:
         # Vinicius - 05/04/2026
         # Adicionado validação de payload para garantir que os dados enviados estejam corretos
-        data = ServicoSchema(**request.get_json())
+        try:
+            data = ServicoSchema(**request.get_json())
+        except ValidationError as e:
+            erros = formatar_erros_pydantic(e)
+            return jsonify({"erros_validacao": erros}), 400
         # Vinicius - 31/03/2026
         # Verificar se o serviço já existe
         if Servico.query.filter_by(nome=data.nome).first():
+
             return jsonify({"erro": "Serviço já cadastrado"}), 409
 
         # Criar serviço e salvar no banco
@@ -150,9 +160,11 @@ def criar_servico():
 # Vinicius - 08/04/2026
 # Mudança de metodo para PATCH, para ser mais semantico com a ação de editar
 # Refatoração da rota editar_servico, para utilizar o schema ServicoUpdateSchema e atualizar dinamicamente os campos do serviço
-#josue alteraçao minima
-#adicionar proteçao para editar servicos
-@servico_bp.route("/editar-servico/<int:id>", methods=["PATCH"])
+# josue alteraçao minima
+# adicionar proteçao para editar servicos
+# Vinicius - 15/04/2026
+# Removido o /editar-servico do endpoint, para ficar mais semantico com a ação de editar e padrão REST
+@servico_bp.route("/<int:id>", methods=["PATCH"])
 @jwt_required()
 @admin_required
 def editar_servico(id):
@@ -195,9 +207,12 @@ def editar_servico(id):
     except Exception as e:
         return jsonify({"erro": "Erro ao editar serviço: " + str(e)}), 500
 
-#josue alteraçao minima
-#proteger deletar serviços
-@servico_bp.route("/deletar-servico/<int:id>", methods=["DELETE"])
+
+# josue alteraçao minima
+# proteger deletar serviços
+# Vinicius - 15/04/2026
+# Removido o /deletar-servico do endpoint, para ficar mais semantico com a ação de deletar e padrão REST
+@servico_bp.route("/<int:id>", methods=["DELETE"])
 @jwt_required()
 @admin_required
 def deletar_servico(id):
@@ -209,21 +224,28 @@ def deletar_servico(id):
         db.session.delete(servico)
         db.session.commit()
         return jsonify({"msg": "Serviço deletado com sucesso"}), 200
-    #josue inicio
-    #cria o Integrity exessao dinamica evitando erro 500 Faz db.session.rollback() para limpar a transação quebrada.
+    # josue inicio
+    # cria o Integrity exessao dinamica evitando erro 500 Faz db.session.rollback() para limpar a transação quebrada.
     except IntegrityError:
         db.session.rollback()
-        return jsonify(
-            {"erro": "Não é possível deletar este serviço porque existem agendamentos vinculados."}
-        ), 409
+        return (
+            jsonify(
+                {
+                    "erro": "Não é possível deletar este serviço porque existem agendamentos vinculados."
+                }
+            ),
+            409,
+        )
     except Exception as e:
         db.session.rollback()
         return jsonify({"erro": "Erro ao deletar serviço: " + str(e)}), 500
-    
-    #josue fim
+
+    # josue fim
 
 
-@servico_bp.route("/buscar-servico/<int:id>", methods=["GET"])
+# Vinicius - 15/04/2026
+# Removido o /buscar-servico do endpoint, para ficar mais semantico com a ação de buscar e padrão REST
+@servico_bp.route("/<int:id>", methods=["GET"])
 def buscar_servico(id):
     try:
         servico = Servico.query.get(id)

@@ -1,6 +1,7 @@
 from flask_mailman import EmailMessage
 from flask import current_app
 from app.extensions import app_logger
+from config import Config
 
 
 class EmailService:
@@ -12,7 +13,12 @@ class EmailService:
         Envia um e-mail de texto simples.
         """
         try:
-            msg = EmailMessage(subject=assunto, body=mensagem_texto, to=[destinatario])
+            msg = EmailMessage(
+                subject=assunto,
+                body=mensagem_texto,
+                to=[destinatario],
+                from_email=Config.MAIL_DEFAULT_SENDER,
+            )
             msg.send()
             return True, "E-mail enviado com sucesso"
         except Exception as e:
@@ -44,14 +50,14 @@ class EmailService:
 
         try:
             # Note que o corpo principal pode ser vazio se formos usar attach_alternative
-            msg = EmailMessage(
-                subject=assunto,
-                body=f"Olá, {nome_usuario}! Bem-vindo ao sistema.",  # Fallback para clientes que não leem HTML
-                to=[destinatario],
-            )
+            msg = EmailMessage(subject=assunto, body=corpo_html, to=[destinatario])
             # Anexa a versão HTML
-            msg.attach_alternative(corpo_html, "text/html")
+            msg.content_subtype = "html"
             msg.send()
             return True, "E-mail de boas-vindas enviado!"
         except Exception as e:
+            app_logger.error(
+                "E-mail de boas-vindas não enviado",
+                extra={"erro_detalhe": str(e), "destinatario": destinatario},
+            )
             return False, str(e)

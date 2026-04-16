@@ -21,7 +21,7 @@ from app.utils.error_formatter import formatar_erros_pydantic
 from pydantic import ValidationError
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from app.utils.decorators import admin_required, role_required
-from app.extensions import app_logger
+from app.extensions import app_logger, db
 from app.services.email_service import EmailService
 
 agendamento_bp = Blueprint("agendamento", __name__, url_prefix="/api/agendamento")
@@ -58,9 +58,9 @@ def criar_agendamento():
         # Vinicius - 14/04/2026
         # Variavel sucesso e mensagem criados para enviar o email e capturar a resposta da função do serviço
         sucesso = EmailService.enviar_notificacao_simples(
-            destinatario="newrk31@gmail.com",
+            destinatario=cliente.email,
             assunto="Agendamento criado com sucesso",
-            mensagem_texto=f"Olá, {cliente.nome}! Seu agendamento foi criado com sucesso.",
+            mensagem_texto=f"Olá, {cliente.nome.title()}! Seu agendamento foi criado com sucesso.",
         )
 
         # Vinicius - 14/04/2026
@@ -83,15 +83,20 @@ def criar_agendamento():
             }
 
         response = AgendamentoResponse.model_validate(data_response)
+        db.session.commit()
 
         return jsonify(response.model_dump()), 201
     except ConflitoHorarioError as e:
+        db.session.rollback()
         return jsonify({"erro": "Erro ao criar agendamento: " + str(e)}), 409
     except AcessoNegadoError as e:
+        db.session.rollback()
         return jsonify({"erro": "Erro ao criar agendamento: " + str(e)}), 403
     except ValueError as e:
+        db.session.rollback()
         return jsonify({"erro": "Erro ao criar agendamento: " + str(e)}), 400
     except Exception as e:
+        db.session.rollback()
         app_logger.error(
             "Erro estrutural 500 ao criar agendamento",
             extra={"erro_detalhe": str(e)},
@@ -170,18 +175,24 @@ def editar_agendamento(id):
             id, dados, role, current_user_id
         )
         response = AgendamentoResponse.model_validate(agendamento_atualizado)
+        db.session.commit()
 
         return jsonify(response.model_dump()), 200
 
     except ConflitoHorarioError as e:
+        db.session.rollback()
         return jsonify({"erro": "Erro ao editar agendamento: " + str(e)}), 409
     except AcessoNegadoError as e:
+        db.session.rollback()
         return jsonify({"erro": "Erro ao editar agendamento: " + str(e)}), 403
     except AgendamentoNaoEncontradoError as e:
+        db.session.rollback()
         return jsonify({"erro": "Erro ao editar agendamento: " + str(e)}), 404
     except ValueError as e:
+        db.session.rollback()
         return jsonify({"erro": "Erro ao editar agendamento: " + str(e)}), 400
     except Exception as e:
+        db.session.rollback()
         app_logger.error(
             f"Erro estrutural 500 ao editar agendamento {id}",
             extra={"erro_detalhe": str(e)},
@@ -214,19 +225,23 @@ def atualizar_status(id):
         )
 
         response = AgendamentoResponse.model_validate(agendamento_atualizado)
+        db.session.commit()
 
         return jsonify(response.model_dump()), 200
 
     except AcessoNegadoError as e:
+        db.session.rollback()
         return (
             jsonify({"erro": "Erro ao atualizar status do agendamento: " + str(e)}),
             403,
         )
     except ValueError as e:
+        db.session.rollback()
         return jsonify(
             {"erro": "Erro ao atualizar status do agendamento: " + str(e)}
         ), (404 if "não encontrado" in str(e).lower() else 400)
     except Exception as e:
+        db.session.rollback()
         app_logger.error(
             f"Erro estrutural 500 ao atualizar status {id}",
             extra={"erro_detalhe": str(e)},
@@ -249,15 +264,19 @@ def deletar_agendamento(id):
         # Migrado toda a logica de negocios para dentro do services
         agendamento = AgendamentoService.deletar_registro_fisico(id)
 
+        db.session.commit()
         return jsonify({"msg": "Agendamento deletado com sucesso"}), 200
 
     except AcessoNegadoError as e:
+        db.session.rollback()
         return jsonify({"erro": "Erro ao deletar agendamento: " + str(e)}), 403
     except ValueError as e:
+        db.session.rollback()
         return jsonify({"erro": "Erro ao deletar agendamento: " + str(e)}), (
             404 if "não encontrado" in str(e).lower() else 400
         )
     except Exception as e:
+        db.session.rollback()
         app_logger.error(
             f"Erro 500 crítico ao deletar agendamento {id}",
             extra={"erro_detalhe": str(e)},
