@@ -56,6 +56,7 @@ def create_app():
     from app.routes.tests_routes import tests_bp
     from app.routes.barbeiro_routes import barbeiros_bp
     from app.routes.admin_routes import admin_bp
+    from app.routes.dashboard_routes import dashboard_bp
 
     app.register_blueprint(clientes_bp)
     app.register_blueprint(servico_bp)
@@ -63,6 +64,7 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(barbeiros_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(dashboard_bp)
     # Vinicius - 02/04/2026
     # Se tiver em ambiente de desenvolvimento, importe tests_bp
     if app.config["DEBUG"] == True:
