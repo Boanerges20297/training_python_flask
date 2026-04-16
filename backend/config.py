@@ -40,6 +40,21 @@ class Config:
     HORARIO_ABERTURA = 8
     HORARIO_FECHAMENTO = 20
 
+    # Vinicius - 14/04/2026
+    # Configurações do envio de emails
+    # Servidor SMTP (Protocolo HTTP dos emails 'correio')
+    MAIL_SERVER = os.environ.get("MAIL_SERVER")
+    # Porta para o serviço
+    MAIL_PORT = os.environ.get("MAIL_PORT")
+    # Metodo de criptografia moderno para as mensagens
+    MAIL_USE_TLS = os.environ.get("MAIL_USE_TLS")
+    # Usuario do remetente
+    MAIL_USERNAME = os.environ.get("MAIL_USERNAME")
+    # Senha do remetente
+    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
+    # Destinatario padrão
+    MAIL_DEFAULT_SENDER = os.environ.get("MAIL_DEFAULT_SENDER")
+
 
 class DevelopmentConfig(Config):
     """Configurações de desenvolvimento"""
@@ -62,7 +77,7 @@ class DevelopmentConfig(Config):
     JWT_COOKIE_SAMESITE = "Lax"
     JWT_COOKIE_SECURE = False
     JWT_SECRET_KEY = "chave-secreta-do-jwt-mudar-em-producao"
-    JWT_COOKIE_CSRF_PROTECT = False
+    JWT_COOKIE_CSRF_PROTECT = True
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=999)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=999)
 

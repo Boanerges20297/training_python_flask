@@ -50,6 +50,14 @@ class AgendamentoResponse(AgendamentoBase):
 
     observacoes: str | None = Field(..., max_length=500, description="Notas extras")
 
+    # Vinicius - 14/04/2026
+    # Adicionado a response uma mensagem e status para padronização da resposta e feedback de retorno de email
+    msg: Optional[str] = Field(None, description="Mensagem de retorno para o payload")
+
+    status: Optional[str] = Field(
+        None, description="Status para sabermos se o email foi enviado ou não"
+    )
+
     model_config = ConfigDict(from_attributes=True)
 
 

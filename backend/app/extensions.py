@@ -7,6 +7,7 @@ from app.utils.ratelimiter import get_usuario_ou_ip
 from config import DevelopmentConfig, ProductionConfig
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
+from flask_mailman import Mail
 
 import logging
 
@@ -21,3 +22,4 @@ limiter = Limiter(
     headers_enabled=DevelopmentConfig.RATELIMIT_HEADERS_ENABLED,
     default_limits=DevelopmentConfig.RATELIMIT_DEFAULT_LIMIT,
 )
+mail = Mail()

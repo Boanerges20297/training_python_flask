@@ -6,11 +6,19 @@ from app import db
 from app.utils.decorators import admin_required
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from app.schemas.client_schema import ClienteSchema, ClienteUpdateSchema
+from app.utils.error_formatter import formatar_erros_pydantic
+from app.services.email_service import EmailService
+from datetime import datetime
+from app.extensions import app_logger
 
 clientes_bp = Blueprint("clientes", __name__, url_prefix="/api/clientes")
 
 
-@clientes_bp.route("/", methods=["GET"])
+@clientes_bp.route("", methods=["GET"])
+# Vinicius - 16/04/2026
+# Adicionado jwt_required e admin_required para proteger o endpoint
+@jwt_required()
+@admin_required
 # josue inicio
 # esse trecho fiquei um pouco confuso no comesso mas fui conseguindo captar a logica
 def listar_clientes():
@@ -91,7 +99,9 @@ def listar_clientes():
 
 
 # josue fim
-@clientes_bp.route("/criar-cliente", methods=["POST"])
+# Vinicius - 15/04/2026
+# Removido o /criar-cliente do endpoint, para ficar mais semantico com a ação de criar e padrão REST
+@clientes_bp.route("", methods=["POST"])
 def criar_cliente():
     try:
         # Vinicius - 08/04/2026
@@ -99,7 +109,10 @@ def criar_cliente():
         try:
             data = ClienteSchema(**request.get_json())
         except Exception as e:
-            return jsonify({"erro": "Erro ao incluir cliente: " + str(e)}), 400
+            # Vinicius - 15/04/2026
+            # Formatando os erros de validação para um formato mais amigável
+            erros = formatar_erros_pydantic(e)
+            return jsonify({"erros_validacao": erros}), 400
         # Vinicius - 08/04/2026
         # Removido validações feitas pelo Josue, que agora serão validadas pelo schema
 
@@ -109,7 +122,13 @@ def criar_cliente():
         # Utilizando o metodo do mixin para hashear a senha em texto simples antes de efetuar o commit no banco
         cliente.senha = data.senha
         db.session.add(cliente)
+        # Vinicius - 16/04/2026
+        # Enviado email de boas vindas para o cliente
+        EmailService.enviar_email_boas_vindas(
+            destinatario=cliente.email, nome_usuario=cliente.nome
+        )
         db.session.commit()
+
         return (
             jsonify(
                 {
@@ -124,20 +143,32 @@ def criar_cliente():
             ),
             201,
         )
-    #josue inicio
+    # josue inicio
     # o front consegue informar ao usuário “cliente já existe” e tratar o fluxo corretamente.
     except IntegrityError:
         db.session.rollback()
-        return jsonify({"erro": "Cliente já cadastrado (email ou telefone já em uso)."}), 409
+        return (
+            jsonify({"erro": "Cliente já cadastrado (email ou telefone já em uso)."}),
+            409,
+        )
     except Exception as e:
         db.session.rollback()
+        # Vinicius - 16/04/2026
+        # Adicionado log para monitorar erros na criação de clientes
+        app_logger.error(
+            "Erro estrutural 500 ao criar cliente",
+            extra={"erro_detalhe": str(e)},
+            exc_info=True,
+        )
         return jsonify({"erro": "Erro ao incluir cliente: " + str(e)}), 500
-    #josue fim
+    # josue fim
 
 
 # Vinicius - 08/04/2026
 # Modificado o metodo de PUT para PATCH, pois PATCH é usado para atualizar apenas os campos enviados
-@clientes_bp.route("/editar-cliente/<int:id>", methods=["PATCH"])
+# Vinicius - 15/04/2026
+# Removido o /editar-cliente do endpoint, para ficar mais semantico com a ação de editar e padrão REST
+@clientes_bp.route("/<int:id>", methods=["PATCH"])
 @jwt_required()
 def editar_cliente(id):
     current_user_id = int(get_jwt_identity())
@@ -186,17 +217,37 @@ def editar_cliente(id):
 
         # 7. Persiste no banco
         db.session.commit()
-
+        # Vinicius - 16/04/2026
+        # Adicionado log para monitorar a edição de clientes
+        app_logger.info(
+            "Cliente atualizado com sucesso",
+            extra={
+                "cliente_id": cliente.id,
+                "realizado_por": current_user_id,
+                "role": role,
+                "data_hora_atual": datetime.utcnow(),
+            },
+        )
         return {
             "message": "Cliente atualizado com sucesso!",
             "campos_alterados": list(update_data.keys()),
         }, 200
 
     except Exception as e:
+        # Vinicius - 16/04/2026
+        # Adicionado roolback caso ocorra algum erro e logging
+        db.session.rollback()
+        app_logger.error(
+            "Erro estrutural 500 ao editar cliente",
+            extra={"erro_detalhe": str(e)},
+            exc_info=True,
+        )
         return jsonify({"erro": "Erro ao editar cliente: " + str(e)}), 500
 
 
-@clientes_bp.route("/deletar-cliente/<int:id>", methods=["DELETE"])
+# Vinicius - 15/04/2026
+# Removido o /deletar-cliente do endpoint, para ficar mais semantico com a ação de deletar e padrão REST
+@clientes_bp.route("/<int:id>", methods=["DELETE"])
 @jwt_required()
 @admin_required
 def deletar_cliente(id):
@@ -207,12 +258,35 @@ def deletar_cliente(id):
 
         db.session.delete(cliente)
         db.session.commit()
+        # Vinicius - 16/04/2026
+        # Adicionado log para monitorar a deleção de clientes
+        app_logger.info(
+            "Cliente deletado com sucesso",
+            extra={
+                "cliente_id": cliente.id,
+                "realizado_por": current_user_id,
+                "role": role,
+                "data_hora_atual": datetime.utcnow(),
+            },
+        )
         return jsonify({"msg": "Cliente deletado com sucesso"}), 200
     except Exception as e:
+        # Vinicius - 16/04/2026
+        # Adicionado roolback caso ocorra algum erro e logging
+        db.session.rollback()
+        app_logger.error(
+            "Erro estrutural 500 ao deletar cliente",
+            extra={"erro_detalhe": str(e)},
+            exc_info=True,
+        )
         return jsonify({"erro": "Erro ao deletar cliente: " + str(e)}), 500
 
 
 @clientes_bp.route("/buscar-cliente/<int:id>", methods=["GET"])
+# Vinicius - 16/04/2026
+# Adicionado jwt_required e admin_required para proteger o endpoint
+@jwt_required()
+@admin_required
 def buscar_cliente(id):
     try:
         cliente = Cliente.query.get(id)

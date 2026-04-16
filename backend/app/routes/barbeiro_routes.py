@@ -7,13 +7,19 @@ from app import db
 from app.utils.decorators import admin_required, barbeiro_required
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from app.schemas.barbeiro_schema import BarbeiroSchema, BarbeiroUpdateSchema
+from app.utils.error_formatter import formatar_erros_pydantic
+from app.extensions import app_logger
+from datetime import datetime
 
 barbeiros_bp = Blueprint("barbeiros", __name__, url_prefix="/api/barbeiros")
 
 
 # Vinicius - 09/04/2026
 # Foi reutilizado o codigo de rotas de cliente e adaptado para barbeiro
-@barbeiros_bp.route("/", methods=["GET"])
+@barbeiros_bp.route("", methods=["GET"])
+# Vinicius - 16/04/2026
+# Adicionado jwt_required para proteger o endpoint
+@jwt_required()
 def listar_barbeiros():
     try:
         # Capturar parâmetros de paginação (com valores padrão)
@@ -65,17 +71,17 @@ def listar_barbeiros():
         # Vinicius - 04/04/2026
         # Troca do nome da variavel para 'clientes' para melhor identificação
         barbeiros = query.paginate(page=pagina, per_page=per_page, error_out=False)
-        
-#josue minima alteraço
+
+        # josue minima alteraço
         barbeiros_dict = [
             {
-    "id": b.id,
-    "nome": b.nome,
-    "telefone": b.telefone,
-    "email": b.email,
-    "especialidade": b.especialidade,
-    "ativo": b.ativo,
-}
+                "id": b.id,
+                "nome": b.nome,
+                "telefone": b.telefone,
+                "email": b.email,
+                "especialidade": b.especialidade,
+                "ativo": b.ativo,
+            }
             # Vinicius - 04/04/2026
             # Adicionado o .items para que o list comprehension receba os itens da paginação
             for b in barbeiros.items
@@ -98,17 +104,25 @@ def listar_barbeiros():
         return jsonify({"erro": "Não foi possível listar os barbeiros: " + str(e)}), 500
 
 
-@barbeiros_bp.route("/criar-barbeiro", methods=["POST"])
+# Vinicius - 15/04/2026
+# Removido o /criar-barbeiro do path para seguir o padrão REST
+@barbeiros_bp.route("", methods=["POST"])
 @jwt_required()
 @admin_required
 def criar_barbeiro():
     try:
+        # Vinicius - 16/04/2026
+        # 0. Captura o usuário atual e sua role
+        current_user_id = int(get_jwt_identity())
+        role = get_jwt().get("role")
+
         # Vinicius - 08/04/2026
         # Adicionado validação de payload para garantir que os dados enviados estejam corretos
         try:
             data = BarbeiroSchema(**request.get_json())
         except Exception as e:
-            return jsonify({"erro": "Erro ao incluir barbeiro: " + str(e)}), 400
+            erros = formatar_erros_pydantic(e)
+            return jsonify({"erros_validacao": erros}), 400
         # Vinicius - 08/04/2026
         # Removido validações feitas pelo Josue, que agora serão validadas pelo schema
 
@@ -119,6 +133,17 @@ def criar_barbeiro():
         barbeiro.senha = data.senha
         db.session.add(barbeiro)
         db.session.commit()
+        # Vinicius - 16/04/2026
+        # Adicionado log para monitorar a criação de barbeiros
+        app_logger.info(
+            "Barbeiro criado com sucesso",
+            extra={
+                "barbeiro_id": barbeiro.id,
+                "realizado_por": current_user_id,
+                "role": role,
+                "data_hora_atual": datetime.utcnow(),
+            },
+        )
         return (
             jsonify(
                 {
@@ -135,12 +160,22 @@ def criar_barbeiro():
             201,
         )
     except Exception as e:
+        # Vinicius - 16/04/2026
+        # Adicionado log para monitorar erros na criação de barbeiros
+        db.session.rollback()
+        app_logger.error(
+            "Erro estrutural 500 ao criar barbeiro",
+            extra={"erro_detalhe": str(e)},
+            exc_info=True,
+        )
         return jsonify({"erro": "Erro ao incluir barbeiro: " + str(e)}), 500
 
 
 # Vinicius - 08/04/2026
 # Modificado o metodo de PUT para PATCH, pois PATCH é usado para atualizar apenas os campos enviados
-@barbeiros_bp.route("/editar-barbeiro/<int:id>", methods=["PATCH"])
+# Vinicius - 15/04/2026
+# Removido o /editar-barbeiro do path para seguir o padrão REST
+@barbeiros_bp.route("/<int:id>", methods=["PATCH"])
 @jwt_required()
 def editar_barbeiro(id):
     current_user_id = int(get_jwt_identity())
@@ -188,6 +223,17 @@ def editar_barbeiro(id):
 
         # 7. Persiste no banco
         db.session.commit()
+        # Vinicius - 16/04/2026
+        # Adicionado log para monitorar a edição de barbeiros
+        app_logger.info(
+            "Barbeiro atualizado com sucesso",
+            extra={
+                "barbeiro_id": barbeiro.id,
+                "realizado_por": current_user_id,
+                "role": role,
+                "data_hora_atual": datetime.utcnow(),
+            },
+        )
 
         return {
             "message": "Barbeiro atualizado com sucesso!",
@@ -195,13 +241,23 @@ def editar_barbeiro(id):
         }, 200
 
     except Exception as e:
+        # Vinicius - 16/04/2026
+        # Adicionado log para monitorar erros na edição de barbeiros
+        db.session.rollback()
+        app_logger.error(
+            "Erro estrutural 500 ao editar barbeiro",
+            extra={"erro_detalhe": str(e)},
+            exc_info=True,
+        )
         return jsonify({"erro": "Erro ao editar barbeiro: " + str(e)}), 500
 
 
 # Vinicius - 09/04/2026
 # Rota simples para deletar um barbeiro
 # Futuramente será usado desativar em vez de deletar por completo
-@barbeiros_bp.route("/deletar-barbeiro/<int:id>", methods=["DELETE"])
+# Vinicius - 15/04/2026
+# Removido o /deletar-barbeiro do path para seguir o padrão REST
+@barbeiros_bp.route("/<int:id>", methods=["DELETE"])
 @jwt_required()
 @admin_required
 def deletar_barbeiro(id):
@@ -212,14 +268,38 @@ def deletar_barbeiro(id):
 
         db.session.delete(barbeiro)
         db.session.commit()
+        # Vinicius - 16/04/2026
+        # Adicionado log para monitorar a deleção de barbeiros
+        app_logger.info(
+            "Barbeiro deletado com sucesso",
+            extra={
+                "barbeiro_id": barbeiro.id,
+                "realizado_por": current_user_id,
+                "role": role,
+                "data_hora_atual": datetime.utcnow(),
+            },
+        )
         return jsonify({"msg": "Barbeiro deletado com sucesso"}), 200
     except Exception as e:
+        # Vinicius - 16/04/2026
+        # Adicionado log para monitorar erros na deleção de barbeiros
+        db.session.rollback()
+        app_logger.error(
+            "Erro estrutural 500 ao deletar barbeiro",
+            extra={"erro_detalhe": str(e)},
+            exc_info=True,
+        )
         return jsonify({"erro": "Erro ao deletar barbeiro: " + str(e)}), 500
 
 
 # Vinicius - 09/04/2026
 # Rota simples para buscar um barbeiro pelo seu ID
-@barbeiros_bp.route("/buscar-barbeiro/<int:id>", methods=["GET"])
+# Vinicius - 15/04/2026
+# Removido o /buscar-barbeiro do path para seguir o padrão REST
+@barbeiros_bp.route("/<int:id>", methods=["GET"])
+# Vinicius - 16/04/2026
+# Adicionado jwt_required para proteger o endpoint
+@jwt_required()
 def buscar_barbeiro(id):
     try:
         barbeiro = Barbeiro.query.get(id)
@@ -288,9 +368,11 @@ def buscar_agendamentos_barbeiro(id):
                 "id": a.id,
                 "cliente_id": a.cliente_id,
                 "barbeiro_id": a.barbeiro_id,
-                #josue minima alteraçao
+                # josue minima alteraçao
                 "data_agendamento": a.data_agendamento.isoformat(),
-                "servico": {"id":a.servico.id,"nome": a.servico.nome}if a.servico else None
+                "servico": (
+                    {"id": a.servico.id, "nome": a.servico.nome} if a.servico else None
+                ),
             }
             for a in agendamentos.items
         ]

@@ -1,6 +1,6 @@
 from flask import Flask, jsonify
 from config import DevelopmentConfig, ProductionConfig
-from app.extensions import db, limiter, jwt, cors
+from app.extensions import db, limiter, jwt, cors, mail
 from app.jwt_callbacks import register_jwt_handlers
 import os
 
@@ -38,6 +38,7 @@ def create_app():
     jwt.init_app(app)
     db.init_app(app)
     cors.init_app(app, resources={r"/api/*": {"origins": app.config["FRONTEND_URL"]}})
+    mail.init_app(app)
 
     register_jwt_handlers(jwt)
 
