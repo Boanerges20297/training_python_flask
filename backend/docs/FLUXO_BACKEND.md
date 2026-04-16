@@ -272,7 +272,7 @@ config.py               → Config centralizada (JWT secret, DB URI, limites, et
 
 ## 9. FLUXO DE LOGIN DETALHADO
 
-```
+``` 
 
 ---
 
