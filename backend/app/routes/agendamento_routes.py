@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request
 from app.models.agendamento import Agendamento
 from app.models.cliente import Cliente
 from app.models.barbeiro import Barbeiro
+from app.models.servico import Servico
 from app import db
 from datetime import datetime, timedelta
 from app.schemas.agendamento_schema import (
@@ -21,8 +22,10 @@ from app.utils.error_formatter import formatar_erros_pydantic
 from pydantic import ValidationError
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from app.utils.decorators import admin_required, role_required
+from app.utils.email_layouts import obter_layout_agendamento
 from app.extensions import app_logger, db
 from app.services.email_service import EmailService
+from datetime import datetime
 
 agendamento_bp = Blueprint("agendamento", __name__, url_prefix="/api/agendamento")
 
@@ -50,17 +53,23 @@ def criar_agendamento():
         )
 
         # Vinicius - 15/04/2026
-        # Como não temos service de clientes vamos pegar na rota por enquanto
+        # Como não temos service de clientes, serviços e barbeiros, vamos pegar na rota por enquanto
         cliente = Cliente.query.get(agendamento_novo.cliente_id)
-        # Como não temos service de clientes, vamos pegar na rota por enquanto
-        # Vinicius - 15/04/2026
+        servico = Servico.query.get(agendamento_novo.servico_id)
+        barbeiro = Barbeiro.query.get(agendamento_novo.barbeiro_id)
 
         # Vinicius - 14/04/2026
         # Variavel sucesso e mensagem criados para enviar o email e capturar a resposta da função do serviço
         sucesso = EmailService.enviar_notificacao_simples(
             destinatario=cliente.email,
             assunto="Agendamento criado com sucesso",
-            mensagem_texto=f"Olá, {cliente.nome.title()}! Seu agendamento foi criado com sucesso.",
+            mensagem_texto=obter_layout_agendamento(
+                nome_usuario=cliente.nome.title(),
+                data=agendamento_novo.data_agendamento.strftime("%d/%m/%Y"),
+                hora=agendamento_novo.data_agendamento.strftime("%H:%M"),
+                servico=servico.nome.title(),
+                barbeiro=barbeiro.nome.title(),
+            ),
         )
 
         # Vinicius - 14/04/2026
@@ -84,7 +93,18 @@ def criar_agendamento():
 
         response = AgendamentoResponse.model_validate(data_response)
         db.session.commit()
-
+        # Vinicius - 16/04/2026
+        # Adicionado log para monitorar a criação de agendamentos
+        app_logger.info(
+            "Agendamento criado com sucesso",
+            extra={
+                "agendamento_id": agendamento_novo.id,
+                "status": agendamento_novo.status,
+                "realizado_por": current_user_id,
+                "role": role,
+                "data_hora_atual": datetime.utcnow(),
+            },
+        )
         return jsonify(response.model_dump()), 201
     except ConflitoHorarioError as e:
         db.session.rollback()
@@ -174,9 +194,52 @@ def editar_agendamento(id):
         agendamento_atualizado = AgendamentoService.editar_agendamento(
             id, dados, role, current_user_id
         )
-        response = AgendamentoResponse.model_validate(agendamento_atualizado)
-        db.session.commit()
 
+        # Vinicius - 15/04/2026
+        # Como não temos service de clientes, serviços e barbeiros, vamos pegar na rota por enquanto
+        cliente = Cliente.query.get(agendamento_atualizado.cliente_id)
+        servico = Servico.query.get(agendamento_atualizado.servico_id)
+        barbeiro = Barbeiro.query.get(agendamento_atualizado.barbeiro_id)
+
+        # Vinicius - 14/04/2026
+        # Variavel sucesso e mensagem criados para enviar o email e capturar a resposta da função do serviço
+        sucesso = EmailService.enviar_notificacao_simples(
+            destinatario=cliente.email,
+            assunto="Agendamento atualizado com sucesso",
+            mensagem_texto=f"""Olá, {cliente.nome.title()}! Seu agendamento foi atualizado com sucesso.
+            Data: {agendamento_atualizado.data_agendamento.strftime('%d/%m/%Y')}
+            Horário: {agendamento_atualizado.data_agendamento.strftime('%H:%M')}
+            Serviço: {servico.nome.title()}
+            Barbeiro: {barbeiro.nome.title()}
+            """,
+        )
+
+        if False in sucesso:
+            data_response = {
+                **agendamento_atualizado.__dict__,
+                "msg": "Agendamento atualizado, mas e-mail não enviado",
+                "status": "sucesso",
+            }
+        else:
+            data_response = {
+                **agendamento_atualizado.__dict__,
+                "msg": "Agendamento atualizado e e-mail enviado",
+                "status": "sucesso",
+            }
+        response = AgendamentoResponse.model_validate(data_response)
+        db.session.commit()
+        # Vinicius - 16/04/2026
+        # Adicionado log para monitorar a edição de agendamentos
+        app_logger.info(
+            "Agendamento atualizado com sucesso",
+            extra={
+                "agendamento_id": agendamento_atualizado.id,
+                "status": agendamento_atualizado.status,
+                "realizado_por": current_user_id,
+                "role": role,
+                "data_hora_atual": datetime.utcnow(),
+            },
+        )
         return jsonify(response.model_dump()), 200
 
     except ConflitoHorarioError as e:
@@ -226,6 +289,18 @@ def atualizar_status(id):
 
         response = AgendamentoResponse.model_validate(agendamento_atualizado)
         db.session.commit()
+        # Vinicius - 16/04/2026
+        # Adicionado log para monitorar a atualização de status de agendamentos
+        app_logger.info(
+            "Agendamento atualizado com sucesso",
+            extra={
+                "agendamento_id": agendamento_atualizado.id,
+                "status": agendamento_atualizado.status,
+                "realizado_por": current_user_id,
+                "role": role,
+                "data_hora_atual": datetime.utcnow(),
+            },
+        )
 
         return jsonify(response.model_dump()), 200
 
@@ -265,6 +340,17 @@ def deletar_agendamento(id):
         agendamento = AgendamentoService.deletar_registro_fisico(id)
 
         db.session.commit()
+        # Vinicius - 16/04/2026
+        # Adicionado log para monitorar a deleção de agendamentos
+        app_logger.info(
+            "Agendamento deletado com sucesso",
+            extra={
+                "agendamento_id": agendamento.id,
+                "realizado_por": current_user_id,
+                "role": role,
+                "data_hora_atual": datetime.utcnow(),
+            },
+        )
         return jsonify({"msg": "Agendamento deletado com sucesso"}), 200
 
     except AcessoNegadoError as e:

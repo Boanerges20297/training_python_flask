@@ -52,10 +52,10 @@ class AgendamentoResponse(AgendamentoBase):
 
     # Vinicius - 14/04/2026
     # Adicionado a response uma mensagem e status para padronização da resposta e feedback de retorno de email
-    msg: str = Field(..., description="Mensagem de retorno para o payload")
+    msg: Optional[str] = Field(None, description="Mensagem de retorno para o payload")
 
-    status: str = Field(
-        ..., description="Status para sabermos se o email foi enviado ou não"
+    status: Optional[str] = Field(
+        None, description="Status para sabermos se o email foi enviado ou não"
     )
 
     model_config = ConfigDict(from_attributes=True)

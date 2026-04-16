@@ -30,9 +30,11 @@ from app.schemas.servico_schema import ServicoSchema, ServicoUpdateSchema
 from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from app.utils.decorators import admin_required
 from app.utils.error_formatter import formatar_erros_pydantic
+from app.extensions import app_logger
+from datetime import datetime
 
 # ========== PASSO 2: CRIAR BLUEPRINT ==========
 # Um blueprint precisa de um nome e um prefixo de URL
@@ -122,6 +124,11 @@ def criar_servico():
     try:
         # Vinicius - 05/04/2026
         # Adicionado validação de payload para garantir que os dados enviados estejam corretos
+        # Vinicius - 16/04/2026
+        # 0. Captura o usuário atual e sua role
+        current_user_id = int(get_jwt_identity())
+        role = get_jwt().get("role")
+
         try:
             data = ServicoSchema(**request.get_json())
         except ValidationError as e:
@@ -137,6 +144,17 @@ def criar_servico():
         servico = Servico(**data.model_dump())
         db.session.add(servico)
         db.session.commit()
+        # Vinicius - 16/04/2026
+        # Adicionado log para monitorar a criação de serviços
+        app_logger.info(
+            "Serviço criado com sucesso",
+            extra={
+                "servico_id": servico.id,
+                "realizado_por": current_user_id,
+                "role": role,
+                "data_hora_atual": datetime.utcnow(),
+            },
+        )
         return (
             jsonify(
                 {
@@ -152,8 +170,22 @@ def criar_servico():
             201,
         )
     except ValidationError as e:
+        # Vinicius - 16/04/2026
+        # Adicionado log para monitorar erros na criação de serviços
+        app_logger.error(
+            "Erro estrutural 500 ao criar cliente",
+            extra={"erro_detalhe": str(e)},
+            exc_info=True,
+        )
         return jsonify({"erro": "Erro ao criar serviço: " + str(e)}), 400
     except Exception as e:
+        # Vinicius - 16/04/2026
+        # Adicionado log para monitorar erros na criação de serviços
+        app_logger.error(
+            "Erro estrutural 500 ao criar cliente",
+            extra={"erro_detalhe": str(e)},
+            exc_info=True,
+        )
         return jsonify({"erro": "Erro ao criar serviço: " + str(e)}), 500
 
 
@@ -169,6 +201,11 @@ def criar_servico():
 @admin_required
 def editar_servico(id):
     try:
+        # Vinicius - 16/04/2026
+        # 0. Captura o usuário atual e sua role
+        current_user_id = int(get_jwt_identity())
+        role = get_jwt().get("role")
+
         # 1. Captura o JSON da requisição
         body = request.get_json()
 
@@ -198,6 +235,17 @@ def editar_servico(id):
 
         # 7. Persiste no banco
         db.session.commit()
+        # Vinicius - 16/04/2026
+        # Adicionado log para monitorar a edição de serviços
+        app_logger.info(
+            "Serviço atualizado com sucesso",
+            extra={
+                "servico_id": servico.id,
+                "realizado_por": current_user_id,
+                "role": role,
+                "data_hora_atual": datetime.utcnow(),
+            },
+        )
 
         return {
             "message": "Serviço atualizado com sucesso!",
@@ -205,6 +253,13 @@ def editar_servico(id):
         }, 200
 
     except Exception as e:
+        # Vinicius - 16/04/2026
+        # Adicionado log para monitorar erros na edição de serviços
+        app_logger.error(
+            "Erro estrutural 500 ao editar cliente",
+            extra={"erro_detalhe": str(e)},
+            exc_info=True,
+        )
         return jsonify({"erro": "Erro ao editar serviço: " + str(e)}), 500
 
 
@@ -217,12 +272,28 @@ def editar_servico(id):
 @admin_required
 def deletar_servico(id):
     try:
+        # Vinicius - 16/04/2026
+        # 0. Captura o usuário atual e sua role
+        current_user_id = int(get_jwt_identity())
+        role = get_jwt().get("role")
+
         servico = Servico.query.get(id)
         if not servico:
             return jsonify({"erro": "Serviço não encontrado"}), 404
 
         db.session.delete(servico)
         db.session.commit()
+        # Vinicius - 16/04/2026
+        # Adicionado log para monitorar a deleção de serviços
+        app_logger.info(
+            "Serviço deletado com sucesso",
+            extra={
+                "servico_id": servico.id,
+                "realizado_por": current_user_id,
+                "role": role,
+                "data_hora_atual": datetime.utcnow(),
+            },
+        )
         return jsonify({"msg": "Serviço deletado com sucesso"}), 200
     # josue inicio
     # cria o Integrity exessao dinamica evitando erro 500 Faz db.session.rollback() para limpar a transação quebrada.
@@ -238,6 +309,13 @@ def deletar_servico(id):
         )
     except Exception as e:
         db.session.rollback()
+        # Vinicius - 16/04/2026
+        # Adicionado log para monitorar erros na deleção de serviços
+        app_logger.error(
+            "Erro estrutural 500 ao deletar cliente",
+            extra={"erro_detalhe": str(e)},
+            exc_info=True,
+        )
         return jsonify({"erro": "Erro ao deletar serviço: " + str(e)}), 500
 
     # josue fim
