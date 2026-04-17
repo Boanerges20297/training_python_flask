@@ -3,11 +3,13 @@ export interface Cliente {
   nome: string;
   email: string;
   telefone: string;
+  senha?: string;
 }
 
 export interface Servico {
   id: number;
   nome: string;
+  descricao?: string;
   preco: number;
   duracao_minutos: number;
   barbeiro_id: number;
@@ -19,6 +21,7 @@ export interface Agendamento {
   barbeiro_id: number;
   servico_id: number;
   data_agendamento: string;
+  data_criacao?: string;
   observacoes: string;
   status?: string; // "pendente" | "confirmado" | "concluido" | "cancelado"
 }
@@ -29,7 +32,33 @@ export interface Barbeiro {
   especialidade: string;
   email: string;
   telefone: string;
+  senha?: string;
   ativo: boolean;
+}
+
+// Tipos de autenticação
+export type UserRole = 'admin' | 'barbeiro' | 'cliente';
+
+export interface AuthUser {
+  id: number;
+  nome: string;
+  email: string;
+  role: UserRole;
+}
+
+export interface LoginResponse {
+  sucesso?: boolean;
+  mensagem?: string;
+  dados?: {
+    usuario: AuthUser;
+    token: string;
+  }
+}
+
+export interface AuthState {
+  user: AuthUser | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
 }
 
 export interface PaginatedResponse<T> {
@@ -87,4 +116,11 @@ export interface DashboardData {
   top_5_horarios: HorarioPopular[];
   receita_diaria: ReceitaDiaria[];
   barbeiros_desempenho: BarbeiroDesempenho[];
+}
+
+export interface ApiResponse<T = any> {
+  sucesso?: boolean;
+  mensagem?: string;
+  dados?: T;
+  erros_de_validacao?: Record<string, string>;
 }

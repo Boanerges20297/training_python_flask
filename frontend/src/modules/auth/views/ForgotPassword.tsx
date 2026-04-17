@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { forgotPassword } from '../../../api/auth';
 import { Mail, KeyRound, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
+import { useAuth } from '../../../auth/useAuth';
 
 interface ForgotPasswordProps {
   onNavigate: (view: any) => void;
 }
 
 const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onNavigate }) => {
+  const { forgotPassword } = useAuth();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

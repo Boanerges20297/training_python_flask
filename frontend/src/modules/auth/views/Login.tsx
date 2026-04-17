@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
-import { login } from '../../../api/auth';
 import { Lock, Mail, Scissors, LogIn } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
+import { useAuth } from '../../../auth/useAuth';
 
 interface LoginProps {
-  onLoginSuccess: (user: any) => void;
   onNavigate?: (view: any) => void;
 }
 
-const Login: React.FC<LoginProps> = ({ onLoginSuccess, onNavigate }) => {
+const Login: React.FC<LoginProps> = ({ onNavigate }) => {
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,15 +21,8 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, onNavigate }) => {
     setError('');
 
     try {
-      const data = await login(email, senha);
-      const userData = data.user || data.usuario;
-      
-      if (userData) {
-        sessionStorage.setItem('barba_user', JSON.stringify(userData));
-        onLoginSuccess(userData);
-      } else {
-        throw new Error('Formato de resposta inválido: Usuário não encontrado.');
-      }
+      await login(email, senha);
+      // O App.tsx detectará o estado autenticado via Contexto
     } catch (err: any) {
       setError(err.toString());
     } finally {
@@ -105,3 +98,4 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, onNavigate }) => {
 };
 
 export default Login;
+

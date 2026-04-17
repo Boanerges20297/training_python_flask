@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getDashboardInfo } from '../../../api/dashboard';
 import type { DashboardData, BarbeiroDesempenho } from '../../../types';
 import { 
@@ -211,7 +211,7 @@ export default function DashboardView() {
             <RechartsTooltip cursor={{fill: 'transparent'}} contentStyle={{ background: 'rgba(15, 23, 42, 0.9)', border: 'none', borderRadius: '8px', color: '#fff' }} />
             <Bar dataKey="total_agendamentos" radius={[4, 4, 0, 0]}>
               {
-                data.top_5_horarios.map((entry, index) => (
+                data.top_5_horarios.map((_, index) => (
                   <Cell key={`cell-${index}`} fill={index === 0 ? '#3b82f6' : 'rgba(59, 130, 246, 0.4)'} />
                 ))
               }

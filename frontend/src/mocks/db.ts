@@ -21,13 +21,13 @@ class Database {
   private data: MockDB;
 
   constructor() {
-    const saved = sessionStorage.getItem(STORAGE_KEY);
+    const saved = localStorage.getItem(STORAGE_KEY);
     this.data = saved ? JSON.parse(saved) : initialData;
     if (!saved) this.save();
   }
 
   private save() {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
   }
 
   getAll<T extends keyof MockDB>(collection: T): MockDB[T] {

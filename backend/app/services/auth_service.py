@@ -9,6 +9,8 @@ from app.schemas.auth_schema import (
     TokenResponse,
 )
 from app.extensions import app_logger
+# felipe
+from app.utils.audit import log_evento_auditoria
 
 MOCK_BLOCKLIST = set()
 
@@ -39,11 +41,13 @@ class AuthService:
             user = cliente
             role = "cliente"
         else:
-            app_logger.warning("Tentativa de login com email não encontrado", extra={"email_tentado": email})
+            # felipe - Log de Auditoria para falha de login
+            log_evento_auditoria("Tentativa de login: E-mail não encontrado", extra_data={"email_tentado": email})
             raise AuthServiceException("Credenciais inválidas")
 
         if user and not user.verificar_senha(senha):
-            app_logger.warning("Tentativa de login falhou por senha incorreta", extra={"email_tentado": email, "role": role})
+            # felipe - Log de Auditoria para falha de senha
+            log_evento_auditoria("Tentativa de login: Senha incorreta", extra_data={"email_tentado": email, "role": role})
             raise AuthServiceException("Credenciais inválidas")
 
         user_id = str(user.id)
@@ -57,6 +61,9 @@ class AuthService:
             identity=user_id, additional_claims=additional_claims
         )
 
+        # felipe - Log de Auditoria para login bem sucedido
+        log_evento_auditoria("Login realizado com sucesso", recurso_id=user_id, extra_data={"role": role})
+
         return {
             "user": UserResponse(id=user_id, role=role),
             "tokens": TokenResponse(
@@ -64,7 +71,7 @@ class AuthService:
             ),
         }
 
-    @staticmethod
+    #josue minima alteraçao  @staticmethod dupicado
     # Vinicius 11/04/2026
     # Adicionado tipagem para o método renew_access_token
     @staticmethod
@@ -79,7 +86,8 @@ class AuthService:
     @staticmethod
     def revoke_token(jti: str) -> None:
         """Adiciona o ID do token na Blocklist (futuro Redis)."""
-        app_logger.info("Token JWT revogado via Logout", extra={"jti": jti})
+        # felipe - Log de Auditoria
+        log_evento_auditoria("Token JWT revogado (Logout)", extra_data={"jti": jti})
         MOCK_BLOCKLIST.add(jti)
 
     # Vinicius 11/04/2026

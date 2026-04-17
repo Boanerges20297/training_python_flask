@@ -7,6 +7,8 @@ from app import db
 from app.utils.decorators import admin_required, barbeiro_required
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from app.schemas.barbeiro_schema import BarbeiroSchema, BarbeiroUpdateSchema
+# felipe
+from app.utils.audit import log_evento_auditoria
 
 barbeiros_bp = Blueprint("barbeiros", __name__, url_prefix="/api/barbeiros")
 
@@ -16,8 +18,7 @@ barbeiros_bp = Blueprint("barbeiros", __name__, url_prefix="/api/barbeiros")
 @barbeiros_bp.route("/", methods=["GET"])
 def listar_barbeiros():
     try:
-        # Capturar parâmetros de paginação (com valores padrão)
-        pagina = request.args.get("pagina", 1, type=int)
+        page = request.args.get("page", 1, type=int)
         per_page = request.args.get("per_page", 10, type=int)
         # Capturar parâmetros de busca
         nome = request.args.get("nome", type=str)
@@ -62,12 +63,19 @@ def listar_barbeiros():
         if servicoId:
             query = query.filter_by(servico_id=servicoId)
 
-        # Vinicius - 04/04/2026
-        # Troca do nome da variavel para 'clientes' para melhor identificação
-        barbeiros = query.paginate(page=pagina, per_page=per_page, error_out=False)
+        # Vinicius - 09/04/2026
+        # Busca os barbeiros paginados
+        barbeiros = query.paginate(page=page, per_page=per_page, error_out=False)
 
         barbeiros_dict = [
-            {"id": b.id, "nome": b.nome, "telefone": b.telefone, "email": b.email}
+            {
+                "id": b.id,
+                "nome": b.nome,
+                "telefone": b.telefone,
+                "email": b.email,
+                "especialidade": b.especialidade,
+                "ativo": b.ativo
+            }
             # Vinicius - 04/04/2026
             # Adicionado o .items para que o list comprehension receba os itens da paginação
             for b in barbeiros.items
@@ -75,15 +83,17 @@ def listar_barbeiros():
         # Retornar em JSON com chave 'clientes'
         return jsonify(
             {
-                "barbeiros": barbeiros_dict,
-                # Vinicius - 04/04/2026
-                # Adicionado formatação para melhor visualização dos dados de paginação e variaveis total e items_nessa_pagina para deixar a resposta mais completa
-                "total": barbeiros.total,
-                "items_nessa_pagina": len(barbeiros_dict),
-                "pagina": barbeiros.page,
-                "per_page": barbeiros.per_page,
-                "tem_proxima": barbeiros.has_next,
-                "tem_pagina_anterior": barbeiros.has_prev,
+                "sucesso": True,
+                "dados": {
+                    "items": barbeiros_dict,
+                    "total": barbeiros.total,
+                    "items_nessa_pagina": len(barbeiros_dict),
+                    "pagina": barbeiros.page,
+                    "per_page": barbeiros.per_page,
+                    "total_paginas": barbeiros.pages,
+                    "tem_proxima": barbeiros.has_next,
+                    "tem_pagina_anterior": barbeiros.has_prev,
+                }
             }
         )
     except Exception as e:
@@ -111,16 +121,23 @@ def criar_barbeiro():
         barbeiro.senha = data.senha
         db.session.add(barbeiro)
         db.session.commit()
+
+        # felipe - Log de Auditoria
+        log_evento_auditoria("Criação de Barbeiro", recurso_id=barbeiro.id)
+
         return (
             jsonify(
                 {
-                    "barbeiro": {
-                        "id": barbeiro.id,
-                        "nome": barbeiro.nome,
-                        "telefone": barbeiro.telefone,
-                        "email": barbeiro.email,
-                        "especialidade": barbeiro.especialidade,
-                        "msg": "Barbeiro criado com sucesso",
+                    "sucesso": True,
+                    "mensagem": "Barbeiro criado com sucesso",
+                    "dados": {
+                        "barbeiro": {
+                            "id": barbeiro.id,
+                            "nome": barbeiro.nome,
+                            "telefone": barbeiro.telefone,
+                            "email": barbeiro.email,
+                            "especialidade": barbeiro.especialidade,
+                        }
                     }
                 }
             ),
@@ -181,9 +198,17 @@ def editar_barbeiro(id):
         # 7. Persiste no banco
         db.session.commit()
 
+        # felipe - Log de Auditoria
+        log_evento_auditoria(
+            "Edição de Barbeiro", 
+            recurso_id=id, 
+            extra_data={"campos_alterados": list(update_data.keys())}
+        )
+
         return {
-            "message": "Barbeiro atualizado com sucesso!",
-            "campos_alterados": list(update_data.keys()),
+            "sucesso": True,
+            "mensagem": "Barbeiro atualizado com sucesso!",
+            "dados": {"campos_alterados": list(update_data.keys())},
         }, 200
 
     except Exception as e:
@@ -204,7 +229,11 @@ def deletar_barbeiro(id):
 
         db.session.delete(barbeiro)
         db.session.commit()
-        return jsonify({"msg": "Barbeiro deletado com sucesso"}), 200
+
+        # felipe - Log de Auditoria
+        log_evento_auditoria("Exclusão Física de Barbeiro", recurso_id=id)
+
+        return jsonify({"sucesso": True, "mensagem": "Barbeiro deletado com sucesso"}), 200
     except Exception as e:
         return jsonify({"erro": "Erro ao deletar barbeiro: " + str(e)}), 500
 
@@ -223,8 +252,10 @@ def buscar_barbeiro(id):
             "nome": barbeiro.nome,
             "telefone": barbeiro.telefone,
             "email": barbeiro.email,
+            "especialidade": barbeiro.especialidade,
+            "ativo": barbeiro.ativo
         }
-        return jsonify({"barbeiro": barbeiro_dict}), 200
+        return jsonify({"dados": {"barbeiro": barbeiro_dict}, "sucesso": True}), 200
     except Exception as e:
         return jsonify({"erro": "Erro ao buscar barbeiro: " + str(e)}), 500
 
@@ -266,7 +297,8 @@ def buscar_agendamentos_barbeiro(id):
 
         # Vinicius - 09/04/2026
         # Verifica se foi encontrado algum agendamento
-        if not agendamentos:
+        # josue minima alteraçao
+        if agendamentos.total == 0:
             return (
                 jsonify({"erro": "Nenhum agendamento encontrado para o barbeiro"}),
                 404,
@@ -279,22 +311,26 @@ def buscar_agendamentos_barbeiro(id):
                 "id": a.id,
                 "cliente_id": a.cliente_id,
                 "barbeiro_id": a.barbeiro_id,
-                "data_hora": a.data_hora,
-                "servico": a.servico,
+                "data_agendamento": a.data_agendamento.isoformat() + "Z" if getattr(a, "data_agendamento", None) else None,
+                "servico": {"id": a.servico.id, "nome": a.servico.nome} if a.servico else None
             }
-            for a in agendamentos
+            for a in agendamentos.items
         ]
         # Vinicius - 09/04/2026
         # Retorna os agendamentos em JSON
         return (
             jsonify(
                 {
-                    "agendamentos": agendamentos_dict,
-                    "total": agendamentos.total,
-                    "pagina": agendamentos.page,
-                    "per_page": agendamentos.per_page,
-                    "tem_proxima": agendamentos.has_next,
-                    "tem_pagina_anterior": agendamentos.has_prev,
+                    "sucesso": True,
+                    "dados": {
+                        "items": agendamentos_dict,
+                        "total": agendamentos.total,
+                        "pagina": agendamentos.page,
+                        "per_page": agendamentos.per_page,
+                        "total_paginas": agendamentos.pages,
+                        "tem_proxima": agendamentos.has_next,
+                        "tem_pagina_anterior": agendamentos.has_prev,
+                    }
                 }
             ),
             200,

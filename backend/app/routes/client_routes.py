@@ -1,10 +1,13 @@
 # josue inicio
+from sqlalchemy.exc import IntegrityError
 from flask import Blueprint, jsonify, request
 from app.models.cliente import Cliente
 from app import db
 from app.utils.decorators import admin_required
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from app.schemas.client_schema import ClienteSchema, ClienteUpdateSchema
+# felipe
+from app.utils.audit import log_evento_auditoria
 
 clientes_bp = Blueprint("clientes", __name__, url_prefix="/api/clientes")
 
@@ -14,8 +17,7 @@ clientes_bp = Blueprint("clientes", __name__, url_prefix="/api/clientes")
 # esse trecho fiquei um pouco confuso no comesso mas fui conseguindo captar a logica
 def listar_clientes():
     try:
-        # Capturar parâmetros de paginação (com valores padrão)
-        pagina = request.args.get("pagina", 1, type=int)
+        page = request.args.get("page", 1, type=int)
         per_page = request.args.get("per_page", 10, type=int)
         # Capturar parâmetros de busca
         nome = request.args.get("nome", type=str)
@@ -62,8 +64,7 @@ def listar_clientes():
             query = query.filter(Cliente.nome.ilike(f"%{nome}%"))
 
         # Vinicius - 04/04/2026
-        # Troca do nome da variavel para 'clientes' para melhor identificação
-        clientes = query.paginate(page=pagina, per_page=per_page, error_out=False)
+        clientes = query.paginate(page=page, per_page=per_page, error_out=False)
 
         clientes_dict = [
             {"id": c.id, "nome": c.nome, "telefone": c.telefone, "email": c.email}
@@ -74,15 +75,17 @@ def listar_clientes():
         # Retornar em JSON com chave 'clientes'
         return jsonify(
             {
-                "clientes": clientes_dict,
-                # Vinicius - 04/04/2026
-                # Adicionado formatação para melhor visualização dos dados de paginação e variaveis total e items_nessa_pagina para deixar a resposta mais completa
-                "total": clientes.total,
-                "items_nessa_pagina": len(clientes_dict),
-                "pagina": clientes.page,
-                "per_page": clientes.per_page,
-                "tem_proxima": clientes.has_next,
-                "tem_pagina_anterior": clientes.has_prev,
+                "sucesso": True,
+                "dados": {
+                    "items": clientes_dict,
+                    "total": clientes.total,
+                    "items_nessa_pagina": len(clientes_dict),
+                    "pagina": clientes.page,
+                    "per_page": clientes.per_page,
+                    "total_paginas": clientes.pages,
+                    "tem_proxima": clientes.has_next,
+                    "tem_pagina_anterior": clientes.has_prev,
+                }
             }
         )
     except Exception as e:
@@ -109,22 +112,36 @@ def criar_cliente():
         cliente.senha = data.senha
         db.session.add(cliente)
         db.session.commit()
+
+        # felipe - Log de Auditoria
+        log_evento_auditoria("Criação de Cliente", recurso_id=cliente.id)
+
         return (
             jsonify(
                 {
-                    "cliente": {
-                        "id": cliente.id,
-                        "nome": cliente.nome,
-                        "telefone": cliente.telefone,
-                        "email": cliente.email,
-                        "msg": "Cliente criado com sucesso",
+                    "sucesso": True,
+                    "mensagem": "Cliente criado com sucesso",
+                    "dados": {
+                        "cliente": {
+                            "id": cliente.id,
+                            "nome": cliente.nome,
+                            "telefone": cliente.telefone,
+                            "email": cliente.email,
+                        }
                     }
                 }
             ),
             201,
         )
+    #josue inicio
+    # o front consegue informar ao usuário “cliente já existe” e tratar o fluxo corretamente.
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({"erro": "Cliente já cadastrado (email ou telefone já em uso)."}), 409
     except Exception as e:
+        db.session.rollback()
         return jsonify({"erro": "Erro ao incluir cliente: " + str(e)}), 500
+    #josue fim
 
 
 # Vinicius - 08/04/2026
@@ -179,9 +196,17 @@ def editar_cliente(id):
         # 7. Persiste no banco
         db.session.commit()
 
+        # felipe - Log de Auditoria
+        log_evento_auditoria(
+            "Edição de Cliente", 
+            recurso_id=id, 
+            extra_data={"campos_alterados": list(update_data.keys())}
+        )
+
         return {
-            "message": "Cliente atualizado com sucesso!",
-            "campos_alterados": list(update_data.keys()),
+            "sucesso": True,
+            "mensagem": "Cliente atualizado com sucesso!",
+            "dados": {"campos_alterados": list(update_data.keys())},
         }, 200
 
     except Exception as e:
@@ -199,7 +224,11 @@ def deletar_cliente(id):
 
         db.session.delete(cliente)
         db.session.commit()
-        return jsonify({"msg": "Cliente deletado com sucesso"}), 200
+
+        # felipe - Log de Auditoria
+        log_evento_auditoria("Exclusão Física de Cliente", recurso_id=id)
+
+        return jsonify({"sucesso": True, "mensagem": "Cliente deletado com sucesso"}), 200
     except Exception as e:
         return jsonify({"erro": "Erro ao deletar cliente: " + str(e)}), 500
 
@@ -217,6 +246,6 @@ def buscar_cliente(id):
             "telefone": cliente.telefone,
             "email": cliente.email,
         }
-        return jsonify({"cliente": cliente_dict}), 200
+        return jsonify({"sucesso": True, "dados": {"cliente": cliente_dict}}), 200
     except Exception as e:
         return jsonify({"erro": "Erro ao buscar cliente: " + str(e)}), 500

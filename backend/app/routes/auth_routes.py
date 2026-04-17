@@ -35,10 +35,9 @@ def login():
             return jsonify({"msg": "Credenciais inválidas"}), 401
 
         # 3. Lida com o sucesso (Monta a resposta e injeta cookies)
-        # Vinicius 11/04/2026
-        # Modificado o codigo para utilizar LoginResponse e TokenResponse para seguir o padrão do projeto
         login_response = LoginResponse(
-            msg="Login realizado com sucesso", user=auth_data["user"]
+            mensagem="Login realizado com sucesso", 
+            dados={"usuario": {"id": str(auth_data["user"].id), "role": auth_data["user"].role}}
         )
 
         app_logger.info("Login realizado com sucesso", extra={"email": data.email, "user_id": auth_data["user"].id, "role": auth_data["user"].role})
@@ -108,3 +107,26 @@ def logout():
             jsonify({"Erro": "Erro ao fazer logout, entre em contato com o suporte."}),
             500,
         )
+
+
+@auth_bp.route("/protected", methods=["GET"])
+@jwt_required()
+def check_session():
+    try:
+        # Extrai os dados do payload do JWT configurado via cookies
+        current_user_id = get_jwt_identity()
+        role = get_jwt().get("role")
+
+        # Mock provisório de nome e email, caso o frontend requeira até implementarmos o fetchUser real
+        user_info = {
+            "id": current_user_id,
+            "role": role,
+            "nome": "Usuário Logado",
+            "email": "usuario@logado.com"
+        }
+
+        app_logger.info("Verificação de sessão (protected) concluída com sucesso.", extra={"user_id": current_user_id})
+        return jsonify({"sucesso": True, "dados": {"usuario": user_info}}), 200
+    except Exception as e:
+        app_logger.error("Sessão espúria ou inválida disparou protegida", exc_info=True)
+        return jsonify({"sucesso": False, "mensagem": "Sessão inválida ou expirada"}), 401

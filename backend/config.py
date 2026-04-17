@@ -40,6 +40,16 @@ class Config:
     HORARIO_ABERTURA = 8
     HORARIO_FECHAMENTO = 20
 
+    # felipe
+    # Configurações de Email
+    MAIL_SERVER = os.environ.get("MAIL_SERVER", "sandbox.smtp.mailtrap.io")
+    MAIL_PORT = int(os.environ.get("MAIL_PORT", 2525))
+    MAIL_USE_TLS = os.environ.get("MAIL_USE_TLS", "True") == "True"
+    MAIL_USE_SSL = os.environ.get("MAIL_USE_SSL", "False") == "True"
+    MAIL_USERNAME = os.environ.get("MAIL_USERNAME")
+    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
+    MAIL_DEFAULT_SENDER = os.environ.get("MAIL_DEFAULT_SENDER", "noreply@barbabyte.com")
+
 
 class DevelopmentConfig(Config):
     """Configurações de desenvolvimento"""

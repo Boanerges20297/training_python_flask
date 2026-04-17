@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from './auth/useAuth';
 import AuthContainer from './modules/auth/views/AuthContainer';
 import Sidebar from './components/layouts/Sidebar';
 import type { SidebarTab } from './components/layouts/Sidebar';
@@ -12,31 +13,31 @@ import ClientDashboard from './modules/client/views/ClientDashboard';
 import DashboardView from './modules/admin/views/DashboardView';
 
 function App() {
-  const [user, setUser] = useState<any>(() => {
-    const savedUser = sessionStorage.getItem('barba_user');
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
+  const { user, isAuthenticated, logout, isLoading } = useAuth();
   
   const [activeTab, setActiveTab] = useState<SidebarTab>(() => {
-    if (user?.role === 'cliente') return 'inicio';
-    if (user?.role === 'barbeiro') return 'agenda';
+    // Tentativa de definir aba inicial baseada na role se o user já existir
+    const savedUser = localStorage.getItem('barba_user');
+    const u = savedUser ? JSON.parse(savedUser) : null;
+    if (u?.role === 'cliente') return 'inicio';
+    if (u?.role === 'barbeiro') return 'agenda';
     return 'dashboard';
   });
   
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('barba_user');
-    setUser(null);
-  };
+  // Aguarda carregamento inicial do contexto (Felipe)
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#0f172a' }}>
+        <p style={{ color: '#3b82f6' }}>Carregando Barba & Byte...</p>
+      </div>
+    );
+  }
 
-  if (!user) {
-    return <AuthContainer onLoginSuccess={(u) => {
-      setUser(u);
-      if (u.role === 'cliente') setActiveTab('inicio');
-      else if (u.role === 'barbeiro') setActiveTab('agenda');
-      else setActiveTab('dashboard');
-    }} />;
+  // Se não autenticado, mostra o Container (Gabriel) que gerencia Login/Register/Forgot
+  if (!isAuthenticated || !user) {
+    return <AuthContainer />;
   }
 
   const renderContent = () => {
@@ -89,7 +90,7 @@ function App() {
         isCollapsed={isSidebarCollapsed}
         onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         user={user}
-        onLogout={handleLogout}
+        onLogout={logout}
       />
 
       <main className="main-content">
@@ -103,3 +104,4 @@ function App() {
 }
 
 export default App;
+

@@ -4,13 +4,11 @@ import Register from './Register';
 import ForgotPassword from './ForgotPassword';
 import './Auth.css';
 
-interface AuthContainerProps {
-  onLoginSuccess: (user: any) => void;
-}
+interface AuthContainerProps {}
 
 type AuthView = 'login' | 'register' | 'forgot-password';
 
-const AuthContainer: React.FC<AuthContainerProps> = ({ onLoginSuccess }) => {
+const AuthContainer: React.FC<AuthContainerProps> = () => {
   const [currentView, setCurrentView] = useState<AuthView>('login');
 
   const renderView = () => {
@@ -18,14 +16,12 @@ const AuthContainer: React.FC<AuthContainerProps> = ({ onLoginSuccess }) => {
       case 'login':
         return (
           <Login 
-            onLoginSuccess={onLoginSuccess} 
             onNavigate={(view: AuthView) => setCurrentView(view)} 
           />
         );
       case 'register':
         return (
           <Register 
-            onRegisterSuccess={(user) => onLoginSuccess(user)}
             onNavigate={(view: AuthView) => setCurrentView(view)} 
           />
         );
@@ -36,7 +32,7 @@ const AuthContainer: React.FC<AuthContainerProps> = ({ onLoginSuccess }) => {
           />
         );
       default:
-        return <Login onLoginSuccess={onLoginSuccess} onNavigate={() => setCurrentView('login')} />;
+        return <Login onNavigate={() => setCurrentView('login')} />;
     }
   };
 

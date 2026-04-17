@@ -5,39 +5,70 @@ const API_BASE = 'http://127.0.0.1:5000/api';
 
 export const handlers = [
   // --- AUTH ---
-  // Gabriel (Arquitetura) - Mock de login com roteamento de role por email.
-  // Use admin@* para admin, barbeiro@* para barbeiro, qualquer outro para cliente.
+  // # felipe - Torna o login dinâmico para identificar barbeiros e clientes
   http.post(`${API_BASE}/auth/login`, async ({ request }) => {
     await delay(300);
     const { email } = await request.json() as any;
-    const nome = email.split('@')[0];
 
-    let role = 'cliente';
-    if (email.startsWith('admin')) role = 'admin';
-    else if (email.startsWith('barbeiro')) role = 'barbeiro';
+    // Busca nas coleções do mock db
+    const barbeiros = db.getAll('barbeiros');
+    const clientes = db.getAll('clientes');
+
+    let role = 'admin'; // Fallback
+    let userId = 1;
+    let userName = email.split('@')[0];
+
+    const b = barbeiros.find(u => u.email === email);
+    const c = clientes.find(u => u.email === email);
+
+    if (b) {
+      role = 'barbeiro';
+      userId = b.id!;
+      userName = b.nome;
+    } else if (c) {
+      role = 'cliente';
+      userId = c.id!;
+      userName = c.nome;
+    } else if (!email.includes('admin')) {
+      // Se não for admin conhecido e não estiver no banco, retorna erro
+      return HttpResponse.json({ erro: "Usuário não encontrado no mock database" }, { status: 401 });
+    }
 
     return HttpResponse.json({
-      token: 'fake-jwt-token',
-      user: { id: 1, nome, email, role }
+      sucesso: true,
+      mensagem: `Login (${role}) realizado com sucesso`,
+      dados: {
+        token: 'fake-jwt-token',
+        usuario: { id: userId, nome: userName, email, role }
+      }
     }, { status: 200 });
   }),
 
-  // Mock de Cadastro (Register) - Sempre registra como cliente com sucesso
+  // Mock de Cadastro (Register) - Registra como cliente com validação de email único
   http.post(`${API_BASE}/auth/register`, async ({ request }) => {
     await delay(500);
-    const { nome, email, senha } = await request.json() as any;
+    const { nome, email } = await request.json() as any;
     
-    // Adiciona o novo cliente ao Mock DB para ele existir pós-login se precisarmos (simulação)
-    db.add('clientes', { nome, email, telefone: '', data_cadastro: new Date().toISOString() });
+    // Validação: email já existe?
+    const clientes = db.getAll('clientes');
+    const barbeiros = db.getAll('barbeiros');
+    if (clientes.find(c => c.email === email) || barbeiros.find(b => b.email === email)) {
+      return HttpResponse.json({ erro: 'Este e-mail já está cadastrado.' }, { status: 409 });
+    }
+
+    const newCliente = db.add('clientes', { nome, email, telefone: '', data_cadastro: new Date().toISOString() });
 
     return HttpResponse.json({
-      token: 'fake-jwt-token-registered',
-      user: { id: Math.floor(Math.random() * 1000) + 10, nome, email, role: 'cliente' }
+      sucesso: true,
+      dados: {
+        token: 'fake-jwt-token-registered',
+        usuario: { id: newCliente.id, nome, email, role: 'cliente' }
+      }
     }, { status: 201 });
   }),
 
   // Mock de Recuperação de Senha
-  http.post(`${API_BASE}/auth/forgot-password`, async ({ request }) => {
+  http.post(`${API_BASE}/auth/forgot-password`, async () => {
     await delay(800);
     return HttpResponse.json({ message: 'E-mail de recuperação enviado com sucesso se o usuário existir.' }, { status: 200 });
   }),
@@ -107,33 +138,52 @@ export const handlers = [
     }, { status: 200 });
   }),
 
+  http.post(`${API_BASE}/auth/refresh`, async () => {
+    await delay(200);
+    return HttpResponse.json({ msg: "Sessão renovada (mock)" }, { status: 200 });
+  }),
+
+  // # felipe - Garante que a role seja mantida corretamente na renovação de sessão
+  http.get(`${API_BASE}/auth/protected`, async () => {
+    await delay(200);
+    // Nota: Em um mock real, pegaríamos o ID do token. 
+    // Aqui simulamos o retorno do usuário logado (geralmente admin no mock persistente)
+    return HttpResponse.json({
+      sucesso: true,
+      dados: {
+        usuario: { id: 1, nome: "Usuário Mock", email: "mock@teste.com", role: 'admin' }
+      }
+    }, { status: 200 });
+  }),
+
+
   // --- CLIENTES ---
   http.get(`${API_BASE}/clientes/`, async ({ request }) => {
     await delay(200);
     const url = new URL(request.url);
     const page = Number(url.searchParams.get('page') || 1);
     const per_page = Number(url.searchParams.get('per_page') || 10);
-    
-    return HttpResponse.json(db.getPaginated('clientes', page, per_page));
+
+    return HttpResponse.json({ dados: db.getPaginated('clientes', page, per_page) });
   }),
 
   http.post(`${API_BASE}/clientes/criar-cliente`, async ({ request }) => {
     const data = await request.json();
     const newCliente = db.add('clientes', data);
-    return HttpResponse.json({ cliente: newCliente }, { status: 201 });
+    return HttpResponse.json({ dados: { cliente: newCliente } }, { status: 201 });
   }),
 
   http.patch(`${API_BASE}/clientes/editar-cliente/:id`, async ({ params, request }) => {
     const { id } = params;
     const data = await request.json();
     db.update('clientes', Number(id), data);
-    return HttpResponse.json({ message: 'Cliente atualizado' });
+    return HttpResponse.json({ mensagem: 'Cliente atualizado' });
   }),
 
   http.delete(`${API_BASE}/clientes/deletar-cliente/:id`, async ({ params }) => {
     const { id } = params;
     db.delete('clientes', Number(id));
-    return HttpResponse.json({ message: 'Cliente deletado' });
+    return HttpResponse.json({ mensagem: 'Cliente deletado' });
   }),
 
   // --- BARBEIROS ---
@@ -142,27 +192,27 @@ export const handlers = [
     const url = new URL(request.url);
     const page = Number(url.searchParams.get('page') || 1);
     const per_page = Number(url.searchParams.get('per_page') || 10);
-    
-    return HttpResponse.json(db.getPaginated('barbeiros', page, per_page));
+
+    return HttpResponse.json({ dados: db.getPaginated('barbeiros', page, per_page) });
   }),
 
   http.post(`${API_BASE}/barbeiros/criar-barbeiro`, async ({ request }) => {
     const data = await request.json();
     const newBarbeiro = db.add('barbeiros', data);
-    return HttpResponse.json({ barbeiro: newBarbeiro }, { status: 201 });
+    return HttpResponse.json({ dados: { barbeiro: newBarbeiro } }, { status: 201 });
   }),
 
   http.patch(`${API_BASE}/barbeiros/editar-barbeiro/:id`, async ({ params, request }) => {
     const { id } = params;
     const data = await request.json();
     db.update('barbeiros', Number(id), data);
-    return HttpResponse.json({ message: 'Barbeiro atualizado' });
+    return HttpResponse.json({ mensagem: 'Barbeiro atualizado' });
   }),
 
   http.delete(`${API_BASE}/barbeiros/deletar-barbeiro/:id`, async ({ params }) => {
     const { id } = params;
     db.delete('barbeiros', Number(id));
-    return HttpResponse.json({ message: 'Barbeiro deletado' });
+    return HttpResponse.json({ mensagem: 'Barbeiro deletado' });
   }),
 
   // --- SERVIÇOS ---
@@ -171,27 +221,27 @@ export const handlers = [
     const url = new URL(request.url);
     const page = Number(url.searchParams.get('page') || 1);
     const per_page = Number(url.searchParams.get('per_page') || 10);
-    
-    return HttpResponse.json(db.getPaginated('servicos', page, per_page));
+
+    return HttpResponse.json({ dados: db.getPaginated('servicos', page, per_page) });
   }),
 
   http.post(`${API_BASE}/servicos/criar-servico`, async ({ request }) => {
     const data = await request.json();
     const newServico = db.add('servicos', data);
-    return HttpResponse.json({ servico: newServico }, { status: 201 });
+    return HttpResponse.json({ dados: { servico: newServico } }, { status: 201 });
   }),
 
   http.patch(`${API_BASE}/servicos/editar-servico/:id`, async ({ params, request }) => {
     const { id } = params;
     const data = await request.json();
     db.update('servicos', Number(id), data);
-    return HttpResponse.json({ message: 'Serviço atualizado' });
+    return HttpResponse.json({ mensagem: 'Serviço atualizado' });
   }),
 
   http.delete(`${API_BASE}/servicos/deletar-servico/:id`, async ({ params }) => {
     const { id } = params;
     db.delete('servicos', Number(id));
-    return HttpResponse.json({ message: 'Serviço deletado' });
+    return HttpResponse.json({ mensagem: 'Serviço deletado' });
   }),
 
   // --- AGENDAMENTOS ---
@@ -200,26 +250,26 @@ export const handlers = [
     const url = new URL(request.url);
     const page = Number(url.searchParams.get('page') || 1);
     const per_page = Number(url.searchParams.get('per_page') || 10);
-    
-    return HttpResponse.json(db.getPaginated('agendamentos', page, per_page));
+
+    return HttpResponse.json({ dados: db.getPaginated('agendamentos', page, per_page) });
   }),
 
   http.post(`${API_BASE}/agendamento/criar-agendamento`, async ({ request }) => {
     const data = await request.json();
     const newAgend = db.add('agendamentos', data);
-    return HttpResponse.json({ agendamento: newAgend }, { status: 201 });
+    return HttpResponse.json({ dados: { agendamento: newAgend } }, { status: 201 });
   }),
 
   http.put(`${API_BASE}/agendamento/editar-agendamento/:id`, async ({ params, request }) => {
     const { id } = params;
     const data = await request.json();
     db.update('agendamentos', Number(id), data);
-    return HttpResponse.json({ message: 'Agendamento atualizado' });
+    return HttpResponse.json({ mensagem: 'Agendamento atualizado' });
   }),
 
   http.delete(`${API_BASE}/agendamento/deletar-agendamento/:id`, async ({ params }) => {
     const { id } = params;
     db.delete('agendamentos', Number(id));
-    return HttpResponse.json({ message: 'Agendamento deletado' });
+    return HttpResponse.json({ mensagem: 'Agendamento deletado' });
   })
 ];

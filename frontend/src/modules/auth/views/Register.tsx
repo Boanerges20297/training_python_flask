@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import { register } from '../../../api/auth';
 import { User, Lock, Mail, UserPlus, ArrowLeft } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
+import { useAuth } from '../../../auth/useAuth';
 
 interface RegisterProps {
-  onRegisterSuccess: (user: any) => void;
+  onRegisterSuccess?: (user: any) => void;
   onNavigate: (view: any) => void;
 }
 
-const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onNavigate }) => {
+const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
+  const { register } = useAuth();
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -43,16 +44,8 @@ const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onNavigate }) =>
     setError('');
 
     try {
-      // Role is fixed to 'cliente' inside api/auth or the mock. We just send the data.
-      const data = await register(nome, email, senha);
-      const userData = data.user || data.usuario;
-      
-      if (userData) {
-        sessionStorage.setItem('barba_user', JSON.stringify(userData));
-        onRegisterSuccess(userData);
-      } else {
-        throw new Error('Formato de resposta inválido.');
-      }
+      await register(nome, email, senha);
+      // O App.tsx detectará o estado autenticado via Contexto
     } catch (err: any) {
       setError(err.toString());
     } finally {
