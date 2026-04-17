@@ -1,9 +1,13 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt
-from app.services.dashboard_service import DashboardService
+
+# Vinicius - 17/04/2026
+# Comentado por enquanto para evitar erros
+# from app.services.dashboard_service import DashboardService
 from app.utils.decorators import admin_required
 
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/api/dashboard")
+
 
 @dashboard_bp.route("/geral", methods=["GET"])
 @admin_required
@@ -19,7 +23,10 @@ def get_dashboard_geral():
     dashboard = DashboardService.get_dashboard_geral(dias=dias)
 
     # Retorna os dados
-    return jsonify({"message": "Dashboard geral obtido com sucesso", "data": dashboard}), 200
+    return (
+        jsonify({"message": "Dashboard geral obtido com sucesso", "data": dashboard}),
+        200,
+    )
 
 
 @dashboard_bp.route("/receita-periodo", methods=["GET"])
@@ -36,7 +43,15 @@ def get_receita_periodo():
     # Extrai apenas a parte de receita
     receita_diaria = dashboard.get("receita_diaria", [])
 
-    return jsonify({"message": "Receita por período obtida com sucesso", "data": receita_diaria}), 200
+    return (
+        jsonify(
+            {
+                "message": "Receita por período obtida com sucesso",
+                "data": receita_diaria,
+            }
+        ),
+        200,
+    )
 
 
 @dashboard_bp.route("/barbeiro/<int:barbeiro_id>", methods=["GET"])
@@ -63,7 +78,12 @@ def get_dashboard_barbeiro(barbeiro_id):
     if dashboard is None:
         return jsonify({"message": "Barbeiro não encontrado"}), 404
 
-    return jsonify({"message": "Dashboard do barbeiro obtido com sucesso", "data": dashboard}), 200
+    return (
+        jsonify(
+            {"message": "Dashboard do barbeiro obtido com sucesso", "data": dashboard}
+        ),
+        200,
+    )
 
 
 @dashboard_bp.route("/servicos-barbeiro/<int:barbeiro_id>", methods=["GET"])
@@ -90,7 +110,15 @@ def get_servicos_barbeiro(barbeiro_id):
     # Retorna só os serviços (recorte do dashboard)
     servicos_realizados = dashboard.get("servicos_realizados", [])
 
-    return jsonify({"message": "Serviços realizados pelo barbeiro obtidos com sucesso", "data": servicos_realizados}), 200
+    return (
+        jsonify(
+            {
+                "message": "Serviços realizados pelo barbeiro obtidos com sucesso",
+                "data": servicos_realizados,
+            }
+        ),
+        200,
+    )
 
 
 @dashboard_bp.route("/horarios-populares", methods=["GET"])
@@ -106,4 +134,12 @@ def get_horarios_populares():
     # Extrai só os horários mais movimentados
     top_5_horarios = dashboard.get("top_5_horarios", [])
 
-    return jsonify({"message": "Horários populares obtidos com sucesso", "data": top_5_horarios}), 200
+    return (
+        jsonify(
+            {
+                "message": "Horários populares obtidos com sucesso",
+                "data": top_5_horarios,
+            }
+        ),
+        200,
+    )
