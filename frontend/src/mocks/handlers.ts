@@ -5,13 +5,105 @@ const API_BASE = 'http://127.0.0.1:5000/api';
 
 export const handlers = [
   // --- AUTH ---
-  // Gabriel (Arquitetura) - Alinhado com Felipe (Task 10): Usando chave 'user' em vez de 'usuario'
+  // Gabriel (Arquitetura) - Mock de login com roteamento de role por email.
+  // Use admin@* para admin, barbeiro@* para barbeiro, qualquer outro para cliente.
   http.post(`${API_BASE}/auth/login`, async ({ request }) => {
-    await delay(300); // Reduzido para maior agilidade
+    await delay(300);
     const { email } = await request.json() as any;
+    const nome = email.split('@')[0];
+
+    let role = 'cliente';
+    if (email.startsWith('admin')) role = 'admin';
+    else if (email.startsWith('barbeiro')) role = 'barbeiro';
+
     return HttpResponse.json({
       token: 'fake-jwt-token',
-      user: { id: 1, nome: email.split('@')[0], email, role: 'admin' }
+      user: { id: 1, nome, email, role }
+    }, { status: 200 });
+  }),
+
+  // Mock de Cadastro (Register) - Sempre registra como cliente com sucesso
+  http.post(`${API_BASE}/auth/register`, async ({ request }) => {
+    await delay(500);
+    const { nome, email, senha } = await request.json() as any;
+    
+    // Adiciona o novo cliente ao Mock DB para ele existir pós-login se precisarmos (simulação)
+    db.add('clientes', { nome, email, telefone: '', data_cadastro: new Date().toISOString() });
+
+    return HttpResponse.json({
+      token: 'fake-jwt-token-registered',
+      user: { id: Math.floor(Math.random() * 1000) + 10, nome, email, role: 'cliente' }
+    }, { status: 201 });
+  }),
+
+  // Mock de Recuperação de Senha
+  http.post(`${API_BASE}/auth/forgot-password`, async ({ request }) => {
+    await delay(800);
+    return HttpResponse.json({ message: 'E-mail de recuperação enviado com sucesso se o usuário existir.' }, { status: 200 });
+  }),
+
+  // --- DASHBOARD ---
+  http.get(`${API_BASE}/dashboard`, async ({ request }) => {
+    await delay(600);
+    const url = new URL(request.url);
+    const dias = Number(url.searchParams.get('dias') || 30);
+    
+    // Simulando escala de dados por "dias"
+    const fator = dias / 30;
+
+    return HttpResponse.json({
+      periodo_inicio: "2026-03-16T00:00:00Z",
+      periodo_fim: "2026-04-15T23:59:59Z",
+      receita_total: 3420.5 * fator,
+      agendamentos_total: Math.round(98 * fator),
+      agendamentos_concluidos: Math.round(76 * fator),
+      agendamentos_cancelados: Math.round(12 * fator),
+      agendamentos_pendentes: Math.round(10 * fator),
+      ticket_medio: 45.01,
+      top_5_horarios: [
+        { hora: 9, total_agendamentos: Math.round(14 * fator) },
+        { hora: 10, total_agendamentos: Math.round(11 * fator) },
+        { hora: 14, total_agendamentos: Math.round(8 * fator) },
+        { hora: 16, total_agendamentos: Math.round(7 * fator) },
+        { hora: 18, total_agendamentos: Math.round(5 * fator) }
+      ],
+      receita_diaria: [
+        { data: "2026-04-10", receita: 150.0 * fator, agendamentos_concluidos: 3, agendamentos_pendentes: 0 },
+        { data: "2026-04-11", receita: 200.0 * fator, agendamentos_concluidos: 4, agendamentos_pendentes: 1 },
+        { data: "2026-04-12", receita: 280.0 * fator, agendamentos_concluidos: 6, agendamentos_pendentes: 1 },
+        { data: "2026-04-13", receita: 400.0 * fator, agendamentos_concluidos: 8, agendamentos_pendentes: 2 },
+        { data: "2026-04-14", receita: 320.0 * fator, agendamentos_concluidos: 7, agendamentos_pendentes: 0 },
+        { data: "2026-04-15", receita: 180.0 * fator, agendamentos_concluidos: 4, agendamentos_pendentes: 3 }
+      ],
+      barbeiros_desempenho: [
+        {
+          barbeiro_id: 1,
+          barbeiro_nome: "Pedro",
+          total_agendamentos: Math.round(30 * fator),
+          agendamentos_concluidos: Math.round(25 * fator),
+          agendamentos_cancelados: Math.round(2 * fator),
+          receita_total: 1200.0 * fator,
+          tempo_total_minutos: 900 * fator,
+          servicos_realizados: [
+            { nome: "Corte", quantidade: 15, preco_unitario: 40.0, receita: 600.0 },
+            { nome: "Barba", quantidade: 10, preco_unitario: 30.0, receita: 300.0 }
+          ],
+          taxa_conclusao: 83.3
+        },
+        {
+          barbeiro_id: 2,
+          barbeiro_nome: "Carlos",
+          total_agendamentos: Math.round(24 * fator),
+          agendamentos_concluidos: Math.round(19 * fator),
+          agendamentos_cancelados: Math.round(3 * fator),
+          receita_total: 980.0 * fator,
+          tempo_total_minutos: 760 * fator,
+          servicos_realizados: [
+            { nome: "Corte", quantidade: 10, preco_unitario: 40.0, receita: 400.0 }
+          ],
+          taxa_conclusao: 79.17
+        }
+      ]
     }, { status: 200 });
   }),
 

@@ -130,6 +130,16 @@ export default function ClientsView() {
           totalPages: totalPages,
           onPageChange: (newPage) => setPage(newPage)
         }}
+        enableSearch={true}
+        searchFilter={(item, query) => {
+          const q = query.toLowerCase();
+          return (
+            item.nome.toLowerCase().includes(q) ||
+            item.email.toLowerCase().includes(q) ||
+            item.telefone.includes(q) ||
+            String(item.id).includes(q)
+          );
+        }}
       />
 
       <ClientModal

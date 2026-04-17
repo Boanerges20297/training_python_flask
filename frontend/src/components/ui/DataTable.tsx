@@ -1,5 +1,5 @@
 import React from 'react';
-import { Loader2, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, Plus, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import Button from './Button';
 import type { LucideIcon } from 'lucide-react';
 import './DataTable.css';
@@ -33,6 +33,10 @@ export interface DataTableProps<T> {
     totalPages: number;
     onPageChange: (page: number) => void;
   };
+  enableSearch?: boolean;
+  searchPlaceholder?: string;
+  onSearch?: (query: string) => void;
+  searchFilter?: (item: T, query: string) => boolean;
 }
 
 /*
@@ -54,27 +58,59 @@ function DataTable<T>({
   emptyStateIcon: EmptyIcon,
   emptyStateText = 'Nenhum registro encontrado no sistema.',
   id,
-  pagination
+  pagination,
+  enableSearch,
+  searchPlaceholder = 'Pesquisar...',
+  onSearch,
+  searchFilter
 }: DataTableProps<T>) {
+  const [internalQuery, setInternalQuery] = React.useState('');
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setInternalQuery(val);
+    if (onSearch) onSearch(val);
+  };
+
+  const filteredData = data.filter((item) => {
+    if (!enableSearch || !internalQuery) return true;
+    if (searchFilter) return searchFilter(item, internalQuery);
+    return JSON.stringify(item).toLowerCase().includes(internalQuery.toLowerCase());
+  });
+
   return (
     <section className="card animate-in" id={id}>
       {/* Cabeçalho da Tabela */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Icon size={20} color={themeColor} />
           <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#f8fafc' }}>{title}</h2>
         </div>
-        {addButtonText && onAddClick && (
-          <Button 
-            onClick={onAddClick} 
-            theme={buttonTheme}
-            variant={buttonVariant}
-            size={buttonSize}
-            icon={<Plus size={16} />}
-          >
-            {addButtonText}
-          </Button>
-        )}
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          {enableSearch && (
+            <div className="table-search-box">
+              <Search size={16} className="search-icon" />
+              <input 
+                type="search" 
+                placeholder={searchPlaceholder} 
+                value={internalQuery}
+                onChange={handleSearchChange}
+                className="table-search-input"
+              />
+            </div>
+          )}
+          {addButtonText && onAddClick && (
+            <Button 
+              onClick={onAddClick} 
+              theme={buttonTheme}
+              variant={buttonVariant}
+              size={buttonSize}
+              icon={<Plus size={16} />}
+            >
+              {addButtonText}
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Corpo / Tabela */}
@@ -101,8 +137,8 @@ function DataTable<T>({
               </tr>
             </thead>
             <tbody>
-              {data.length > 0 ? (
-                data.map((item, rowIdx) => (
+              {filteredData.length > 0 ? (
+                filteredData.map((item, rowIdx) => (
                   <tr key={rowIdx} className="fade-in">
                     {columns.map((col, colIdx) => (
                       <td 

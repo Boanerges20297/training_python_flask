@@ -1,0 +1,250 @@
+/* Dashboard.css - Estilos Premium para o Dashboard Administrativo */
+
+.dashboard-container {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(12, 1fr);
+  animation: fadeSlideUp 0.4s ease-out;
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Area Superior de Filtros e Ações --- */
+.dashboard-controls {
+  grid-column: span 12;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(30, 41, 59, 0.4);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 1rem 1.5rem;
+  border-radius: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-controls-left, .dashboard-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* --- Cards de KPI --- */
+.kpi-grid {
+  grid-column: span 12;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+}
+
+.kpi-card {
+  background: rgba(30, 41, 59, 0.6);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1.25rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.kpi-card:hover {
+  transform: translateY(-4px);
+  background: rgba(30, 41, 59, 0.8);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.kpi-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.kpi-title {
+  color: #94a3b8;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.kpi-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+
+.kpi-value {
+  color: #f8fafc;
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.2;
+}
+
+.kpi-subtitle {
+  color: #64748b;
+  font-size: 0.75rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.kpi-trend.positive { color: #10b981; }
+.kpi-trend.negative { color: #ef4444; }
+
+/* Decorador de Fundo dos KPIs */
+.kpi-bg-glow {
+  position: absolute;
+  bottom: -20px;
+  right: -20px;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  filter: blur(30px);
+  opacity: 0.15;
+  pointer-events: none;
+}
+
+/* --- Gráficos Container --- */
+.chart-card {
+  background: rgba(30, 41, 59, 0.5);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-card-header {
+  margin-bottom: 1.5rem;
+}
+
+.chart-card-title {
+  color: #f8fafc;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+}
+
+.chart-card-subtitle {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+/* Espaçamento dos Gráficos */
+.chart-primary {
+  grid-column: span 8;
+  min-height: 380px;
+}
+
+.chart-secondary {
+  grid-column: span 4;
+  min-height: 380px;
+}
+
+@media (max-width: 1024px) {
+  .chart-primary, .chart-secondary {
+    grid-column: span 12;
+  }
+}
+
+/* Tema interno para tooltip do Recharts */
+.recharts-tooltip-wrapper .custom-tooltip {
+  background: rgba(15, 23, 42, 0.9) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5);
+  color: #f8fafc;
+}
+
+.custom-tooltip-label {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-bottom: 0.5rem;
+}
+
+.custom-tooltip-item {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+/* --- Tabela de Barbeiros (Desempenho) --- */
+.performance-list {
+  grid-column: span 12;
+}
+
+.performance-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  background: rgba(15, 23, 42, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 1rem;
+  margin-bottom: 0.75rem;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.performance-item:hover {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+.perf-barber-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.perf-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 1rem;
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.perf-name {
+  color: #f8fafc;
+  font-weight: 600;
+  font-size: 1rem;
+  margin: 0 0 0.25rem 0;
+}
+
+.perf-stats {
+  display: flex;
+  gap: 1rem;
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.perf-stat-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.perf-revenue {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #10b981;
+}

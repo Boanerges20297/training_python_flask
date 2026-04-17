@@ -256,6 +256,19 @@ export default function AppointmentsView() {
           totalPages: totalPages,
           onPageChange: (newPage) => setPage(newPage)
         }}
+        enableSearch={true}
+        searchFilter={(item, query) => {
+          const q = query.toLowerCase();
+          const cName = clientMap[item.cliente_id] || '';
+          const bName = barberMap[item.barbeiro_id] || '';
+          const sName = serviceMap[item.servico_id] || '';
+          return (
+            cName.toLowerCase().includes(q) ||
+            bName.toLowerCase().includes(q) ||
+            sName.toLowerCase().includes(q) ||
+            String(item.id).includes(q)
+          );
+        }}
       />
 
       <Popover

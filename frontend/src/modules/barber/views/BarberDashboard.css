@@ -1,0 +1,130 @@
+/* BARBER MODULE — Tema Âmbar (#f59e0b) */
+
+.barber-panel {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.barber-highlight-card {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.03) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.15);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.barber-highlight-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 0.875rem;
+  background: rgba(245, 158, 11, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.barber-highlight-info {
+  flex: 1;
+}
+
+.barber-highlight-info h3 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.barber-highlight-info p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #94a3b8;
+}
+
+.barber-highlight-info .highlight-detail {
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.barber-welcome {
+  margin-bottom: 2rem;
+}
+
+.barber-welcome h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #f8fafc;
+  font-weight: 600;
+}
+
+.barber-welcome p {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.barber-metrics {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.barber-metric-card {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.barber-metric-card .metric-icon {
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.barber-metric-card .metric-info {
+  flex: 1;
+}
+
+.barber-metric-card .metric-info h4 {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.barber-metric-card .metric-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #f8fafc;
+  line-height: 1.2;
+}
+
+/* Ações rápidas inline */
+.action-btn-group {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: nowrap;
+}
+
+/* Filtros do Histórico */
+.historico-filters {
+  margin-bottom: 1.5rem;
+}
+
+.historico-filters .filter-group {
+  max-width: 250px;
+}

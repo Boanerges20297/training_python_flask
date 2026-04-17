@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import Login from './modules/auth/views/Login';
+import AuthContainer from './modules/auth/views/AuthContainer';
 import Sidebar from './components/layouts/Sidebar';
+import type { SidebarTab } from './components/layouts/Sidebar';
 import Header from './components/layouts/Header';
 import ClientsView from './modules/admin/views/ClientsView';
 import ServicesView from './modules/admin/views/ServicesView';
@@ -8,17 +9,20 @@ import AppointmentsView from './modules/admin/views/AppointmentsView';
 import BarbersView from './modules/admin/views/BarbersView';
 import BarberDashboard from './modules/barber/views/BarberDashboard';
 import ClientDashboard from './modules/client/views/ClientDashboard';
-
-type Tab = 'clientes' | 'servicos' | 'agendamentos' | 'barbeiros';
+import DashboardView from './modules/admin/views/DashboardView';
 
 function App() {
   const [user, setUser] = useState<any>(() => {
-    // # Gabriel (Dev 1) - Recuperação de sessão para o F5 não dar logout
     const savedUser = sessionStorage.getItem('barba_user');
     return savedUser ? JSON.parse(savedUser) : null;
   });
   
-  const [activeTab, setActiveTab] = useState<Tab>('clientes');
+  const [activeTab, setActiveTab] = useState<SidebarTab>(() => {
+    if (user?.role === 'cliente') return 'inicio';
+    if (user?.role === 'barbeiro') return 'agenda';
+    return 'dashboard';
+  });
+  
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const handleLogout = () => {
@@ -27,91 +31,73 @@ function App() {
   };
 
   if (!user) {
-    return <Login onLoginSuccess={(u) => setUser(u)} />;
+    return <AuthContainer onLoginSuccess={(u) => {
+      setUser(u);
+      if (u.role === 'cliente') setActiveTab('inicio');
+      else if (u.role === 'barbeiro') setActiveTab('agenda');
+      else setActiveTab('dashboard');
+    }} />;
   }
 
-  // --- Layout Administrativo ---
-  const AdminLayout = () => {
-    const tabNames: Record<Tab, string> = {
-      clientes: 'Clientes',
-      servicos: 'Serviços',
-      agendamentos: 'Agendamentos',
-      barbeiros: 'Barbeiros'
-    };
+  const renderContent = () => {
+    if (user.role === 'admin') {
+      if (activeTab === 'dashboard') return <DashboardView />;
+      if (activeTab === 'clientes') return <ClientsView />;
+      if (activeTab === 'servicos') return <ServicesView />;
+      if (activeTab === 'agendamentos') return <AppointmentsView />;
+      if (activeTab === 'barbeiros') return <BarbersView />;
+    }
 
-    return (
-      <div className={`app-layout ${isSidebarCollapsed ? 'collapsed' : ''}`}>
-        <Sidebar 
-          activeTab={activeTab}
-          onTabChange={(tab) => setActiveTab(tab)}
-          isCollapsed={isSidebarCollapsed}
-          onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-          user={user}
-          onLogout={handleLogout}
-        />
+    if (user.role === 'cliente') {
+      return <ClientDashboard user={user} activeTab={activeTab as string} />;
+    }
 
-        <main className="main-content">
-          <Header activeTabName={tabNames[activeTab]} />
-          <div className="content-body">
-            {activeTab === 'clientes' && <ClientsView />}
-            {activeTab === 'servicos' && <ServicesView />}
-            {activeTab === 'agendamentos' && <AppointmentsView />}
-            {activeTab === 'barbeiros' && <BarbersView />}
-          </div>
-        </main>
-      </div>
-    );
+    if (user.role === 'barbeiro') {
+      return <BarberDashboard user={user} activeTab={activeTab as string} />;
+    }
+
+    return null;
   };
 
-  // --- Layout Global (Barbeiro / Cliente) ---
-  const SimplifiedLayout = ({ title, children }: { title: string, children: React.ReactNode }) => (
-    <div className="flex flex-col h-screen bg-slate-100">
-      <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between shrink-0">
-        <h1 className="text-xl font-bold text-slate-800">{title}</h1>
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-slate-500 font-medium">{user.nome || user.email}</span>
-          <button 
-            onClick={handleLogout}
-            className="text-sm font-semibold text-red-500 hover:text-red-600 transition-colors"
-          >
-            Sair
-          </button>
-        </div>
-      </header>
-      <main className="flex-1 p-6 overflow-auto">
-        {children}
-      </main>
-    </div>
-  );
+  const getHeaderTitle = () => {
+    if (user.role === 'admin') {
+      const titles: Record<string, string> = {
+        dashboard: 'Estatísticas',
+        clientes: 'Clientes',
+        servicos: 'Serviços',
+        agendamentos: 'Agendamentos',
+        barbeiros: 'Barbeiros'
+      };
+      return titles[activeTab as string] || 'Admin';
+    }
+    if (user.role === 'cliente') {
+      if (activeTab === 'agendamentos_cliente') return 'Meus Agendamentos';
+      return 'Área do Cliente';
+    }
+    if (user.role === 'barbeiro') {
+      if (activeTab === 'historico') return 'Histórico';
+      return 'Agenda do Dia';
+    }
+    return '';
+  };
 
-  // --- Roteamento por Role ---
-  if (user.role === 'admin') {
-    return <AdminLayout />;
-  }
-
-  if (user.role === 'barbeiro') {
-    return (
-      <SimplifiedLayout title="Painel do Profissional">
-        <BarberDashboard />
-      </SimplifiedLayout>
-    );
-  }
-
-  if (user.role === 'cliente') {
-    return (
-      <SimplifiedLayout title="Área do Cliente">
-        <ClientDashboard />
-      </SimplifiedLayout>
-    );
-  }
-
-  // Fallback para roles desconhecidas
   return (
-    <div className="flex items-center justify-center h-screen">
-      <div className="text-center">
-        <p className="text-red-500 font-bold">Erro: Role desconhecida ({user.role})</p>
-        <button onClick={handleLogout} className="mt-4 text-blue-500 underline">Voltar para Login</button>
-      </div>
+    <div className={`app-layout ${isSidebarCollapsed ? 'collapsed' : ''}`}>
+      <Sidebar 
+        activeTab={activeTab}
+        onTabChange={(tab: SidebarTab) => setActiveTab(tab)}
+        isCollapsed={isSidebarCollapsed}
+        onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        user={user}
+        onLogout={handleLogout}
+      />
+
+      <main className="main-content">
+        <Header activeTabName={getHeaderTitle()} />
+        <div className="content-body">
+          {renderContent()}
+        </div>
+      </main>
     </div>
   );
 }

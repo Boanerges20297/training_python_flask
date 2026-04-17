@@ -20,6 +20,7 @@ export interface Agendamento {
   servico_id: number;
   data_agendamento: string;
   observacoes: string;
+  status?: string; // "pendente" | "confirmado" | "concluido" | "cancelado"
 }
 
 export interface Barbeiro {
@@ -40,4 +41,50 @@ export interface PaginatedResponse<T> {
   total_paginas: number;
   tem_proxima: boolean;
   tem_pagina_anterior: boolean;
+}
+
+// --- Dashboard Types ---
+export interface HorarioPopular {
+  hora: number;
+  total_agendamentos: number;
+}
+
+export interface ReceitaDiaria {
+  data: string; // YYYY-MM-DD
+  receita: number;
+  agendamentos_concluidos: number;
+  agendamentos_pendentes: number;
+}
+
+export interface ServicoRealizado {
+  nome: string;
+  quantidade: number;
+  preco_unitario: number;
+  receita: number;
+}
+
+export interface BarbeiroDesempenho {
+  barbeiro_id: number;
+  barbeiro_nome: string;
+  total_agendamentos: number;
+  agendamentos_concluidos: number;
+  agendamentos_cancelados: number;
+  receita_total: number;
+  tempo_total_minutos: number;
+  servicos_realizados: ServicoRealizado[];
+  taxa_conclusao: number;
+}
+
+export interface DashboardData {
+  periodo_inicio: string;
+  periodo_fim: string;
+  receita_total: number;
+  agendamentos_total: number;
+  agendamentos_concluidos: number;
+  agendamentos_cancelados: number;
+  agendamentos_pendentes: number;
+  ticket_medio: number;
+  top_5_horarios: HorarioPopular[];
+  receita_diaria: ReceitaDiaria[];
+  barbeiros_desempenho: BarbeiroDesempenho[];
 }

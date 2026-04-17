@@ -6,9 +6,10 @@ import Input from '../../../components/ui/Input';
 
 interface LoginProps {
   onLoginSuccess: (user: any) => void;
+  onNavigate?: (view: any) => void;
 }
 
-const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
+const Login: React.FC<LoginProps> = ({ onLoginSuccess, onNavigate }) => {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,7 +22,6 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
 
     try {
       const data = await login(email, senha);
-      // Gabriel (Dev 1) - Alinhado com Felipe (Task 10): Aceita 'user' (novo) ou 'usuario' (legado)
       const userData = data.user || data.usuario;
       
       if (userData) {
@@ -38,188 +38,68 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <div className="login-header">
-          <div className="logo-icon">
-            <Scissors size={32} color="#3b82f6" />
-          </div>
-          <h1>Barba & Byte</h1>
-          <p>Acesse sua conta</p>
+    <div className="auth-card">
+      <div className="auth-header">
+        <div className="logo-icon">
+          <Scissors size={32} color="#3b82f6" />
         </div>
-
-        <form onSubmit={handleSubmit} className="modern-form">
-          <Input 
-            label="E-mail"
-            type="email" 
-            icon={<Mail size={18} />}
-            placeholder="seu@email.com" 
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoFocus
-          />
-
-          <Input 
-            label="Senha"
-            type="password" 
-            icon={<Lock size={18} />}
-            placeholder="Digite sua senha" 
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-            required
-          />
-
-          {error && <div className="error-message">{error}</div>}
-
-          <Button 
-            type="submit" 
-            variant="primary" 
-            theme="blue" 
-            size="lg" 
-            fullWidth 
-            isLoading={loading}
-            icon={<LogIn size={20} />}
-          >
-            Entrar no Sistema
-          </Button>
-        </form>
-
-        <div className="login-footer">
-          <p>Dica: Use <strong>admin@barba.com</strong> / <strong>admin123</strong></p>
-        </div>
+        <h1>Barba & Byte</h1>
+        <p>Acesse sua conta</p>
       </div>
 
-      <style>{`
-        .login-container {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          height: 100vh;
-          width: 100vw;
-          background: radial-gradient(circle at top right, #1e293b 0%, #0f172a 100%);
-          overflow: hidden;
-        }
+      <form onSubmit={handleSubmit} className="modern-form">
+        <Input 
+          label="E-mail"
+          type="email" 
+          icon={<Mail size={18} />}
+          placeholder="seu@email.com" 
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          autoFocus
+        />
 
-        .login-card {
-          width: 100%;
-          max-width: 400px;
-          background: rgba(30, 41, 59, 0.4);
-          backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 1.5rem;
-          padding: 2.5rem;
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-          animation: slideUp 0.6s ease-out;
-        }
+        <Input 
+          label="Senha"
+          type="password" 
+          icon={<Lock size={18} />}
+          placeholder="Digite sua senha" 
+          value={senha}
+          onChange={(e) => setSenha(e.target.value)}
+          required
+        />
 
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
+        {error && <div className="error-message">{error}</div>}
 
-        .login-header {
-          text-align: center;
-          margin-bottom: 2rem;
-        }
+        <Button 
+          type="submit" 
+          variant="primary" 
+          theme="blue" 
+          size="lg" 
+          fullWidth 
+          isLoading={loading}
+          icon={<LogIn size={20} />}
+        >
+          Entrar no Sistema
+        </Button>
+      </form>
 
-        .logo-icon {
-          background: rgba(59, 130, 246, 0.1);
-          width: 64px;
-          height: 64px;
-          border-radius: 1rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin: 0 auto 1rem;
-          border: 1px solid rgba(59, 130, 246, 0.2);
-        }
-
-        .login-header h1 {
-          font-size: 1.75rem;
-          margin-bottom: 0.5rem;
-          background: linear-gradient(to right, #fff, #94a3b8);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-        }
-
-        .login-header p {
-          color: #94a3b8;
-          font-size: 0.9rem;
-        }
-
-        .input-group {
-          margin-bottom: 1.5rem;
-        }
-
-        .input-group label {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          color: #94a3b8;
-          font-size: 0.875rem;
-          margin-bottom: 0.5rem;
-          font-weight: 500;
-        }
-
-        .input-group input {
-          width: 100%;
-          background: rgba(15, 23, 42, 0.6);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          padding: 0.75rem 1rem;
-          border-radius: 0.75rem;
-          color: white;
-          transition: all 0.2s;
-          box-sizing: border-box;
-        }
-
-        .input-group input:focus {
-          outline: none;
-          border-color: #3b82f6;
-          background: rgba(15, 23, 42, 0.9);
-          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
-        }
-
-        .login-btn {
-          width: 100%;
-          margin-top: 1rem;
-          height: 3rem;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        }
-
-        .error-message {
-          background: rgba(239, 68, 68, 0.1);
-          color: #ef4444;
-          padding: 0.75rem;
-          border-radius: 0.5rem;
-          font-size: 0.875rem;
-          margin-bottom: 1rem;
-          border: 1px solid rgba(239, 68, 68, 0.2);
-          text-align: center;
-        }
-
-        .login-footer {
-          margin-top: 2rem;
-          text-align: center;
-          font-size: 0.8rem;
-          color: #475569;
-        }
-
-        .login-footer strong {
-          color: #64748b;
-        }
-
-        .animate-spin {
-          animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
+      <div className="auth-footer auth-links">
+        {onNavigate && (
+          <>
+            <span onClick={() => onNavigate('forgot-password')} className="clickable-text" style={{ cursor: 'pointer', color: '#94a3b8' }}>
+              Esqueceu sua senha?
+            </span>
+            <span>
+              Ainda não tem conta? <a onClick={() => onNavigate('register')}>Criar nova conta</a>
+            </span>
+          </>
+        )}
+        <div style={{ marginTop: '1.5rem', opacity: 0.6 }}>
+          <p>Dica: <strong>admin@barba.com</strong> → Admin</p>
+          <p><strong>cliente@barba.com</strong> → Cliente • <strong>barbeiro@barba.com</strong> → Barbeiro</p>
+        </div>
+      </div>
     </div>
   );
 };

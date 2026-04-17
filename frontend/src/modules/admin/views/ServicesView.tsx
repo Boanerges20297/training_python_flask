@@ -165,6 +165,15 @@ export default function ServicesView() {
           totalPages: totalPages,
           onPageChange: (newPage) => setPage(newPage)
         }}
+        enableSearch={true}
+        searchFilter={(item, query) => {
+          const q = query.toLowerCase();
+          return (
+            item.nome.toLowerCase().includes(q) ||
+            String(item.id).includes(q) ||
+            String(item.preco).includes(q)
+          );
+        }}
       />
 
       <Popover
