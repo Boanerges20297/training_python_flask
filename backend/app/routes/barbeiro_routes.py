@@ -239,12 +239,7 @@ def editar_barbeiro(id):
             },
         )
 
-        # felipe - Log de Auditoria
-        log_evento_auditoria(
-            "Edição de Barbeiro", 
-            recurso_id=id, 
-            extra_data={"campos_alterados": list(update_data.keys())}
-        )
+
 
         return {
             "sucesso": True,
@@ -273,6 +268,8 @@ def editar_barbeiro(id):
 @jwt_required()
 @admin_required
 def deletar_barbeiro(id):
+    current_user_id = int(get_jwt_identity())
+    role = get_jwt().get("role")
     try:
         barbeiro = Barbeiro.query.get(id)
         if not barbeiro:

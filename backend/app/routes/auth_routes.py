@@ -14,6 +14,8 @@ from app.utils.error_formatter import formatar_erros_pydantic
 from app.schemas.auth_schema import LoginRequest, TokenResponse, LoginResponse
 from app.extensions import app_logger
 from datetime import datetime
+from app.models.barbeiro import Barbeiro
+from app.models.cliente import Cliente
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
@@ -39,9 +41,16 @@ def login():
             return jsonify({"msg": "Credenciais inválidas"}), 401
 
         # 3. Lida com o sucesso (Monta a resposta e injeta cookies)
+        usuario_dados = {
+            "id": auth_data["user"].id,
+            "nome": auth_data["user"].nome,
+            "email": auth_data["user"].email,
+            "role": auth_data["user"].role
+        }
+
         login_response = LoginResponse(
             mensagem="Login realizado com sucesso", 
-            dados={"usuario": {"id": str(auth_data["user"].id), "role": auth_data["user"].role}}
+            dados={"usuario": usuario_dados}
         )
 
         app_logger.info(
@@ -155,12 +164,18 @@ def check_session():
         current_user_id = get_jwt_identity()
         role = get_jwt().get("role")
 
-        # Mock provisório de nome e email, caso o frontend requeira até implementarmos o fetchUser real
+        # Busca o usuário real do banco conforme a role
+        user = None
+        if role == "cliente":
+            user = Cliente.query.get(current_user_id)
+        elif role == "barbeiro":
+            user = Barbeiro.query.get(current_user_id)
+
         user_info = {
             "id": current_user_id,
             "role": role,
-            "nome": "Usuário Logado",
-            "email": "usuario@logado.com"
+            "nome": user.nome if user else ("Admin" if role == "admin" else "Usuário Desconhecido"),
+            "email": user.email if user else ("admin@barbabyte.com" if role == "admin" else "email@desconhecido.com")
         }
 
         app_logger.info("Verificação de sessão (protected) concluída com sucesso.", extra={"user_id": current_user_id})

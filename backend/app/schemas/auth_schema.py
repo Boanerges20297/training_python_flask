@@ -18,7 +18,9 @@ class LoginRequest(BaseModel):
 
 # --- SCHEMAS DE SAÍDA (O que o Backend devolve) ---
 class UserResponse(BaseModel):
-    id: str = Field(description="ID do usuário")
+    id: int = Field(description="ID do usuário")
+    nome: str = Field(description="Nome do usuário")
+    email: str = Field(description="E-mail do usuário")
     role: str = Field(description="Role do usuário")
 
 

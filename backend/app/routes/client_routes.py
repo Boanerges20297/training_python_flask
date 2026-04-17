@@ -255,6 +255,8 @@ def editar_cliente(id):
 @jwt_required()
 @admin_required
 def deletar_cliente(id):
+    current_user_id = int(get_jwt_identity())
+    role = get_jwt().get("role")
     try:
         cliente = Cliente.query.get(id)
         if not cliente:
