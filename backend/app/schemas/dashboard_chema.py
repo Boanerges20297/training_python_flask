@@ -20,6 +20,7 @@ class ReceitaPeriodicaSchema(BaseModel):
     data:str
     receita:float
     agendamentos_concluidos:int
+    agendamentos_pendentes:int = 0
 
 class BarbeiroDesempenhoSchema(BaseModel):
     """Performance de um barbeiro em um período"""
@@ -42,6 +43,7 @@ class DashboardResumoSchema(BaseModel):
     agendamentos_total: int
     agendamentos_concluidos: int
     agendamentos_cancelados: int
+    agendamentos_pendentes: int
     barbeiros_desempenho: List[BarbeiroDesempenhoSchema]
     top_5_horarios: List[HorarioPopularSchema]
     receita_diaria: List[ReceitaPeriodicaSchema]
@@ -58,4 +60,5 @@ class DashboardBarbeiroSchema(BaseModel):
     agendamentos_concluidos: int
     agendamentos_cancelados: int
     servicos_realizados: List[Dict]
+    top_5_horarios: List[HorarioPopularSchema] = Field(default_factory=list)
     taxa_conclusao: float

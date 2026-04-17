@@ -6,6 +6,7 @@ from app.models.barbeiro import Barbeiro
 
 #josue - 08/04/2026
 # Service centralizado para lógica de negócios relacionada ao dashboard, como cálculos de receita, desempenho e análises de dados
+# Ajustes de payload e receita diaria assinados por Josue Ferreira - 17/04/2026
 class DashboardService:
     """Service centralizado para analytics e relatórios do dashboard"""
 
@@ -116,6 +117,7 @@ class DashboardService:
                     servicos_dict[nome] = {
                         "nome": nome,
                         "quantidade": 0,
+                        "preco_unitario": agendamento.servico.preco,
                         "receita": 0
                     }
                 servicos_dict[nome]["quantidade"] += 1
@@ -135,6 +137,7 @@ class DashboardService:
             "agendamentos_concluidos": len(concluidos),
             "agendamentos_cancelados": len(cancelados),
             "servicos_realizados": list(servicos_dict.values()),
+            "top_5_horarios": horarios,
             "taxa_conclusao": round(taxa_conclusao, 2),
         }
 
@@ -257,10 +260,10 @@ class DashboardService:
             agendamentos_por_dia[data_str]["pendentes"] += 1
 
         resultado = []
-        for data in sorted(receita_por_dia.keys()):
+        for data in sorted(agendamentos_por_dia.keys()):
             resultado.append({
                 "data": data,
-                "receita": round(receita_por_dia[data], 2),
+                "receita": round(receita_por_dia.get(data, 0), 2),
                 "agendamentos_concluidos": agendamentos_por_dia[data]["concluidos"],
                 "agendamentos_pendentes": agendamentos_por_dia[data].get("pendentes", 0)
             })
