@@ -34,12 +34,15 @@ export const handlers = [
       return HttpResponse.json({ erro: "Usuário não encontrado no mock database" }, { status: 401 });
     }
 
+    const usuario = { id: userId, nome: userName, email, role };
+    db.setSession(usuario);
+
     return HttpResponse.json({
       sucesso: true,
       mensagem: `Login (${role}) realizado com sucesso`,
       dados: {
         token: 'fake-jwt-token',
-        usuario: { id: userId, nome: userName, email, role }
+        usuario
       }
     }, { status: 200 });
   }),
@@ -47,7 +50,7 @@ export const handlers = [
   // Mock de Cadastro (Register) - Registra como cliente com validação de email único
   http.post(`${API_BASE}/auth/register`, async ({ request }) => {
     await delay(500);
-    const { nome, email } = await request.json() as any;
+    const { nome, email, senha, telefone } = await request.json() as any;
     
     // Validação: email já existe?
     const clientes = db.getAll('clientes');
@@ -56,13 +59,15 @@ export const handlers = [
       return HttpResponse.json({ erro: 'Este e-mail já está cadastrado.' }, { status: 409 });
     }
 
-    const newCliente = db.add('clientes', { nome, email, telefone: '', data_cadastro: new Date().toISOString() });
+    const newCliente = db.add('clientes', { nome, email, telefone: telefone || '', data_cadastro: new Date().toISOString() });
+    const usuario = { id: newCliente.id, nome, email, role: 'cliente' as const };
+    db.setSession(usuario);
 
     return HttpResponse.json({
       sucesso: true,
       dados: {
         token: 'fake-jwt-token-registered',
-        usuario: { id: newCliente.id, nome, email, role: 'cliente' }
+        usuario
       }
     }, { status: 201 });
   }),
@@ -143,15 +148,25 @@ export const handlers = [
     return HttpResponse.json({ msg: "Sessão renovada (mock)" }, { status: 200 });
   }),
 
+  http.post(`${API_BASE}/auth/logout`, async () => {
+    await delay(100);
+    db.setSession(null);
+    return HttpResponse.json({ msg: "Logout realizado com sucesso (mock)" }, { status: 200 });
+  }),
+
   // # felipe - Garante que a role seja mantida corretamente na renovação de sessão
   http.get(`${API_BASE}/auth/protected`, async () => {
-    await delay(200);
-    // Nota: Em um mock real, pegaríamos o ID do token. 
-    // Aqui simulamos o retorno do usuário logado (geralmente admin no mock persistente)
+    await delay(300);
+    const sessionUser = db.getSession();
+    
+    if (!sessionUser) {
+      return HttpResponse.json({ erro: "Sessão expirada no mock" }, { status: 401 });
+    }
+
     return HttpResponse.json({
       sucesso: true,
       dados: {
-        usuario: { id: 1, nome: "Usuário Mock", email: "mock@teste.com", role: 'admin' }
+        usuario: sessionUser
       }
     }, { status: 200 });
   }),

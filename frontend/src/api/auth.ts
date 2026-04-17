@@ -28,9 +28,9 @@ export async function login(email: string, senha: string): Promise<any> {
     throw errData.msg || errData.mensagem || errData.Erro || errData.erro || JSON.stringify(errData) || 'Erro ao realizar login';
   }
 }
-export async function register(nome: string, email: string, senha: string) {
+export async function register(nome: string, email: string, senha: string, telefone: string) {
   try {
-    const response = await api.post('/auth/register', { nome, email, senha });
+    const response = await api.post('/auth/register', { nome, email, senha, telefone });
     return response.data;
   } catch (error: any) {
     throw error.response?.data?.erro || error.response?.data?.mensagem || 'Erro ao realizar cadastro';

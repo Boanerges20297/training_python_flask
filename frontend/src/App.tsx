@@ -16,7 +16,11 @@ function App() {
   const { user, isAuthenticated, logout, isLoading } = useAuth();
   
   const [activeTab, setActiveTab] = useState<SidebarTab>(() => {
-    // Tentativa de definir aba inicial baseada na role se o user já existir
+    // 1. Tenta recuperar aba salva da última sessão (Gabriel)
+    const savedTab = localStorage.getItem('barba_active_tab');
+    if (savedTab) return savedTab as SidebarTab;
+
+    // 2. Fallback baseada na role (Felipe)
     const savedUser = localStorage.getItem('barba_user');
     const u = savedUser ? JSON.parse(savedUser) : null;
     if (u?.role === 'cliente') return 'inicio';
@@ -86,11 +90,17 @@ function App() {
     <div className={`app-layout ${isSidebarCollapsed ? 'collapsed' : ''}`}>
       <Sidebar 
         activeTab={activeTab}
-        onTabChange={(tab: SidebarTab) => setActiveTab(tab)}
+        onTabChange={(tab: SidebarTab) => {
+          setActiveTab(tab);
+          localStorage.setItem('barba_active_tab', tab);
+        }}
         isCollapsed={isSidebarCollapsed}
         onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         user={user}
-        onLogout={logout}
+        onLogout={() => {
+          localStorage.removeItem('barba_active_tab');
+          logout();
+        }}
       />
 
       <main className="main-content">

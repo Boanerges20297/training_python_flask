@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Lock, Mail, UserPlus, ArrowLeft } from 'lucide-react';
+import { User, Lock, Mail, Phone, UserPlus, ArrowLeft } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import { useAuth } from '../../../auth/useAuth';
@@ -13,22 +13,24 @@ const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
   const { register } = useAuth();
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
+  const [telefone, setTelefone] = useState('');
   const [senha, setSenha] = useState('');
   const [confirmSenha, setConfirmSenha] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Password Strength Logic
-  const calcStrength = (pw: string) => {
-    let score = 0;
-    if (!pw) return score;
-    if (pw.length > 5) score += 1;
-    if (pw.length > 8) score += 1;
-    if (/[A-Z]/.test(pw)) score += 1;
-    if (/[0-9]/.test(pw)) score += 1;
-    if (/[^a-zA-Z0-9]/.test(pw)) score += 1;
-    return Math.min(4, score);
-  };
+  // Lógica da Senha Forte
+const calcStrength = (pw: string) => {
+  if (pw.length < 6) return 0; 
+
+  let score = 1; 
+  if (pw.length > 10) score += 1;
+  if (/[A-Z]/.test(pw)) score += 1;
+  if (/[0-9]/.test(pw)) score += 1;
+  if (/[^a-zA-Z0-9]/.test(pw)) score += 1;
+
+  return Math.min(4, score);
+};
   
   const strength = calcStrength(senha);
   const strengthLabels = ['Muito Fraca', 'Fraca', 'Razoável', 'Forte', 'Muito Forte'];
@@ -44,7 +46,7 @@ const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
     setError('');
 
     try {
-      await register(nome, email, senha);
+      await register(nome, email, senha, telefone);
       // O App.tsx detectará o estado autenticado via Contexto
     } catch (err: any) {
       setError(err.toString());
@@ -84,6 +86,17 @@ const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
           required
         />
 
+        <Input
+          label="Telefone"
+          type="text"
+          mask="phone"
+          icon={<Phone size={18} />}
+          placeholder="Seu telefone"
+          value={telefone}
+          onChange={(e) => setTelefone(e.target.value)}
+          required
+        />
+
         <div style={{ position: 'relative' }}>
           <Input 
             label="Senha"
@@ -96,7 +109,7 @@ const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
           />
         </div>
         
-        <div className="password-strength-container">
+        <div className="password-strength-container" style={{ marginBottom: '0.1rem' }}>
           <div className="password-strength-bars">
             <div className={`pw-bar ${strength >= 1 ? 'active-1' : ''}`} />
             <div className={`pw-bar ${strength >= 2 ? `active-${strength}` : ''}`} />

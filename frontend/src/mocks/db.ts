@@ -7,6 +7,7 @@ interface MockDB {
   barbeiros: Barbeiro[];
   servicos: Servico[];
   agendamentos: Agendamento[];
+  currentSession: any | null;
 }
 
 // Inicia vazio conforme solicitado: Experiência de criar do zero
@@ -14,7 +15,8 @@ const initialData: MockDB = {
   clientes: [],
   barbeiros: [],
   servicos: [],
-  agendamentos: []
+  agendamentos: [],
+  currentSession: null
 };
 
 class Database {
@@ -93,6 +95,15 @@ class Database {
       return true;
     }
     return false;
+  }
+
+  setSession(user: any | null) {
+    this.data.currentSession = user;
+    this.save();
+  }
+
+  getSession() {
+    return this.data.currentSession;
   }
 }
 

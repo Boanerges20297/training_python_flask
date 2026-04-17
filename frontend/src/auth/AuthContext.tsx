@@ -2,6 +2,7 @@ import { createContext, useState, useEffect, useCallback, type ReactNode } from 
 import type { AuthUser, AuthState, UserRole } from '../types';
 import { login as apiLogin, logout as apiLogout, getMe, register as apiRegister, forgotPassword as apiForgotPassword } from '../api/auth';
 import { createLogger } from '../utils/logger';
+import { cleanPhone } from '../components/ui/Input';
 
 // felipe
 const logger = createLogger('AuthContext');
@@ -10,7 +11,7 @@ const logger = createLogger('AuthContext');
 // define o formato completo do contexto — o que os filhos vão consumir
 interface AuthContextType extends AuthState {
   login: (email: string, senha: string) => Promise<void>;
-  register: (nome: string, email: string, senha: string) => Promise<void>;
+  register: (nome: string, email: string, senha: string, telefone: string) => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   hasRole: (role: UserRole) => boolean;
@@ -90,9 +91,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Gabriel & Felipe
   // chama a API de registro e autentica o usuário imediatamente
-  const register = useCallback(async (nome: string, email: string, senha: string) => {
+  const register = useCallback(async (nome: string, email: string, senha: string, telefone: string) => {
     logger.info('Iniciando registro via contexto', { email });
-    const data = await apiRegister(nome, email, senha);
+    const cleanTel = cleanPhone(telefone);
+    const data = await apiRegister(nome, email, senha, cleanTel);
     const usuario = data.dados?.usuario || data.user || data.usuario;
     localStorage.setItem('barba_user', JSON.stringify(usuario));
     setUser(usuario);
