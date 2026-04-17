@@ -50,7 +50,7 @@ def criar_agendamento():
         # Transformado o objeto agendamento em dicionário padronizado pelo schema
         response = AgendamentoResponse.model_validate(agendamento_novo)
 
-        return jsonify(response.model_dump()), 201
+        return jsonify({"sucesso": True, "mensagem": "Agendamento criado com sucesso", "dados": {"agendamento": response.model_dump()}}), 201
     except ConflitoHorarioError as e:
         return jsonify({"erro": "Erro ao criar agendamento: " + str(e)}), 409
     except AcessoNegadoError as e:
@@ -81,18 +81,20 @@ def listar_agendamento():
         # Transformado o objeto agendamento em dicionário padronizado pelo schema
         response = AgendamentoListResponse.model_validate(
             {
-                "page": agendamentos.page,
+                "pagina": agendamentos.page,
                 "per_page": agendamentos.per_page,
-                "has_next": agendamentos.has_next,
-                "has_prev": agendamentos.has_prev,
-                "data": [
+                "total": agendamentos.total,
+                "total_paginas": agendamentos.pages,
+                "tem_proxima": agendamentos.has_next,
+                "tem_pagina_anterior": agendamentos.has_prev,
+                "items": [
                     AgendamentoResponse.model_validate(agendamento)
                     for agendamento in agendamentos.items
                 ],
             }
         )
 
-        return jsonify(response.model_dump()), 200
+        return jsonify({"sucesso": True, "dados": response.model_dump()}), 200
 
     except Exception as e:
         app_logger.error("Erro estrutural 500 ao listar agendamentos", extra={"erro_detalhe": str(e)}, exc_info=True)
@@ -126,7 +128,7 @@ def editar_agendamento(id):
         )
         response = AgendamentoResponse.model_validate(agendamento_atualizado)
 
-        return jsonify(response.model_dump()), 200
+        return jsonify({"sucesso": True, "mensagem": "Agendamento atualizado com sucesso", "dados": {"agendamento": response.model_dump()}}), 200
 
     except ConflitoHorarioError as e:
         return jsonify({"erro": "Erro ao editar agendamento: " + str(e)}), 409
@@ -163,7 +165,7 @@ def atualizar_status(id):
 
         response = AgendamentoResponse.model_validate(agendamento_atualizado)
 
-        return jsonify(response.model_dump()), 200
+        return jsonify({"sucesso": True, "mensagem": "Status atualizado com sucesso", "dados": {"agendamento": response.model_dump()}}), 200
 
     except AcessoNegadoError as e:
         return (
@@ -193,7 +195,7 @@ def deletar_agendamento(id):
         # Migrado toda a logica de negocios para dentro do services
         agendamento = AgendamentoService.deletar_registro_fisico(id)
 
-        return jsonify({"msg": "Agendamento deletado com sucesso"}), 200
+        return jsonify({"sucesso": True, "mensagem": "Agendamento deletado com sucesso"}), 200
 
     except AcessoNegadoError as e:
         return jsonify({"erro": "Erro ao deletar agendamento: " + str(e)}), 403
@@ -219,7 +221,7 @@ def buscar_agendamento(id):
 
         response = AgendamentoResponse.model_validate(agendamento)
 
-        return jsonify(response.model_dump()), 200
+        return jsonify({"sucesso": True, "dados": {"agendamento": response.model_dump()}}), 200
     except AcessoNegadoError as e:
         return jsonify({"erro": "Erro ao buscar agendamento: " + str(e)}), 403
     except ValueError as e:

@@ -89,16 +89,17 @@ def listar_servicos():
         # TODO: Retornar em JSON
         return jsonify(
             {
-                # Vinicius - 04/04/2026
-                # Adicionado nova resposta para a rota contendo mais informações sobre a paginação
-                "servicos": servicos_dict,
-                "total": servicos.total,
-                "per_page": servicos.per_page,
-                "items_nessa_pagina": len(servicos_dict),
-                "pagina": servicos.page,
-                "total_paginas": servicos.pages,
-                "tem_proxima": servicos.has_next,
-                "tem_pagina_anterior": servicos.has_prev,
+                "sucesso": True,
+                "dados": {
+                    "items": servicos_dict,
+                    "total": servicos.total,
+                    "per_page": servicos.per_page,
+                    "items_nessa_pagina": len(servicos_dict),
+                    "pagina": servicos.page,
+                    "total_paginas": servicos.pages,
+                    "tem_proxima": servicos.has_next,
+                    "tem_pagina_anterior": servicos.has_prev,
+                }
             }
         )
 
@@ -130,12 +131,15 @@ def criar_servico():
         return (
             jsonify(
                 {
-                    "servico": {
-                        "id": servico.id,
-                        "nome": servico.nome,
-                        "preco": servico.preco,
-                        "duracao_minutos": servico.duracao_minutos,
-                        "msg": "Serviço criado com sucesso",
+                    "sucesso": True,
+                    "mensagem": "Serviço criado com sucesso",
+                    "dados": {
+                        "servico": {
+                            "id": servico.id,
+                            "nome": servico.nome,
+                            "preco": servico.preco,
+                            "duracao_minutos": servico.duracao_minutos,
+                        }
                     }
                 }
             ),
@@ -188,8 +192,9 @@ def editar_servico(id):
         db.session.commit()
 
         return {
-            "message": "Serviço atualizado com sucesso!",
-            "campos_alterados": list(update_data.keys()),
+            "sucesso": True,
+            "mensagem": "Serviço atualizado com sucesso!",
+            "dados": {"campos_alterados": list(update_data.keys())},
         }, 200
 
     except Exception as e:
@@ -208,13 +213,15 @@ def deletar_servico(id):
 
         db.session.delete(servico)
         db.session.commit()
-        return jsonify({"msg": "Serviço deletado com sucesso"}), 200
-    #josue inicio
-    #cria o Integrity exessao dinamica evitando erro 500 Faz db.session.rollback() para limpar a transação quebrada.
+        return jsonify({"sucesso": True, "mensagem": "Serviço deletado com sucesso"}), 200
     except IntegrityError:
+        # felipe - Tratamento inteligente para evitar erro 500 em deleção com FK
         db.session.rollback()
         return jsonify(
-            {"erro": "Não é possível deletar este serviço porque existem agendamentos vinculados."}
+            {
+                "erro": "Não é possível deletar este serviço porque existem agendamentos vinculados.",
+                "sucesso": False
+            }
         ), 409
     except Exception as e:
         db.session.rollback()
@@ -236,6 +243,6 @@ def buscar_servico(id):
             "preco": servico.preco,
             "duracao_minutos": servico.duracao_minutos,
         }
-        return jsonify({"servico": servico_dict}), 200
+        return jsonify({"sucesso": True, "dados": {"servico": servico_dict}}), 200
     except Exception as e:
         return jsonify({"erro": "Erro ao buscar serviço: " + str(e)}), 500

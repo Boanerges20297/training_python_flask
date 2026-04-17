@@ -11,6 +11,10 @@ from app.schemas.agendamento_schema import (
 from datetime import datetime, timedelta
 from config import Config
 from app.extensions import app_logger
+# felipe
+from app.services.email_service import EmailService
+# felipe
+from app.utils.audit import log_evento_auditoria
 
 
 class ConflitoHorarioError(Exception):
@@ -142,7 +146,12 @@ class AgendamentoService:
         db.session.add(novo_agendamento)
         db.session.commit()
 
-        app_logger.info("Novo agendamento criado", extra={"agendamento_id": novo_agendamento.id, "barbeiro_id": novo_agendamento.barbeiro_id, "cliente_id": novo_agendamento.cliente_id})
+        # felipe - Log de Auditoria
+        log_evento_auditoria(
+            "Criação de Agendamento", 
+            recurso_id=novo_agendamento.id,
+            extra_data={"barbeiro_id": novo_agendamento.barbeiro_id, "cliente_id": novo_agendamento.cliente_id}
+        )
         return novo_agendamento
 
     @staticmethod
@@ -323,7 +332,12 @@ class AgendamentoService:
             setattr(agendamento_atual, campo, valor)
 
         db.session.commit()
-        app_logger.info("Agendamento editado com sucesso", extra={"agendamento_id": agendamento_id, "dados_alterados": list(dados_para_atualizar.keys())})
+        # felipe - Log de Auditoria
+        log_evento_auditoria(
+            "Edição de Agendamento", 
+            recurso_id=agendamento_id,
+            extra_data={"dados_alterados": list(dados_para_atualizar.keys())}
+        )
         return agendamento_atual
 
     @staticmethod
@@ -397,7 +411,12 @@ class AgendamentoService:
         agendamento.status = dados.status
         db.session.commit()
 
-        app_logger.info("Status do agendamento atualizado", extra={"agendamento_id": agendamento_id, "novo_status": dados.status})
+        # felipe - Log de Auditoria
+        log_evento_auditoria(
+            "Alteração de Status de Agendamento", 
+            recurso_id=agendamento_id,
+            extra_data={"novo_status": dados.status}
+        )
         return agendamento
 
     @staticmethod
@@ -412,8 +431,14 @@ class AgendamentoService:
         agendamento = Agendamento.query.get(agendamento_id)
         if not agendamento:
             raise ValueError("Agendamento não encontrado.")
+        
+        # felipe
+        # Notifica cliente e barbeiro via e-mail antes da exclusão física
+        EmailService.notificar_cancelamento_admin(agendamento)
+
         db.session.delete(agendamento)
         db.session.commit()
         
-        app_logger.info("Agendamento deletado fisicamente do banco", extra={"agendamento_id": agendamento_id})
+        # felipe - Log de Auditoria
+        log_evento_auditoria("Exclusão Física de Agendamento", recurso_id=agendamento_id)
         return True

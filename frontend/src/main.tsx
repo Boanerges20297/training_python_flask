@@ -5,13 +5,20 @@ import App from './App.tsx'
 import { ToastProvider } from './components/ui/Toast.tsx'
 import { AuthProvider } from './auth/AuthContext.tsx'
 
-// MSW logic removed as per documentation for actual Backend Integration phase
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <AuthProvider>
-      <ToastProvider>
-        <App />
-      </ToastProvider>
-    </AuthProvider>
-  </StrictMode>,
-)
+async function enableMocking() {
+  // Configuração explícita para rodar apenas com frontend (mockado)
+  const { worker } = await import('./mocks/browser')
+  return worker.start({ onUnhandledRequest: 'bypass' })
+}
+
+enableMocking().then(() => {
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <AuthProvider>
+        <ToastProvider>
+          <App />
+        </ToastProvider>
+      </AuthProvider>
+    </StrictMode>,
+  )
+})

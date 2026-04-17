@@ -43,22 +43,22 @@ const Login: React.FC = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="modern-form">
-          <Input 
+          <Input
             label="E-mail"
-            type="email" 
+            type="email"
             icon={<Mail size={18} />}
-            placeholder="seu@email.com" 
+            placeholder="seu@email.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
             autoFocus
           />
 
-          <Input 
+          <Input
             label="Senha"
-            type="password" 
+            type="password"
             icon={<Lock size={18} />}
-            placeholder="Digite sua senha" 
+            placeholder="Digite sua senha"
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
             required
@@ -66,12 +66,12 @@ const Login: React.FC = () => {
 
           {error && <div className="error-message">{error}</div>}
 
-          <Button 
-            type="submit" 
-            variant="primary" 
-            theme="blue" 
-            size="lg" 
-            fullWidth 
+          <Button
+            type="submit"
+            variant="primary"
+            theme="blue"
+            size="lg"
+            fullWidth
             isLoading={loading}
             icon={<LogIn size={20} />}
           >

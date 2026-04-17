@@ -59,13 +59,14 @@ class AgendamentoListResponse(BaseModel):
     Encapsula uma lista de objetos para permitir expansão futura (paginação).
     """
 
-    page: int = Field(..., description="Página atual")
+    pagina: int = Field(..., description="Página atual")
     per_page: int = Field(..., description="Itens por página")
+    total: int = Field(..., description="Total de itens")
+    total_paginas: int = Field(..., description="Total de páginas")
+    tem_proxima: bool = Field(..., description="Tem próxima página?")
+    tem_pagina_anterior: bool = Field(..., description="Tem página anterior?")
 
-    has_next: bool = Field(..., description="Tem próxima página?")
-    has_prev: bool = Field(..., description="Tem página anterior?")
-
-    data: List[AgendamentoResponse] = Field(..., description="Lista de agendamentos")
+    items: List[AgendamentoResponse] = Field(..., description="Lista de agendamentos")
 
     model_config = ConfigDict(from_attributes=True)
 

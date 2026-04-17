@@ -10,17 +10,22 @@ const logger = createLogger('auth');
 // Chamada quando o usuário preenche o formulário e clica "Entrar"
 // Envia: { email, senha }
 // Recebe: { msg, usuario: { id, nome, email, role }, token }
-export async function login(email: string, senha: string): Promise<LoginResponse> {
+export async function login(email: string, senha: string): Promise<any> {
   try {
     logger.info('Login iniciado', { email });
 
     const response = await api.post<LoginResponse>('/auth/login', { email, senha });
+    const usuario = response.data.dados?.usuario || (response.data as any).usuario;
 
-    logger.info('Login bem-sucedido', { usuario: response.data.usuario });
-    return response.data;
+    logger.info('Login bem-sucedido', { usuario });
+    return { usuario, ...response.data };
   } catch (error: any) {
     logger.error('Falha no login', error);
-    throw error.response?.data?.erro || 'Erro ao realizar login';
+    if (!error.response) {
+      throw 'Erro de rede ou CORS: O servidor backend pode estar desligado ou inacessível. Detalhe: ' + error.message;
+    }
+    const errData = error.response.data || {};
+    throw errData.msg || errData.mensagem || errData.Erro || errData.erro || JSON.stringify(errData) || 'Erro ao realizar login';
   }
 }
 
@@ -69,9 +74,10 @@ export async function refreshSession(): Promise<void> {
 export async function getMe(): Promise<AuthUser> {
   logger.debug('Verificando sessão ativa...');
 
-  const response = await api.get<{ usuario: AuthUser }>('/auth/protected');
+  const response = await api.get<any>('/auth/protected');
+  const usuario = response.data.dados?.usuario || response.data.usuario;
 
-  logger.debug('Sessão válida', { usuario: response.data.usuario });
-  return response.data.usuario;
+  logger.debug('Sessão válida', { usuario });
+  return usuario;
 }
 

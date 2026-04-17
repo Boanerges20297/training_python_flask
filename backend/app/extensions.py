@@ -7,12 +7,16 @@ from app.utils.ratelimiter import get_usuario_ou_ip
 from config import DevelopmentConfig, ProductionConfig
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
+# felipe
+from flask_mail import Mail
 
 import logging
 
 jwt = JWTManager()
 cors = CORS()
 db = SQLAlchemy()
+# felipe
+mail = Mail()
 app_logger = logging.getLogger("barbabyte")
 limiter = Limiter(
     key_func=get_usuario_ou_ip,

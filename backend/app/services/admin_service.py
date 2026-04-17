@@ -1,6 +1,8 @@
 from app import db
 from app.models.admin import Admin
 from app.schemas.admin_schema import AdminCreate, AdminUpdate
+# felipe
+from app.utils.audit import log_evento_auditoria
 
 
 class AdminService:
@@ -25,6 +27,9 @@ class AdminService:
 
         db.session.add(novo_admin)
         db.session.commit()
+
+        # felipe - Log de Auditoria
+        log_evento_auditoria("Criação de Administrador", recurso_id=novo_admin.id)
 
         return novo_admin
 
@@ -60,6 +65,13 @@ class AdminService:
             setattr(admin, campo, valor)
 
         db.session.commit()
+
+        # felipe - Log de Auditoria
+        log_evento_auditoria(
+            "Edição de Administrador", 
+            recurso_id=admin_id,
+            extra_data={"campos_alterados": list(dados_para_atualizar.keys())}
+        )
         return admin
 
     @staticmethod
@@ -72,5 +84,12 @@ class AdminService:
 
         admin.ativo = not admin.ativo  # Se True vira False, se False vira True
         db.session.commit()
+
+        # felipe - Log de Auditoria
+        log_evento_auditoria(
+            "Alternância de Status de Administrador (Ativo/Inativo)", 
+            recurso_id=admin_id,
+            extra_data={"novo_status_ativo": admin.ativo}
+        )
 
         return admin
