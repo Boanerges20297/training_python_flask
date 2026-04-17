@@ -98,4 +98,5 @@ def create_app():
             429,
         )
 
+    # josue minima alteracao
     return app

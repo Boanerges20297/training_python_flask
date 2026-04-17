@@ -65,9 +65,17 @@ def listar_barbeiros():
         # Vinicius - 04/04/2026
         # Troca do nome da variavel para 'clientes' para melhor identificação
         barbeiros = query.paginate(page=pagina, per_page=per_page, error_out=False)
-
+        
+#josue minima alteraço
         barbeiros_dict = [
-            {"id": b.id, "nome": b.nome, "telefone": b.telefone, "email": b.email}
+            {
+    "id": b.id,
+    "nome": b.nome,
+    "telefone": b.telefone,
+    "email": b.email,
+    "especialidade": b.especialidade,
+    "ativo": b.ativo,
+}
             # Vinicius - 04/04/2026
             # Adicionado o .items para que o list comprehension receba os itens da paginação
             for b in barbeiros.items
@@ -266,7 +274,8 @@ def buscar_agendamentos_barbeiro(id):
 
         # Vinicius - 09/04/2026
         # Verifica se foi encontrado algum agendamento
-        if not agendamentos:
+        # josue minima alteraçao
+        if agendamentos.total == 0:
             return (
                 jsonify({"erro": "Nenhum agendamento encontrado para o barbeiro"}),
                 404,
@@ -279,10 +288,11 @@ def buscar_agendamentos_barbeiro(id):
                 "id": a.id,
                 "cliente_id": a.cliente_id,
                 "barbeiro_id": a.barbeiro_id,
-                "data_hora": a.data_hora,
-                "servico": a.servico,
+                #josue minima alteraçao
+                "data_agendamento": a.data_agendamento.isoformat(),
+                "servico": {"id":a.servico.id,"nome": a.servico.nome}if a.servico else None
             }
-            for a in agendamentos
+            for a in agendamentos.items
         ]
         # Vinicius - 09/04/2026
         # Retorna os agendamentos em JSON

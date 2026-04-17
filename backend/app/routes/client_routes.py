@@ -1,4 +1,5 @@
 # josue inicio
+from sqlalchemy.exc import IntegrityError
 from flask import Blueprint, jsonify, request
 from app.models.cliente import Cliente
 from app import db
@@ -123,8 +124,15 @@ def criar_cliente():
             ),
             201,
         )
+    #josue inicio
+    # o front consegue informar ao usuário “cliente já existe” e tratar o fluxo corretamente.
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({"erro": "Cliente já cadastrado (email ou telefone já em uso)."}), 409
     except Exception as e:
+        db.session.rollback()
         return jsonify({"erro": "Erro ao incluir cliente: " + str(e)}), 500
+    #josue fim
 
 
 # Vinicius - 08/04/2026

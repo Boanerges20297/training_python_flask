@@ -1,3 +1,4 @@
+
 """
 DESAFIO 1: Criar API GET para listar serviços
 
@@ -28,7 +29,10 @@ from app.models.cliente import Cliente
 from app import db
 from app.schemas.servico_schema import ServicoSchema, ServicoUpdateSchema
 from pydantic import ValidationError
+from sqlalchemy.exc import IntegrityError
 
+from flask_jwt_extended import jwt_required
+from app.utils.decorators import admin_required
 # ========== PASSO 2: CRIAR BLUEPRINT ==========
 # Um blueprint precisa de um nome e um prefixo de URL
 # Nome: 'servicos' (pode ser qualquer coisa)
@@ -102,9 +106,11 @@ def listar_servicos():
 
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
-
-
+#josue alteraçao minima
+#proteger criar serviços
 @servico_bp.route("/criar-servico", methods=["POST"])
+@jwt_required()
+@admin_required
 def criar_servico():
     # Vinicius - 01/04/2026
     # Adicinado barbeiro_id como campo obrigatório, para acompanhar o model Servico
@@ -144,7 +150,11 @@ def criar_servico():
 # Vinicius - 08/04/2026
 # Mudança de metodo para PATCH, para ser mais semantico com a ação de editar
 # Refatoração da rota editar_servico, para utilizar o schema ServicoUpdateSchema e atualizar dinamicamente os campos do serviço
+#josue alteraçao minima
+#adicionar proteçao para editar servicos
 @servico_bp.route("/editar-servico/<int:id>", methods=["PATCH"])
+@jwt_required()
+@admin_required
 def editar_servico(id):
     try:
         # 1. Captura o JSON da requisição
@@ -185,8 +195,11 @@ def editar_servico(id):
     except Exception as e:
         return jsonify({"erro": "Erro ao editar serviço: " + str(e)}), 500
 
-
+#josue alteraçao minima
+#proteger deletar serviços
 @servico_bp.route("/deletar-servico/<int:id>", methods=["DELETE"])
+@jwt_required()
+@admin_required
 def deletar_servico(id):
     try:
         servico = Servico.query.get(id)
@@ -196,8 +209,18 @@ def deletar_servico(id):
         db.session.delete(servico)
         db.session.commit()
         return jsonify({"msg": "Serviço deletado com sucesso"}), 200
+    #josue inicio
+    #cria o Integrity exessao dinamica evitando erro 500 Faz db.session.rollback() para limpar a transação quebrada.
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify(
+            {"erro": "Não é possível deletar este serviço porque existem agendamentos vinculados."}
+        ), 409
     except Exception as e:
+        db.session.rollback()
         return jsonify({"erro": "Erro ao deletar serviço: " + str(e)}), 500
+    
+    #josue fim
 
 
 @servico_bp.route("/buscar-servico/<int:id>", methods=["GET"])
