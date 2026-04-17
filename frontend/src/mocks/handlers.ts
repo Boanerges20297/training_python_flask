@@ -182,20 +182,20 @@ export const handlers = [
     return HttpResponse.json({ dados: db.getPaginated('clientes', page, per_page) });
   }),
 
-  http.post(`${API_BASE}/clientes/criar-cliente`, async ({ request }) => {
+  http.post(`${API_BASE}/clientes/`, async ({ request }) => {
     const data = await request.json();
     const newCliente = db.add('clientes', data);
     return HttpResponse.json({ dados: { cliente: newCliente } }, { status: 201 });
   }),
 
-  http.patch(`${API_BASE}/clientes/editar-cliente/:id`, async ({ params, request }) => {
+  http.patch(`${API_BASE}/clientes/:id`, async ({ params, request }) => {
     const { id } = params;
     const data = await request.json();
     db.update('clientes', Number(id), data);
     return HttpResponse.json({ mensagem: 'Cliente atualizado' });
   }),
 
-  http.delete(`${API_BASE}/clientes/deletar-cliente/:id`, async ({ params }) => {
+  http.delete(`${API_BASE}/clientes/:id`, async ({ params }) => {
     const { id } = params;
     db.delete('clientes', Number(id));
     return HttpResponse.json({ mensagem: 'Cliente deletado' });
@@ -211,20 +211,20 @@ export const handlers = [
     return HttpResponse.json({ dados: db.getPaginated('barbeiros', page, per_page) });
   }),
 
-  http.post(`${API_BASE}/barbeiros/criar-barbeiro`, async ({ request }) => {
+  http.post(`${API_BASE}/barbeiros/`, async ({ request }) => {
     const data = await request.json();
     const newBarbeiro = db.add('barbeiros', data);
     return HttpResponse.json({ dados: { barbeiro: newBarbeiro } }, { status: 201 });
   }),
 
-  http.patch(`${API_BASE}/barbeiros/editar-barbeiro/:id`, async ({ params, request }) => {
+  http.patch(`${API_BASE}/barbeiros/:id`, async ({ params, request }) => {
     const { id } = params;
     const data = await request.json();
     db.update('barbeiros', Number(id), data);
     return HttpResponse.json({ mensagem: 'Barbeiro atualizado' });
   }),
 
-  http.delete(`${API_BASE}/barbeiros/deletar-barbeiro/:id`, async ({ params }) => {
+  http.delete(`${API_BASE}/barbeiros/:id`, async ({ params }) => {
     const { id } = params;
     db.delete('barbeiros', Number(id));
     return HttpResponse.json({ mensagem: 'Barbeiro deletado' });
@@ -240,27 +240,27 @@ export const handlers = [
     return HttpResponse.json({ dados: db.getPaginated('servicos', page, per_page) });
   }),
 
-  http.post(`${API_BASE}/servicos/criar-servico`, async ({ request }) => {
+  http.post(`${API_BASE}/servicos/`, async ({ request }) => {
     const data = await request.json();
     const newServico = db.add('servicos', data);
     return HttpResponse.json({ dados: { servico: newServico } }, { status: 201 });
   }),
 
-  http.patch(`${API_BASE}/servicos/editar-servico/:id`, async ({ params, request }) => {
+  http.patch(`${API_BASE}/servicos/:id`, async ({ params, request }) => {
     const { id } = params;
     const data = await request.json();
     db.update('servicos', Number(id), data);
     return HttpResponse.json({ mensagem: 'Serviço atualizado' });
   }),
 
-  http.delete(`${API_BASE}/servicos/deletar-servico/:id`, async ({ params }) => {
+  http.delete(`${API_BASE}/servicos/:id`, async ({ params }) => {
     const { id } = params;
     db.delete('servicos', Number(id));
     return HttpResponse.json({ mensagem: 'Serviço deletado' });
   }),
 
   // --- AGENDAMENTOS ---
-  http.get(`${API_BASE}/agendamento/listar-agendamento`, async ({ request }) => {
+  http.get(`${API_BASE}/agendamento/`, async ({ request }) => {
     await delay(300);
     const url = new URL(request.url);
     const page = Number(url.searchParams.get('page') || 1);
@@ -269,20 +269,20 @@ export const handlers = [
     return HttpResponse.json({ dados: db.getPaginated('agendamentos', page, per_page) });
   }),
 
-  http.post(`${API_BASE}/agendamento/criar-agendamento`, async ({ request }) => {
+  http.post(`${API_BASE}/agendamento/`, async ({ request }) => {
     const data = await request.json();
     const newAgend = db.add('agendamentos', data);
     return HttpResponse.json({ dados: { agendamento: newAgend } }, { status: 201 });
   }),
 
-  http.put(`${API_BASE}/agendamento/editar-agendamento/:id`, async ({ params, request }) => {
+  http.patch(`${API_BASE}/agendamento/:id`, async ({ params, request }) => {
     const { id } = params;
     const data = await request.json();
     db.update('agendamentos', Number(id), data);
     return HttpResponse.json({ mensagem: 'Agendamento atualizado' });
   }),
 
-  http.delete(`${API_BASE}/agendamento/deletar-agendamento/:id`, async ({ params }) => {
+  http.delete(`${API_BASE}/agendamento/:id`, async ({ params }) => {
     const { id } = params;
     db.delete('agendamentos', Number(id));
     return HttpResponse.json({ mensagem: 'Agendamento deletado' });

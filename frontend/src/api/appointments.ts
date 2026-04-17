@@ -1,10 +1,11 @@
 // Gabriel (Dev 1) - API de agendamentos
+// Atualizado para o padrão RESTful do backend (Vinicius - 15/04/2026)
 import api from './config';
 import type { Agendamento, PaginatedResponse } from '../types';
 
 export async function getAgendamentos(page = 1, per_page = 10): Promise<PaginatedResponse<Agendamento>> {
   try {
-    const response = await api.get('/agendamento/listar-agendamento', {
+    const response = await api.get('/agendamento/', {
       params: { page, per_page }
     });
     return response.data.dados;
@@ -16,15 +17,16 @@ export async function getAgendamentos(page = 1, per_page = 10): Promise<Paginate
 
 export async function createAgendamento(agendamento: Omit<Agendamento, 'id'>): Promise<Agendamento> {
   try {
-    const response = await api.post('/agendamento/criar-agendamento', agendamento);
+    const response = await api.post('/agendamento/', agendamento);
     return response.data.dados.agendamento;
   } catch (error: any) {
-    throw error.response?.data?.erro || 'Erro ao criar agendamento';
+    throw error.response?.data?.erro || error.response?.data?.erros_validacao || 'Erro ao criar agendamento';
   }
 }
+
 export async function updateAgendamento(id: number, agendamento: Partial<Agendamento>): Promise<boolean> {
   try {
-    await api.put(`/agendamento/editar-agendamento/${id}`, agendamento);
+    await api.patch(`/agendamento/${id}`, agendamento);
     return true;
   } catch (error) {
     console.error("Erro ao atualizar agendamento:", error);
@@ -34,7 +36,7 @@ export async function updateAgendamento(id: number, agendamento: Partial<Agendam
 
 export async function deleteAgendamento(id: number): Promise<boolean> {
   try {
-    await api.delete(`/agendamento/deletar-agendamento/${id}`);
+    await api.delete(`/agendamento/${id}`);
     return true;
   } catch (error) {
     console.error("Erro ao deletar agendamento:", error);

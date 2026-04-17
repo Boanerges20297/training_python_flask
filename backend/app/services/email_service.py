@@ -1,55 +1,50 @@
-from flask_mail import Message
-from app.extensions import mail, app_logger
+from flask_mailman import EmailMessage
 from flask import current_app
-import threading
+from app.extensions import app_logger
+from config import Config
+from app.utils.email_layouts import obter_layout_boas_vindas
 
-# felipe
+
 class EmailService:
     @staticmethod
-    def _send_async_email(app, msg):
-        with app.app_context():
-            try:
-                mail.send(msg)
-                app_logger.info("E-mail enviado com sucesso", extra={"assunto": msg.subject, "destinatario": msg.recipients})
-            except Exception as e:
-                app_logger.error("Falha ao enviar e-mail", extra={"erro": str(e), "destinatario": msg.recipients})
+    def enviar_notificacao_simples(
+        destinatario: str, assunto: str, mensagem_texto: str
+    ) -> tuple[bool, str]:
+        """
+        Envia um e-mail de texto simples.
+        """
+        try:
+            msg = EmailMessage(subject=assunto, body=mensagem_texto, to=[destinatario])
+            msg.content_subtype = "html"
+            msg.send()
+            return True, "E-mail enviado com sucesso"
+        except Exception as e:
+            app_logger.error(
+                "E-mail de notificação não enviado",
+                extra={"erro_detalhe": str(e), "destinatario": destinatario},
+            )
+            return False, str(e)
 
     @staticmethod
-    def notificar_cancelamento_admin(agendamento):
+    def enviar_email_boas_vindas(
+        destinatario: str, nome_usuario: str
+    ) -> tuple[bool, str]:
         """
-        Envia e-mails de aviso para o cliente e para o barbeiro
-        quando um agendamento é excluído por um administrador.
+        Envia um e-mail em HTML (ideal para boas-vindas).
         """
-        app = current_app._get_current_object()
-        
-        data_formatada = agendamento.data_agendamento.strftime('%d/%m/%Y às %H:%M')
-        
-        # 1. Notificar o Cliente
-        msg_cliente = Message(
-            subject="Aviso: Seu agendamento foi cancelado",
-            recipients=[agendamento.cliente.email],
-            body=(
-                f"Olá {agendamento.cliente.nome},\n\n"
-                f"Informamos que o seu agendamento para o dia {data_formatada} "
-                f"foi cancelado por um administrador do sistema Barber & Byte.\n\n"
-                f"Para mais informações ou para reagendar, entre em contato conosco.\n\n"
-                f"Atenciosamente,\nEquipe Barber & Byte"
-            )
-        )
-        
-        # 2. Notificar o Barbeiro
-        msg_barbeiro = Message(
-            subject="Aviso: Um agendamento em sua agenda foi cancelado",
-            recipients=[agendamento.barbeiro.email],
-            body=(
-                f"Olá {agendamento.barbeiro.nome},\n\n"
-                f"Informamos que o agendamento do cliente {agendamento.cliente.nome} "
-                f"marcado para o dia {data_formatada} foi removido da sua agenda "
-                f"por um administrador.\n\n"
-                f"Atenciosamente,\nSistema Barber & Byte"
-            )
-        )
+        assunto = "Bem-vindo ao nosso Sistema!"
+        corpo_html = obter_layout_boas_vindas(nome_usuario.title())
 
-        # Dispara os envios em background
-        threading.Thread(target=EmailService._send_async_email, args=(app, msg_cliente)).start()
-        threading.Thread(target=EmailService._send_async_email, args=(app, msg_barbeiro)).start()
+        try:
+            # Note que o corpo principal pode ser vazio se formos usar attach_alternative
+            msg = EmailMessage(subject=assunto, body=corpo_html, to=[destinatario])
+            # Anexa a versão HTML
+            msg.content_subtype = "html"
+            msg.send()
+            return True, "E-mail de boas-vindas enviado!"
+        except Exception as e:
+            app_logger.error(
+                "E-mail de boas-vindas não enviado",
+                extra={"erro_detalhe": str(e), "destinatario": destinatario},
+            )
+            return False, str(e)

@@ -16,6 +16,20 @@ const api = axios.create({
   withCredentials: true, // envia cookies automaticamente em toda requisição
 });
 
+// Gabriel - Helper para extrair o CSRF token do cookie
+// O Flask-JWT-Extended salva o token CSRF em um cookie legível pelo JS
+function getCsrfToken(): string | null {
+  const name = 'csrf_access_token=';
+  const cookies = document.cookie.split(';');
+  for (const cookie of cookies) {
+    const trimmed = cookie.trim();
+    if (trimmed.startsWith(name)) {
+      return trimmed.substring(name.length);
+    }
+  }
+  return null;
+}
+
 // felipe
 // INTERCEPTOR DE REQUISIÇÃO
 // Executado antes de cada requisição sair do frontend
@@ -23,6 +37,17 @@ api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     // loga o método e a url para facilitar debug no DevTools
     logger.debug(`→ ${config.method?.toUpperCase()} ${config.url}`);
+
+    // Gabriel - Injeta o CSRF token em requisições de escrita (POST, PATCH, PUT, DELETE)
+    // O backend com JWT_COOKIE_CSRF_PROTECT=True exige esse header
+    const method = config.method?.toUpperCase();
+    if (method && method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
+      const csrfToken = getCsrfToken();
+      if (csrfToken) {
+        config.headers['X-CSRF-TOKEN'] = csrfToken;
+      }
+    }
+
     return config;
   },
   (error: AxiosError) => {

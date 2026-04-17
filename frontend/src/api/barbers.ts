@@ -1,4 +1,5 @@
 // Gabriel (Dev 1) - API de barbeiros
+// Atualizado para o padrão RESTful do backend (Vinicius - 15/04/2026)
 import api from './config';
 import type { Barbeiro, PaginatedResponse } from '../types';
 
@@ -16,16 +17,16 @@ export async function getBarbeiros(page = 1, per_page = 10): Promise<PaginatedRe
 
 export async function createBarbeiro(barbeiro: Omit<Barbeiro, 'id'>): Promise<Barbeiro> {
   try {
-    const response = await api.post('/barbeiros/criar-barbeiro', barbeiro);
+    const response = await api.post('/barbeiros/', barbeiro);
     return response.data.dados.barbeiro;
   } catch (error: any) {
-    throw error.response?.data?.erro || 'Erro ao criar barbeiro';
+    throw error.response?.data?.erro || error.response?.data?.erros_validacao || 'Erro ao criar barbeiro';
   }
 }
 
 export async function updateBarbeiro(id: number, barbeiro: Partial<Barbeiro>): Promise<boolean> {
   try {
-    await api.patch(`/barbeiros/editar-barbeiro/${id}`, barbeiro);
+    await api.patch(`/barbeiros/${id}`, barbeiro);
     return true;
   } catch (error) {
     console.error("Erro ao atualizar barbeiro:", error);
@@ -37,7 +38,7 @@ export async function updateBarbeiro(id: number, barbeiro: Partial<Barbeiro>): P
 // remove o barbeiro pelo id — autenticação via cookie JWT (withCredentials no config.ts)
 export async function deleteBarbeiro(id: number): Promise<boolean> {
   try {
-    await api.delete(`/barbeiros/deletar-barbeiro/${id}`);
+    await api.delete(`/barbeiros/${id}`);
     return true;
   } catch (error) {
     console.error("Erro ao deletar barbeiro:", error);

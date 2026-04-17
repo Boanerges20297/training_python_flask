@@ -7,6 +7,15 @@ import { cleanPhone } from '../components/ui/Input';
 // felipe
 const logger = createLogger('AuthContext');
 
+// Gabriel - Normaliza o ID do usuário para number
+// O backend às vezes retorna o id como string (ex: "1"), o frontend espera number
+function normalizeUser(user: any): AuthUser {
+  return {
+    ...user,
+    id: typeof user.id === 'string' ? parseInt(user.id, 10) : user.id
+  };
+}
+
 // felipe
 // define o formato completo do contexto — o que os filhos vão consumir
 interface AuthContextType extends AuthState {
@@ -47,7 +56,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       try {
         // valida com o backend — se o token expirou, getMe lança erro
-        const currentUser = await getMe();
+        const currentUser = normalizeUser(await getMe());
         setUser(currentUser);
         logger.info('Sessão restaurada com sucesso', { usuario: currentUser });
       } catch {
@@ -82,9 +91,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const data = await apiLogin(email, senha);
 
-    // persiste no sessionStorage para sobreviver ao F5
-    localStorage.setItem('barba_user', JSON.stringify(data.usuario));
-    setUser(data.usuario);
+    // persiste no localStorage para sobreviver ao F5
+    const usuario = normalizeUser(data.usuario);
+    localStorage.setItem('barba_user', JSON.stringify(usuario));
+    setUser(usuario);
 
     logger.info('Usuário autenticado', { usuario: data.usuario });
   }, []);
@@ -95,7 +105,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     logger.info('Iniciando registro via contexto', { email });
     const cleanTel = cleanPhone(telefone);
     const data = await apiRegister(nome, email, senha, cleanTel);
-    const usuario = data.dados?.usuario || data.user || data.usuario;
+    const raw = data.dados?.usuario || data.user || data.usuario;
+    const usuario = normalizeUser(raw);
     localStorage.setItem('barba_user', JSON.stringify(usuario));
     setUser(usuario);
     logger.info('Usuário registrado e logado', { usuario });

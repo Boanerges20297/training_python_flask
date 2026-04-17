@@ -1,6 +1,5 @@
 from flask import Flask, jsonify
 from config import DevelopmentConfig, ProductionConfig
-# felipe
 from app.extensions import db, limiter, jwt, cors, mail
 from app.jwt_callbacks import register_jwt_handlers
 import os
@@ -38,11 +37,8 @@ def create_app():
 
     jwt.init_app(app)
     db.init_app(app)
-    # felipe
+    cors.init_app(app, resources={r"/api/*": {"origins": app.config["FRONTEND_URL"]}})
     mail.init_app(app)
-    # Configurando CORS para suportar cookies (com JWT/sessão) e aceitando o endereço do frontend
-    cors_origins = [app.config.get("FRONTEND_URL", "http://localhost:5173"), "http://localhost:5173", "http://127.0.0.1:5173"]
-    cors.init_app(app, supports_credentials=True, resources={r"/*": {"origins": list(set(cors_origins))}})
 
     register_jwt_handlers(jwt)
 
@@ -61,6 +57,7 @@ def create_app():
     from app.routes.tests_routes import tests_bp
     from app.routes.barbeiro_routes import barbeiros_bp
     from app.routes.admin_routes import admin_bp
+    from app.routes.dashboard_routes import dashboard_bp
 
     app.register_blueprint(clientes_bp)
     app.register_blueprint(servico_bp)
@@ -68,6 +65,7 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(barbeiros_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(dashboard_bp)
     # Vinicius - 02/04/2026
     # Se tiver em ambiente de desenvolvimento, importe tests_bp
     if app.config["DEBUG"] == True:

@@ -61,7 +61,13 @@ class AgendamentoService:
             )
 
             if inicio_proposto < termino_existente:
-                app_logger.warning("Conflito de horário detectado", extra={"barbeiro_id": barbeiro_id, "conflito_com": agendamento_conflito.id})
+                app_logger.warning(
+                    "Conflito de horário detectado",
+                    extra={
+                        "barbeiro_id": barbeiro_id,
+                        "conflito_com": agendamento_conflito.id,
+                    },
+                )
                 raise ConflitoHorarioError(
                     "Conflito: O barbeiro já possui um serviço que se sobrepõe a este horário."
                 )
@@ -144,13 +150,14 @@ class AgendamentoService:
         novo_agendamento = Agendamento(**dados.model_dump())
 
         db.session.add(novo_agendamento)
-        db.session.commit()
 
-        # felipe - Log de Auditoria
-        log_evento_auditoria(
-            "Criação de Agendamento", 
-            recurso_id=novo_agendamento.id,
-            extra_data={"barbeiro_id": novo_agendamento.barbeiro_id, "cliente_id": novo_agendamento.cliente_id}
+        app_logger.info(
+            "Novo agendamento criado",
+            extra={
+                "agendamento_id": novo_agendamento.id,
+                "barbeiro_id": novo_agendamento.barbeiro_id,
+                "cliente_id": novo_agendamento.cliente_id,
+            },
         )
         return novo_agendamento
 
@@ -331,12 +338,12 @@ class AgendamentoService:
         for campo, valor in dados_para_atualizar.items():
             setattr(agendamento_atual, campo, valor)
 
-        db.session.commit()
-        # felipe - Log de Auditoria
-        log_evento_auditoria(
-            "Edição de Agendamento", 
-            recurso_id=agendamento_id,
-            extra_data={"dados_alterados": list(dados_para_atualizar.keys())}
+        app_logger.info(
+            "Agendamento editado com sucesso",
+            extra={
+                "agendamento_id": agendamento_id,
+                "dados_alterados": list(dados_para_atualizar.keys()),
+            },
         )
         return agendamento_atual
 
@@ -409,13 +416,10 @@ class AgendamentoService:
 
         # 3. Atualização
         agendamento.status = dados.status
-        db.session.commit()
 
-        # felipe - Log de Auditoria
-        log_evento_auditoria(
-            "Alteração de Status de Agendamento", 
-            recurso_id=agendamento_id,
-            extra_data={"novo_status": dados.status}
+        app_logger.info(
+            "Status do agendamento atualizado",
+            extra={"agendamento_id": agendamento_id, "novo_status": dados.status},
         )
         return agendamento
 
@@ -438,7 +442,9 @@ class AgendamentoService:
 
         db.session.delete(agendamento)
         db.session.commit()
-        
-        # felipe - Log de Auditoria
-        log_evento_auditoria("Exclusão Física de Agendamento", recurso_id=agendamento_id)
+
+        app_logger.info(
+            "Agendamento deletado fisicamente do banco",
+            extra={"agendamento_id": agendamento_id},
+        )
         return True
