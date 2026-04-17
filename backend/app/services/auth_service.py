@@ -8,7 +8,10 @@ from app.schemas.auth_schema import (
     UserResponse,
     TokenResponse,
 )
-from app.extensions import app_logger
+from app.extensions import app_logger, db
+from app.models.passwordResetToken import PasswordResetToken
+from app.tasks.email_tasks import enviar_email_recuperacao_task
+from config import Config
 
 MOCK_BLOCKLIST = set()
 
@@ -39,11 +42,17 @@ class AuthService:
             user = cliente
             role = "cliente"
         else:
-            app_logger.warning("Tentativa de login com email não encontrado", extra={"email_tentado": email})
+            app_logger.warning(
+                "Tentativa de login com email não encontrado",
+                extra={"email_tentado": email},
+            )
             raise AuthServiceException("Credenciais inválidas")
 
         if user and not user.verificar_senha(senha):
-            app_logger.warning("Tentativa de login falhou por senha incorreta", extra={"email_tentado": email, "role": role})
+            app_logger.warning(
+                "Tentativa de login falhou por senha incorreta",
+                extra={"email_tentado": email, "role": role},
+            )
             raise AuthServiceException("Credenciais inválidas")
 
         user_id = str(user.id)
@@ -64,7 +73,62 @@ class AuthService:
             ),
         }
 
-    #josue minima alteraçao  @staticmethod dupicado
+    @staticmethod
+    def solicitar_recuperacao_senha(email: str) -> bool:
+        # 1. Busca o usuário
+        cliente = Cliente.query.filter_by(email=email).first()
+
+        # Regra de Segurança: Não retorne erro se o usuário não existir.
+        # Finja que deu certo para evitar enumeração de e-mails por hackers.
+        if not cliente:
+            return True
+
+        # 2. Invalida preventivamente todos os tokens anteriores deste usuário
+        # que ainda não foram usados e não expiraram
+        tokens_antigos = PasswordResetToken.query.filter_by(
+            user_id=cliente.id, is_used=False
+        ).all()
+
+        for t in tokens_antigos:
+            t.is_used = True
+
+        # 3. Cria o novo token (com validade padrão de 30 minutos)
+        novo_token = PasswordResetToken(user_id=cliente.id)
+        db.session.add(novo_token)
+        db.session.commit()
+
+        # 4. Dispara o e-mail assíncrono via Celery
+        link_recuperacao = (
+            f"https://{Config.FRONTEND_URL}/recuperar-senha?token={novo_token.token}"
+        )
+        enviar_email_recuperacao_task.delay(
+            cliente.email, cliente.nome, link_recuperacao
+        )
+
+        return True
+
+    @staticmethod
+    def redefinir_senha(token: str, nova_senha: str) -> tuple[bool, str]:
+        # Busca o token no banco
+        reset_token = PasswordResetToken.query.filter_by(token=token).first()
+
+        # Verifica se existe e se é válido usando a regra encapsulada no Model
+        if not reset_token or not reset_token.is_valid:
+            return False, "Link inválido ou expirado. Solicite novamente."
+
+        # Atualiza a senha do usuário
+        user = reset_token.user
+        user.set_password(
+            nova_senha
+        )  # Assumindo que você tem um método que faz o hash (ex: werkzeug.security)
+
+        # Queima o token para que não possa ser usado novamente
+        reset_token.mark_as_used()
+
+        db.session.commit()
+        return True, "Senha alterada com sucesso!"
+
+    # josue minima alteraçao  @staticmethod dupicado
     # Vinicius 11/04/2026
     # Adicionado tipagem para o método renew_access_token
     @staticmethod

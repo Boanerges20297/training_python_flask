@@ -146,3 +146,48 @@ def logout():
             jsonify({"Erro": "Erro ao fazer logout, entre em contato com o suporte."}),
             500,
         )
+
+
+@auth_bp.route("/esqueci-senha", methods=["POST"])
+def esqueci_senha():
+    dados = request.get_json()
+    email = dados.get("email")
+
+    if not email:
+        return jsonify({"erro": "O campo e-mail é obrigatório."}), 400
+
+    # Chama o Service.
+    # Repare que não verificamos se deu True ou False para o usuário.
+    AuthService.solicitar_recuperacao_senha(email)
+
+    # Resposta genérica (Segurança contra enumeração de e-mails)
+    return (
+        jsonify(
+            {
+                "status": "sucesso",
+                "mensagem": "Se o e-mail estiver em nossa base de dados, um link de recuperação será enviado em instantes.",
+            }
+        ),
+        200,
+    )
+
+
+@auth_bp.route("/redefinir-senha", methods=["POST"])
+def redefinir_senha():
+    dados = request.get_json()
+    token = dados.get("token")
+    nova_senha = dados.get("nova_senha")
+
+    if not token or not nova_senha:
+        return jsonify({"erro": "Token e nova senha são obrigatórios."}), 400
+
+    # Validação de força da senha poderia entrar aqui (ex: len(nova_senha) >= 8)
+
+    # O Service faz o trabalho pesado de checar o banco e fazer o hash
+    sucesso, mensagem = AuthService.redefinir_senha(token, nova_senha)
+
+    if sucesso:
+        return jsonify({"status": "sucesso", "mensagem": mensagem}), 200
+    else:
+        # Retorna 400 (Bad Request) se o token for inválido ou expirado
+        return jsonify({"status": "erro", "mensagem": mensagem}), 400
