@@ -34,7 +34,14 @@ class PasswordResetToken(db.Model):
         Propriedade utilitária que encapsula a regra de negócio:
         Um token só é válido se não foi usado E se a data atual for menor que a expiração.
         """
-        return not self.is_used and datetime.now(timezone.utc) < self.expires_at
+        # Ao recuperar do banco (como SQLite), o objeto datetime pode vir "naive" (sem fuso horário).
+        # Precisamos converter ambos para terem a informação de zona UTC antes da comparação.
+        expires_aware = (
+            self.expires_at.replace(tzinfo=timezone.utc)
+            if self.expires_at.tzinfo is None
+            else self.expires_at
+        )
+        return not self.is_used and datetime.now(timezone.utc) < expires_aware
 
     def mark_as_used(self):
         """Invalida o token após o uso bem-sucedido."""

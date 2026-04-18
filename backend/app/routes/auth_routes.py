@@ -10,10 +10,13 @@ from flask_jwt_extended import (
 
 # Importamos o nosso novo serviço
 from app.services.auth_service import AuthService, AuthServiceException
+from app.services.email_service import EmailService
 from app.utils.error_formatter import formatar_erros_pydantic
 from app.schemas.auth_schema import LoginRequest, TokenResponse, LoginResponse
 from app.extensions import app_logger
 from datetime import datetime
+from app.extensions import db
+from config import Config, DevelopmentConfig
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
@@ -150,44 +153,90 @@ def logout():
 
 @auth_bp.route("/esqueci-senha", methods=["POST"])
 def esqueci_senha():
-    dados = request.get_json()
-    email = dados.get("email")
 
-    if not email:
-        return jsonify({"erro": "O campo e-mail é obrigatório."}), 400
+    try:
+        dados = request.get_json()
+        email = dados.get("email")
+        if not email:
+            return jsonify({"erro": "O campo e-mail é obrigatório."}), 400
 
-    # Chama o Service.
-    # Repare que não verificamos se deu True ou False para o usuário.
-    AuthService.solicitar_recuperacao_senha(email)
+        # Chama o Service.
+        # Repare que não verificamos se deu True ou False para o usuário.
+        token, usuario = AuthService.gerar_token_recuperacao_senha(email)
 
-    # Resposta genérica (Segurança contra enumeração de e-mails)
-    return (
-        jsonify(
-            {
+        link_recuperacao = (
+            f"{DevelopmentConfig.FRONTEND_URL}/recuperar-senha?token={token}"
+        )
+
+        sucesso = EmailService.enviar_email_recuperacao_senha(
+            email, usuario.nome, link_recuperacao
+        )
+
+        if False in sucesso:
+            data_response = {
+                "status": "erro",
+                "mensagem": "Erro ao enviar e-mail de recuperação de senha, entre em contato com o suporte.",
+            }
+        else:
+            data_response = {
                 "status": "sucesso",
                 "mensagem": "Se o e-mail estiver em nossa base de dados, um link de recuperação será enviado em instantes.",
             }
-        ),
-        200,
-    )
+            app_logger.info(
+                "E-mail de recuperação de senha enviado com sucesso",
+                extra={"email": email, "data_response": data_response},
+            )
+        db.session.commit()
+        return jsonify(data_response), 200
+    except Exception as e:
+        db.session.rollback()
+        app_logger.error(
+            "Falha inesperada ao enviar e-mail de recuperação de senha",
+            extra={"email": email, "erro_detalhe": str(e)},
+            exc_info=True,
+        )
+        return (
+            jsonify(
+                {
+                    "Erro": "Erro ao enviar e-mail de recuperação de senha, entre em contato com o suporte."
+                }
+            ),
+            500,
+        )
 
 
 @auth_bp.route("/redefinir-senha", methods=["POST"])
 def redefinir_senha():
-    dados = request.get_json()
-    token = dados.get("token")
-    nova_senha = dados.get("nova_senha")
+    try:
+        dados = request.get_json()
 
-    if not token or not nova_senha:
-        return jsonify({"erro": "Token e nova senha são obrigatórios."}), 400
+        if not dados.get("token") or not dados.get("nova_senha"):
+            return jsonify({"erro": "Token e nova senha são obrigatórios."}), 400
 
-    # Validação de força da senha poderia entrar aqui (ex: len(nova_senha) >= 8)
+        # Validação de força da senha poderia entrar aqui (ex: len(nova_senha) >= 8)
 
-    # O Service faz o trabalho pesado de checar o banco e fazer o hash
-    sucesso, mensagem = AuthService.redefinir_senha(token, nova_senha)
+        # O Service faz o trabalho pesado de checar o banco e fazer o hash
+        sucesso, mensagem = AuthService.redefinir_senha(
+            dados.get("token"), dados.get("nova_senha")
+        )
 
-    if sucesso:
-        return jsonify({"status": "sucesso", "mensagem": mensagem}), 200
-    else:
-        # Retorna 400 (Bad Request) se o token for inválido ou expirado
-        return jsonify({"status": "erro", "mensagem": mensagem}), 400
+        if sucesso:
+            db.session.commit()
+            return jsonify({"status": "sucesso", "mensagem": mensagem}), 200
+        else:
+            db.session.rollback()
+            # Retorna 400 (Bad Request) se o token for inválido ou expirado
+            return jsonify({"status": "erro", "mensagem": mensagem}), 400
+    except Exception as e:
+        db.session.rollback()
+        app_logger.error(
+            "Falha inesperada ao redefinir senha",
+            extra={"erro_detalhe": str(e)},
+            exc_info=True,
+        )
+        return (
+            jsonify(
+                {"Erro": "Erro ao redefinir senha, entre em contato com o suporte."}
+            ),
+            500,
+        )

@@ -10,8 +10,6 @@ from app.schemas.auth_schema import (
 )
 from app.extensions import app_logger, db
 from app.models.passwordResetToken import PasswordResetToken
-from app.tasks.email_tasks import enviar_email_recuperacao_task
-from config import Config
 
 MOCK_BLOCKLIST = set()
 
@@ -74,7 +72,7 @@ class AuthService:
         }
 
     @staticmethod
-    def solicitar_recuperacao_senha(email: str) -> bool:
+    def gerar_token_recuperacao_senha(email: str) -> bool:
         # 1. Busca o usuário
         cliente = Cliente.query.filter_by(email=email).first()
 
@@ -95,17 +93,9 @@ class AuthService:
         # 3. Cria o novo token (com validade padrão de 30 minutos)
         novo_token = PasswordResetToken(user_id=cliente.id)
         db.session.add(novo_token)
-        db.session.commit()
 
-        # 4. Dispara o e-mail assíncrono via Celery
-        link_recuperacao = (
-            f"https://{Config.FRONTEND_URL}/recuperar-senha?token={novo_token.token}"
-        )
-        enviar_email_recuperacao_task.delay(
-            cliente.email, cliente.nome, link_recuperacao
-        )
-
-        return True
+        # 4. Retorna o token para ser enviado por e-mail
+        return novo_token.token, cliente
 
     @staticmethod
     def redefinir_senha(token: str, nova_senha: str) -> tuple[bool, str]:
@@ -117,15 +107,12 @@ class AuthService:
             return False, "Link inválido ou expirado. Solicite novamente."
 
         # Atualiza a senha do usuário
-        user = reset_token.user
-        user.set_password(
-            nova_senha
-        )  # Assumindo que você tem um método que faz o hash (ex: werkzeug.security)
+        cliente = Cliente.query.filter_by(id=reset_token.user_id).first()
+        cliente.senha = nova_senha
 
         # Queima o token para que não possa ser usado novamente
         reset_token.mark_as_used()
 
-        db.session.commit()
         return True, "Senha alterada com sucesso!"
 
     # josue minima alteraçao  @staticmethod dupicado
