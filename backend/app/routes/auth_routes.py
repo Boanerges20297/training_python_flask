@@ -12,7 +12,13 @@ from flask_jwt_extended import (
 from app.services.auth_service import AuthService, AuthServiceException
 from app.services.email_service import EmailService
 from app.utils.error_formatter import formatar_erros_pydantic
-from app.schemas.auth_schema import LoginRequest, TokenResponse, LoginResponse
+from app.schemas.auth_schema import (
+    LoginRequest,
+    TokenResponse,
+    LoginResponse,
+    EsqueciSenhaRequest,
+    RedefinirSenhaRequest,
+)
 from app.extensions import app_logger
 from datetime import datetime
 from app.extensions import db
@@ -155,10 +161,17 @@ def logout():
 def esqueci_senha():
 
     try:
-        dados = request.get_json()
-        email = dados.get("email")
-        if not email:
-            return jsonify({"erro": "O campo e-mail é obrigatório."}), 400
+        try:
+            dados = EsqueciSenhaRequest(**request.get_json())
+        except Exception as e:
+            erros = formatar_erros_pydantic(e)
+            app_logger.warning(
+                "Falha estrutural de validação no payload de Esqueci a Senha",
+                extra={"erros_validacao": erros},
+            )
+            return jsonify(erros), 400
+
+        email = dados.email
 
         # Chama o Service.
         # Repare que não verificamos se deu True ou False para o usuário.
@@ -208,17 +221,20 @@ def esqueci_senha():
 @auth_bp.route("/redefinir-senha", methods=["POST"])
 def redefinir_senha():
     try:
-        dados = request.get_json()
+        try:
+            dados = RedefinirSenhaRequest(**request.get_json())
+        except Exception as e:
+            erros = formatar_erros_pydantic(e)
+            app_logger.warning(
+                "Falha estrutural de validação no payload para redefinir senha",
+                extra={"erros_validacao": erros},
+            )
+            return jsonify(erros), 400
 
-        if not dados.get("token") or not dados.get("nova_senha"):
-            return jsonify({"erro": "Token e nova senha são obrigatórios."}), 400
-
-        # Validação de força da senha poderia entrar aqui (ex: len(nova_senha) >= 8)
+        # A validação restritiva em tempo de requisição de força do backend está protegida pelo Pydantic
 
         # O Service faz o trabalho pesado de checar o banco e fazer o hash
-        sucesso, mensagem = AuthService.redefinir_senha(
-            dados.get("token"), dados.get("nova_senha")
-        )
+        sucesso, mensagem = AuthService.redefinir_senha(dados.token, dados.nova_senha)
 
         if sucesso:
             db.session.commit()
