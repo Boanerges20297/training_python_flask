@@ -3,10 +3,10 @@ import type { DashboardData } from '../types';
 
 export const getDashboardInfo = async (dias: number = 30): Promise<DashboardData> => {
   try {
-    const response = await api.get('/dashboard', {
+    const response = await api.get('/dashboard/geral', {
       params: { dias }
     });
-    return response.data;
+    return response.data.data;
   } catch (error: any) {
     throw error.response?.data?.erro || 'Erro ao carregar dados do dashboard';
   }

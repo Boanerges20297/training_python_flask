@@ -69,7 +69,7 @@ def listar_barbeiros():
 
         # Vinicius - 04/04/2026
         # Troca do nome da variavel para 'clientes' para melhor identificação
-        barbeiros = query.paginate(page=pagina, per_page=per_page, error_out=False)
+        barbeiros = query.paginate(page=page, per_page=per_page, error_out=False)
 
         # josue minima alteraço
         barbeiros_dict = [
@@ -167,12 +167,18 @@ def criar_barbeiro():
         # Vinicius - 16/04/2026
         # Adicionado log para monitorar erros na criação de barbeiros
         db.session.rollback()
+        error_msg = str(e)
+        
+        # Tratar erro de e-mail duplicado (Felipe)
+        if "UNIQUE constraint failed" in error_msg or "Duplicate entry" in error_msg:
+             return jsonify({"sucesso": False, "erro": "Este e-mail já está sendo usado por outro profissional."}), 409
+
         app_logger.error(
             "Erro estrutural 500 ao criar barbeiro",
-            extra={"erro_detalhe": str(e)},
+            extra={"erro_detalhe": error_msg},
             exc_info=True,
         )
-        return jsonify({"erro": "Erro ao incluir barbeiro: " + str(e)}), 500
+        return jsonify({"sucesso": False, "erro": "Erro ao incluir barbeiro: " + error_msg}), 500
 
 
 # Vinicius - 08/04/2026
@@ -288,7 +294,7 @@ def deletar_barbeiro(id):
                 "data_hora_atual": datetime.utcnow(),
             },
         )
-        return jsonify({"msg": "Barbeiro deletado com sucesso"}), 200
+        return jsonify({"sucesso": True, "mensagem": "Barbeiro deletado com sucesso"}), 200
     except Exception as e:
         # Vinicius - 16/04/2026
         # Adicionado log para monitorar erros na deleção de barbeiros

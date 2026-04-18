@@ -11,7 +11,7 @@ async function enableMocking() {
   return worker.start({ onUnhandledRequest: 'bypass' })
 }
 
-enableMocking().then(() => {
+// enableMocking().then(() => {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <AuthProvider>
@@ -21,4 +21,4 @@ enableMocking().then(() => {
       </AuthProvider>
     </StrictMode>,
   )
-})
+// })

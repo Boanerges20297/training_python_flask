@@ -105,7 +105,7 @@ def criar_agendamento():
                 "data_hora_atual": datetime.utcnow(),
             },
         )
-        return jsonify(response.model_dump()), 201
+        return jsonify({"sucesso": True, "mensagem": data_response.get("msg"), "dados": {"agendamento": response.model_dump()}}), 201
     except ConflitoHorarioError as e:
         db.session.rollback()
         return jsonify({"erro": "Erro ao criar agendamento: " + str(e)}), 409
@@ -353,7 +353,7 @@ def deletar_agendamento(id):
                 "data_hora_atual": datetime.utcnow(),
             },
         )
-        return jsonify({"msg": "Agendamento deletado com sucesso"}), 200
+        return jsonify({"sucesso": True, "mensagem": "Agendamento deletado com sucesso"}), 200
 
     except AcessoNegadoError as e:
         db.session.rollback()

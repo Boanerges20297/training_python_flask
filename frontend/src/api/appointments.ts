@@ -5,7 +5,7 @@ import type { Agendamento, PaginatedResponse } from '../types';
 
 export async function getAgendamentos(page = 1, per_page = 10): Promise<PaginatedResponse<Agendamento>> {
   try {
-    const response = await api.get('/agendamento/', {
+    const response = await api.get('/agendamento', {
       params: { page, per_page }
     });
     return response.data.dados;
@@ -17,7 +17,7 @@ export async function getAgendamentos(page = 1, per_page = 10): Promise<Paginate
 
 export async function createAgendamento(agendamento: Omit<Agendamento, 'id'>): Promise<Agendamento> {
   try {
-    const response = await api.post('/agendamento/', agendamento);
+    const response = await api.post('/agendamento', agendamento);
     return response.data.dados.agendamento;
   } catch (error: any) {
     throw error.response?.data?.erro || error.response?.data?.erros_validacao || 'Erro ao criar agendamento';

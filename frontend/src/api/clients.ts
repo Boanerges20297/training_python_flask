@@ -5,7 +5,7 @@ import type { Cliente, PaginatedResponse } from '../types';
 
 export async function getClientes(page = 1, per_page = 10): Promise<PaginatedResponse<Cliente>> {
   try {
-    const response = await api.get('/clientes/', {
+    const response = await api.get('/clientes', {
       params: { page, per_page }
     });
     return response.data.dados; // O backend já devolve o objeto paginado
@@ -17,7 +17,7 @@ export async function getClientes(page = 1, per_page = 10): Promise<PaginatedRes
 
 export async function createCliente(cliente: Omit<Cliente, 'id'>): Promise<Cliente> {
   try {
-    const response = await api.post('/clientes/', cliente);
+    const response = await api.post('/clientes', cliente);
     return response.data.dados.cliente;
   } catch (error: any) {
     throw error.response?.data?.erro || error.response?.data?.erros_validacao || 'Erro ao criar cliente';

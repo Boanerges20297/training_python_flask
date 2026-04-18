@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from config import DevelopmentConfig, ProductionConfig
 from app.extensions import db, limiter, jwt, cors, mail
 from app.jwt_callbacks import register_jwt_handlers
@@ -37,19 +37,29 @@ def create_app():
 
     jwt.init_app(app)
     db.init_app(app)
+    
+    app.url_map.strict_slashes = False
+
     # Configuração de CORS para suportar credenciais e múltiplas origens
     cors_origins = [
-        app.config.get("FRONTEND_URL"),
+        "http://localhost:5174",
+        "http://127.0.0.1:5174",
         "http://localhost:5173",
         "http://127.0.0.1:5173",
+        app.config.get("FRONTEND_URL"),
     ]
-    # Filtra None e remove duplicatas
     cors_origins = list(set(filter(None, cors_origins)))
 
     cors.init_app(
         app,
         supports_credentials=True,
-        resources={r"/api/*": {"origins": cors_origins}},
+        resources={
+            r"/api/*": {
+                "origins": cors_origins,
+                "allow_headers": ["Content-Type", "Authorization", "X-CSRF-TOKEN"],
+                "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+            }
+        },
     )
     mail.init_app(app)
 

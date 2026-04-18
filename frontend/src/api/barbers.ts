@@ -5,7 +5,7 @@ import type { Barbeiro, PaginatedResponse } from '../types';
 
 export async function getBarbeiros(page = 1, per_page = 10): Promise<PaginatedResponse<Barbeiro>> {
   try {
-    const response = await api.get('/barbeiros/', {
+    const response = await api.get('/barbeiros', {
       params: { page, per_page }
     });
     return response.data.dados;
@@ -17,7 +17,7 @@ export async function getBarbeiros(page = 1, per_page = 10): Promise<PaginatedRe
 
 export async function createBarbeiro(barbeiro: Omit<Barbeiro, 'id'>): Promise<Barbeiro> {
   try {
-    const response = await api.post('/barbeiros/', barbeiro);
+    const response = await api.post('/barbeiros', barbeiro);
     return response.data.dados.barbeiro;
   } catch (error: any) {
     throw error.response?.data?.erro || error.response?.data?.erros_validacao || 'Erro ao criar barbeiro';

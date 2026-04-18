@@ -69,10 +69,13 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
             border: 'none', 
             cursor: 'pointer', 
             color: mainColor, 
-            padding: '0.25rem',
-            transition: 'transform 0.2s'
+            padding: '0.5rem', // Aumentado
+            margin: '-0.25rem', // Compensa o padding para não espaçar visualmente demais
+            transition: 'transform 0.2s',
+            display: 'flex',
+            alignItems: 'center'
           }}
-          onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.15)'}
           onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
           aria-label={editTitle}
         >
@@ -89,10 +92,13 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
             border: 'none', 
             cursor: 'pointer', 
             color: '#ef4444', 
-            padding: '0.25rem',
-            transition: 'transform 0.2s'
+            padding: '0.5rem', // Aumentado
+            margin: '-0.25rem',
+            transition: 'transform 0.2s',
+            display: 'flex',
+            alignItems: 'center'
           }}
-          onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.15)'}
           onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
           aria-label={deleteTitle}
         >

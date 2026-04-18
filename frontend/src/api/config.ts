@@ -8,7 +8,7 @@ import { createLogger } from '../utils/logger';
 // felipe
 const logger = createLogger('api');
 
-export const API_URL = 'http://127.0.0.1:5000/api';
+export const API_URL = 'http://localhost:5000/api';
 
 // instância base do Axios — todas as requisições do app usam esta instância
 const api = axios.create({

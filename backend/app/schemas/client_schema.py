@@ -35,14 +35,15 @@ class ClienteSchema(BaseModel):
     @field_validator("telefone", mode="before")
     @classmethod
     def validar_telefone(cls, value):
+        if not value: return value
         # Remove caracteres comuns de máscara para validar apenas os números
-        numeros = re.sub(r"\D", "", value)
+        numeros = re.sub(r"\D", "", str(value))
+        numeros = numeros.strip()
 
         # Validação: Um telefone brasileiro tem entre 10 (fixo) e 11 (celular) dígitos
         if not (10 <= len(numeros) <= 11):
             raise ValueError("O telefone deve conter entre 10 e 11 dígitos (com DDD)")
 
-        # Opcional: Você pode retornar apenas os números limpos para o banco
         return numeros
 
 

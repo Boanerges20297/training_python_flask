@@ -2,8 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt
 
 # Vinicius - 17/04/2026
-# Comentado por enquanto para evitar erros
-# from app.services.dashboard_service import DashboardService
+from app.services.dashboard_service import DashboardService
 from app.utils.decorators import admin_required
 
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/api/dashboard")

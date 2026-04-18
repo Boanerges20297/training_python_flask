@@ -227,7 +227,7 @@ export default function DashboardView() {
           <p className="chart-card-subtitle">Clique para ver detalhes do barbeiro</p>
         </div>
         <div>
-          {data.barbeiros_desempenho.map((barbeiro) => (
+          {(data.barbeiros_desempenho || []).map((barbeiro) => (
             <div 
               key={barbeiro.barbeiro_id} 
               className="performance-item"
@@ -282,10 +282,10 @@ export default function DashboardView() {
             
             <h4 style={{ color: '#f8fafc', marginBottom: '1rem' }}>Serviços Realizados</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {selectedBarber.servicos_realizados.map((srv, idx) => (
+              {(selectedBarber.servicos_realizados || []).map((srv, idx) => (
                 <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '0.75rem', borderRadius: '0.5rem' }}>
                   <span>{srv.quantidade}x <strong>{srv.nome}</strong></span>
-                  <span style={{ color: '#10b981' }}>R$ {srv.receita.toFixed(2)}</span>
+                  <span style={{ color: '#10b981' }}>R$ {(srv.receita || 0).toFixed(2)}</span>
                 </div>
               ))}
             </div>

@@ -24,4 +24,3 @@ limiter = Limiter(
     headers_enabled=DevelopmentConfig.RATELIMIT_HEADERS_ENABLED,
     default_limits=DevelopmentConfig.RATELIMIT_DEFAULT_LIMIT,
 )
-mail = Mail()

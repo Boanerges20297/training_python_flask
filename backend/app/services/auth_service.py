@@ -65,7 +65,7 @@ class AuthService:
         log_evento_auditoria("Login realizado com sucesso", recurso_id=user_id, extra_data={"role": role})
 
         return {
-            "user": UserResponse(id=user_id, role=role),
+            "user": UserResponse(id=user_id, role=role, nome=user.nome, email=user.email),
             "tokens": TokenResponse(
                 access_token=access_token, refresh_token=refresh_token
             ),

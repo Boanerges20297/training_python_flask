@@ -275,7 +275,7 @@ def deletar_cliente(id):
                 "data_hora_atual": datetime.utcnow(),
             },
         )
-        return jsonify({"msg": "Cliente deletado com sucesso"}), 200
+        return jsonify({"sucesso": True, "mensagem": "Cliente deletado com sucesso"}), 200
     except Exception as e:
         # Vinicius - 16/04/2026
         # Adicionado roolback caso ocorra algum erro e logging

@@ -65,7 +65,7 @@ class DevelopmentConfig(Config):
         f'sqlite:///{os.path.join(BASE_DIR, "instances", "barba_byte.db")}'
     )
 
-    FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
+    FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5174")
 
     # Variavel para habilitar/desabilitar o rate limiter
     RATELIMIT_ENABLED = False

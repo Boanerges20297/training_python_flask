@@ -6,6 +6,8 @@ from flask_jwt_extended import (
     jwt_required,
     get_jwt_identity,
     get_jwt,
+    create_access_token,
+    create_refresh_token,
 )
 
 # Importamos o nosso novo serviço
@@ -16,6 +18,10 @@ from app.extensions import app_logger
 from datetime import datetime
 from app.models.barbeiro import Barbeiro
 from app.models.cliente import Cliente
+from app.schemas.client_schema import ClienteSchema
+from app import db
+from sqlalchemy.exc import IntegrityError
+from app.services.email_service import EmailService
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
@@ -62,20 +68,15 @@ def login():
             },
         )
 
-        response = jsonify(login_response.model_dump())
+        response = jsonify({
+            "sucesso": True,
+            "mensagem": "Login realizado com sucesso",
+            "dados": {"usuario": usuario_dados}
+        })
 
         set_access_cookies(response, auth_data["tokens"].access_token)
         set_refresh_cookies(response, auth_data["tokens"].refresh_token)
-        # Vinicius - 16/04/2026
-        # Adicionado log para monitorar o login
-        app_logger.info(
-            "Login realizado com sucesso",
-            extra={
-                "user_id": auth_data["user"].id,
-                "role": auth_data["user"].role,
-                "data_hora_atual": datetime.utcnow(),
-            },
-        )
+        
         return response, 200
 
     except AuthServiceException as e:
@@ -183,3 +184,67 @@ def check_session():
     except Exception as e:
         app_logger.error("Sessão espúria ou inválida disparou protegida", exc_info=True)
         return jsonify({"sucesso": False, "mensagem": "Sessão inválida ou expirada"}), 401
+
+
+@auth_bp.route("/register", methods=["POST"])
+def register():
+    """
+    Ponte para o cadastro de clientes via aba de autenticação.
+    O frontend espera /api/auth/register
+    """
+    try:
+        try:
+            data = ClienteSchema(**request.get_json())
+        except Exception as e:
+            erros = formatar_erros_pydantic(e)
+            return jsonify({"erros_validacao": erros}), 400
+
+        # Criar cliente e salvar no banco
+        cliente = Cliente(**data.model_dump())
+        cliente.senha = data.senha
+        db.session.add(cliente)
+        
+        # Envio de e-mail de boas vindas
+        try:
+            EmailService.enviar_email_boas_vindas(
+                destinatario=cliente.email, nome_usuario=cliente.nome
+            )
+        except Exception as e:
+            app_logger.warning(f"Falha ao enviar e-mail de boas-vindas: {str(e)}")
+
+        db.session.commit()
+
+        # Após registrar, logamos o usuário automaticamente gerando os tokens
+        user_id = str(cliente.id)
+        role = "cliente"
+        
+        access_token = create_access_token(identity=user_id, additional_claims={"role": role})
+        refresh_token = create_refresh_token(identity=user_id, additional_claims={"role": role})
+
+        usuario_dados = {
+            "id": cliente.id,
+            "nome": cliente.nome,
+            "email": cliente.email,
+            "role": role
+        }
+
+        response = jsonify({
+            "sucesso": True,
+            "mensagem": "Cadastro realizado com sucesso",
+            "dados": {
+                "usuario": usuario_dados
+            }
+        })
+
+        set_access_cookies(response, access_token)
+        set_refresh_cookies(response, refresh_token)
+        
+        return response, 201
+
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({"erro": "E-mail ou Telefone já estão em uso."}), 409
+    except Exception as e:
+        db.session.rollback()
+        app_logger.error("Erro no register:", exc_info=True)
+        return jsonify({"erro": str(e)}), 500
