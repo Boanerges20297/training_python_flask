@@ -10,10 +10,19 @@ from flask_jwt_extended import (
 
 # Importamos o nosso novo serviço
 from app.services.auth_service import AuthService, AuthServiceException
+from app.services.email_service import EmailService
 from app.utils.error_formatter import formatar_erros_pydantic
-from app.schemas.auth_schema import LoginRequest, TokenResponse, LoginResponse
+from app.schemas.auth_schema import (
+    LoginRequest,
+    TokenResponse,
+    LoginResponse,
+    EsqueciSenhaRequest,
+    RedefinirSenhaRequest,
+)
 from app.extensions import app_logger
 from datetime import datetime
+from app.extensions import db
+from config import Config, DevelopmentConfig
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
@@ -144,5 +153,106 @@ def logout():
         )
         return (
             jsonify({"Erro": "Erro ao fazer logout, entre em contato com o suporte."}),
+            500,
+        )
+
+
+@auth_bp.route("/esqueci-senha", methods=["POST"])
+def esqueci_senha():
+
+    try:
+        try:
+            dados = EsqueciSenhaRequest(**request.get_json())
+        except Exception as e:
+            erros = formatar_erros_pydantic(e)
+            app_logger.warning(
+                "Falha estrutural de validação no payload de Esqueci a Senha",
+                extra={"erros_validacao": erros},
+            )
+            return jsonify(erros), 400
+
+        email = dados.email
+
+        # Chama o Service.
+        # Repare que não verificamos se deu True ou False para o usuário.
+        token, usuario = AuthService.gerar_token_recuperacao_senha(email)
+
+        link_recuperacao = (
+            f"{DevelopmentConfig.FRONTEND_URL}/recuperar-senha?token={token}"
+        )
+
+        sucesso = EmailService.enviar_email_recuperacao_senha(
+            email, usuario.nome, link_recuperacao
+        )
+
+        if False in sucesso:
+            data_response = {
+                "status": "erro",
+                "mensagem": "Erro ao enviar e-mail de recuperação de senha, entre em contato com o suporte.",
+            }
+        else:
+            data_response = {
+                "status": "sucesso",
+                "mensagem": "Se o e-mail estiver em nossa base de dados, um link de recuperação será enviado em instantes.",
+            }
+            app_logger.info(
+                "E-mail de recuperação de senha enviado com sucesso",
+                extra={"email": email, "data_response": data_response},
+            )
+        db.session.commit()
+        return jsonify(data_response), 200
+    except Exception as e:
+        db.session.rollback()
+        app_logger.error(
+            "Falha inesperada ao enviar e-mail de recuperação de senha",
+            extra={"email": email, "erro_detalhe": str(e)},
+            exc_info=True,
+        )
+        return (
+            jsonify(
+                {
+                    "Erro": "Erro ao enviar e-mail de recuperação de senha, entre em contato com o suporte."
+                }
+            ),
+            500,
+        )
+
+
+@auth_bp.route("/redefinir-senha", methods=["POST"])
+def redefinir_senha():
+    try:
+        try:
+            dados = RedefinirSenhaRequest(**request.get_json())
+        except Exception as e:
+            erros = formatar_erros_pydantic(e)
+            app_logger.warning(
+                "Falha estrutural de validação no payload para redefinir senha",
+                extra={"erros_validacao": erros},
+            )
+            return jsonify(erros), 400
+
+        # A validação restritiva em tempo de requisição de força do backend está protegida pelo Pydantic
+
+        # O Service faz o trabalho pesado de checar o banco e fazer o hash
+        sucesso, mensagem = AuthService.redefinir_senha(dados.token, dados.nova_senha)
+
+        if sucesso:
+            db.session.commit()
+            return jsonify({"status": "sucesso", "mensagem": mensagem}), 200
+        else:
+            db.session.rollback()
+            # Retorna 400 (Bad Request) se o token for inválido ou expirado
+            return jsonify({"status": "erro", "mensagem": mensagem}), 400
+    except Exception as e:
+        db.session.rollback()
+        app_logger.error(
+            "Falha inesperada ao redefinir senha",
+            extra={"erro_detalhe": str(e)},
+            exc_info=True,
+        )
+        return (
+            jsonify(
+                {"Erro": "Erro ao redefinir senha, entre em contato com o suporte."}
+            ),
             500,
         )
