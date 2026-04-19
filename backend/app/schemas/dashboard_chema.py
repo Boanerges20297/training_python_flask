@@ -9,7 +9,7 @@ Regra de manutenção: qualquer alteração em campos/tipos aqui deve ser tratad
 como mudança de contrato da API (impacta integração e testes de rota).
 """
 
-#JOSUE - 16/04/2026
+# JOSUE - 16/04/2026
 
 from datetime import datetime
 from typing import List
@@ -56,6 +56,7 @@ class DashboardResumoSchema(BaseModel):
     agendamentos_concluidos: int
     agendamentos_cancelados: int
     agendamentos_pendentes: int
+
     barbeiros_desempenho: List[BarbeiroDesempenhoSchema] = Field(default_factory=list)
     top_5_horarios: List[HorarioPopularSchema] = Field(default_factory=list)
     receita_diaria: List[ReceitaPeriodicaSchema] = Field(default_factory=list)
@@ -63,6 +64,8 @@ class DashboardResumoSchema(BaseModel):
 
 
 class DashboardBarbeiroSchema(BaseModel):
+    """Dashboard individual: um barbeiro específico"""
+
     barbeiro_id: int
     barbeiro_nome: str
     periodo_inicio: datetime

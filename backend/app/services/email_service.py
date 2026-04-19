@@ -2,7 +2,10 @@ from flask_mailman import EmailMessage
 from flask import current_app
 from app.extensions import app_logger
 from config import Config
-from app.utils.email_layouts import obter_layout_boas_vindas
+from app.utils.email_layouts import (
+    obter_layout_boas_vindas,
+    obter_layout_recuperacao_senha,
+)
 
 
 class EmailService:
@@ -45,6 +48,34 @@ class EmailService:
         except Exception as e:
             app_logger.error(
                 "E-mail de boas-vindas não enviado",
+                extra={"erro_detalhe": str(e), "destinatario": destinatario},
+            )
+            return False, str(e)
+
+    @staticmethod
+    def enviar_email_recuperacao_senha(
+        destinatario: str, nome_usuario: str, link_recuperacao: str
+    ) -> tuple[bool, str]:
+        """
+        Envia o e-mail com o link para redefinir a senha.
+        """
+        assunto = "Recuperação de Senha - Barba & Byte"
+        corpo_html = obter_layout_recuperacao_senha(
+            nome_usuario.title(), link_recuperacao
+        )
+
+        try:
+            msg = EmailMessage(subject=assunto, body=corpo_html, to=[destinatario])
+            msg.content_subtype = "html"
+            msg.send()
+            app_logger.info(
+                "E-mail de recuperação enviado com sucesso",
+                extra={"destinatario": destinatario},
+            )
+            return True, "E-mail de recuperação enviado!"
+        except Exception as e:
+            app_logger.error(
+                "E-mail de recuperação não enviado",
                 extra={"erro_detalhe": str(e), "destinatario": destinatario},
             )
             return False, str(e)

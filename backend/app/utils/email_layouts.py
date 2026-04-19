@@ -63,3 +63,46 @@ def obter_layout_boas_vindas(nome_usuario):
     </body>
     </html>
     """
+
+
+def obter_layout_recuperacao_senha(nome_usuario, link_recuperacao):
+    """
+    Retorna o layout do e-mail de recuperação de senha.
+    """
+    return f"""
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            body {{ margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f5; color: #333; }}
+            .container {{ max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }}
+            .header {{ background-color: #1a1a1a; padding: 30px 20px; text-align: center; }}
+            .header h1 {{ margin: 0; color: #d4af37; font-size: 24px; letter-spacing: 1px; }}
+            .content {{ padding: 30px 40px; text-align: center; }}
+            .btn-reset {{ display: inline-block; background-color: #d4af37; color: #1a1a1a; padding: 12px 25px; text-decoration: none; border-radius: 4px; font-weight: bold; margin: 20px 0; }}
+            .footer {{ background-color: #f9f9f9; padding: 20px; text-align: center; font-size: 12px; color: #888; border-top: 1px solid #eee; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>BARBA & BYTE</h1>
+            </div>
+            <div class="content">
+                <h2>Recuperação de Senha</h2>
+                <p>Olá, {nome_usuario}!</p>
+                <p>Recebemos uma solicitação para redefinir a senha da sua conta. Se você não solicitou, pode ignorar este e-mail.</p>
+                <p>Para criar uma nova senha, clique no botão abaixo:</p>
+                
+                <a href="{link_recuperacao}" class="btn-reset">Redefinir Senha Agora</a>
+                
+                <p style="font-size: 14px; color: #666;">Este link expirará em 30 minutos.</p>
+            </div>
+            <div class="footer">
+                <p>Barba & Byte - Estilo e Tecnologia</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """

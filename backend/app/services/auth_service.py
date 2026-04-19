@@ -8,9 +8,11 @@ from app.schemas.auth_schema import (
     UserResponse,
     TokenResponse,
 )
-from app.extensions import app_logger
+
 # felipe
 from app.utils.audit import log_evento_auditoria
+from app.extensions import app_logger, db
+from app.models.passwordResetToken import PasswordResetToken
 
 MOCK_BLOCKLIST = set()
 
@@ -42,12 +44,18 @@ class AuthService:
             role = "cliente"
         else:
             # felipe - Log de Auditoria para falha de login
-            log_evento_auditoria("Tentativa de login: E-mail não encontrado", extra_data={"email_tentado": email})
+            log_evento_auditoria(
+                "Tentativa de login: E-mail não encontrado",
+                extra_data={"email_tentado": email},
+            )
             raise AuthServiceException("Credenciais inválidas")
 
         if user and not user.verificar_senha(senha):
             # felipe - Log de Auditoria para falha de senha
-            log_evento_auditoria("Tentativa de login: Senha incorreta", extra_data={"email_tentado": email, "role": role})
+            log_evento_auditoria(
+                "Tentativa de login: Senha incorreta",
+                extra_data={"email_tentado": email, "role": role},
+            )
             raise AuthServiceException("Credenciais inválidas")
 
         user_id = str(user.id)
@@ -62,16 +70,64 @@ class AuthService:
         )
 
         # felipe - Log de Auditoria para login bem sucedido
-        log_evento_auditoria("Login realizado com sucesso", recurso_id=user_id, extra_data={"role": role})
+        log_evento_auditoria(
+            "Login realizado com sucesso", recurso_id=user_id, extra_data={"role": role}
+        )
 
         return {
-            "user": UserResponse(id=user_id, role=role, nome=user.nome, email=user.email),
+            "user": UserResponse(
+                id=user_id, role=role, nome=user.nome, email=user.email
+            ),
             "tokens": TokenResponse(
                 access_token=access_token, refresh_token=refresh_token
             ),
         }
 
-    #josue minima alteraçao  @staticmethod dupicado
+    @staticmethod
+    def gerar_token_recuperacao_senha(email: str) -> bool:
+        # 1. Busca o usuário
+        cliente = Cliente.query.filter_by(email=email).first()
+
+        # Regra de Segurança: Não retorne erro se o usuário não existir.
+        # Finja que deu certo para evitar enumeração de e-mails por hackers.
+        if not cliente:
+            return True
+
+        # 2. Invalida preventivamente todos os tokens anteriores deste usuário
+        # que ainda não foram usados e não expiraram
+        tokens_antigos = PasswordResetToken.query.filter_by(
+            user_id=cliente.id, is_used=False
+        ).all()
+
+        for t in tokens_antigos:
+            t.is_used = True
+
+        # 3. Cria o novo token (com validade padrão de 30 minutos)
+        novo_token = PasswordResetToken(user_id=cliente.id)
+        db.session.add(novo_token)
+
+        # 4. Retorna o token para ser enviado por e-mail
+        return novo_token.token, cliente
+
+    @staticmethod
+    def redefinir_senha(token: str, nova_senha: str) -> tuple[bool, str]:
+        # Busca o token no banco
+        reset_token = PasswordResetToken.query.filter_by(token=token).first()
+
+        # Verifica se existe e se é válido usando a regra encapsulada no Model
+        if not reset_token or not reset_token.is_valid:
+            return False, "Link inválido ou expirado. Solicite novamente."
+
+        # Atualiza a senha do usuário
+        cliente = Cliente.query.filter_by(id=reset_token.user_id).first()
+        cliente.senha = nova_senha
+
+        # Queima o token para que não possa ser usado novamente
+        reset_token.mark_as_used()
+
+        return True, "Senha alterada com sucesso!"
+
+    # josue minima alteraçao  @staticmethod dupicado
     # Vinicius 11/04/2026
     # Adicionado tipagem para o método renew_access_token
     @staticmethod

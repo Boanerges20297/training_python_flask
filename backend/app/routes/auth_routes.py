@@ -12,16 +12,24 @@ from flask_jwt_extended import (
 
 # Importamos o nosso novo serviço
 from app.services.auth_service import AuthService, AuthServiceException
+from app.services.email_service import EmailService
 from app.utils.error_formatter import formatar_erros_pydantic
-from app.schemas.auth_schema import LoginRequest, TokenResponse, LoginResponse
+from app.schemas.auth_schema import (
+    LoginRequest,
+    TokenResponse,
+    LoginResponse,
+    EsqueciSenhaRequest,
+    RedefinirSenhaRequest,
+)
 from app.extensions import app_logger
 from datetime import datetime
 from app.models.barbeiro import Barbeiro
 from app.models.cliente import Cliente
 from app.schemas.client_schema import ClienteSchema
-from app import db
 from sqlalchemy.exc import IntegrityError
 from app.services.email_service import EmailService
+from app.extensions import db
+from config import Config, DevelopmentConfig
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
@@ -51,12 +59,11 @@ def login():
             "id": auth_data["user"].id,
             "nome": auth_data["user"].nome,
             "email": auth_data["user"].email,
-            "role": auth_data["user"].role
+            "role": auth_data["user"].role,
         }
 
         login_response = LoginResponse(
-            mensagem="Login realizado com sucesso", 
-            dados={"usuario": usuario_dados}
+            mensagem="Login realizado com sucesso", dados={"usuario": usuario_dados}
         )
 
         app_logger.info(
@@ -68,15 +75,17 @@ def login():
             },
         )
 
-        response = jsonify({
-            "sucesso": True,
-            "mensagem": "Login realizado com sucesso",
-            "dados": {"usuario": usuario_dados}
-        })
+        response = jsonify(
+            {
+                "sucesso": True,
+                "mensagem": "Login realizado com sucesso",
+                "dados": {"usuario": usuario_dados},
+            }
+        )
 
         set_access_cookies(response, auth_data["tokens"].access_token)
         set_refresh_cookies(response, auth_data["tokens"].refresh_token)
-        
+
         return response, 200
 
     except AuthServiceException as e:
@@ -175,15 +184,33 @@ def check_session():
         user_info = {
             "id": current_user_id,
             "role": role,
-            "nome": user.nome if user else ("Admin" if role == "admin" else "Usuário Desconhecido"),
-            "email": user.email if user else ("admin@barbabyte.com" if role == "admin" else "email@desconhecido.com")
+            "nome": (
+                user.nome
+                if user
+                else ("Admin" if role == "admin" else "Usuário Desconhecido")
+            ),
+            "email": (
+                user.email
+                if user
+                else (
+                    "admin@barbabyte.com"
+                    if role == "admin"
+                    else "email@desconhecido.com"
+                )
+            ),
         }
 
-        app_logger.info("Verificação de sessão (protected) concluída com sucesso.", extra={"user_id": current_user_id})
+        app_logger.info(
+            "Verificação de sessão (protected) concluída com sucesso.",
+            extra={"user_id": current_user_id},
+        )
         return jsonify({"sucesso": True, "dados": {"usuario": user_info}}), 200
     except Exception as e:
         app_logger.error("Sessão espúria ou inválida disparou protegida", exc_info=True)
-        return jsonify({"sucesso": False, "mensagem": "Sessão inválida ou expirada"}), 401
+        return (
+            jsonify({"sucesso": False, "mensagem": "Sessão inválida ou expirada"}),
+            401,
+        )
 
 
 @auth_bp.route("/register", methods=["POST"])
@@ -203,7 +230,7 @@ def register():
         cliente = Cliente(**data.model_dump())
         cliente.senha = data.senha
         db.session.add(cliente)
-        
+
         # Envio de e-mail de boas vindas
         try:
             EmailService.enviar_email_boas_vindas(
@@ -217,28 +244,32 @@ def register():
         # Após registrar, logamos o usuário automaticamente gerando os tokens
         user_id = str(cliente.id)
         role = "cliente"
-        
-        access_token = create_access_token(identity=user_id, additional_claims={"role": role})
-        refresh_token = create_refresh_token(identity=user_id, additional_claims={"role": role})
+
+        access_token = create_access_token(
+            identity=user_id, additional_claims={"role": role}
+        )
+        refresh_token = create_refresh_token(
+            identity=user_id, additional_claims={"role": role}
+        )
 
         usuario_dados = {
             "id": cliente.id,
             "nome": cliente.nome,
             "email": cliente.email,
-            "role": role
+            "role": role,
         }
 
-        response = jsonify({
-            "sucesso": True,
-            "mensagem": "Cadastro realizado com sucesso",
-            "dados": {
-                "usuario": usuario_dados
+        response = jsonify(
+            {
+                "sucesso": True,
+                "mensagem": "Cadastro realizado com sucesso",
+                "dados": {"usuario": usuario_dados},
             }
-        })
+        )
 
         set_access_cookies(response, access_token)
         set_refresh_cookies(response, refresh_token)
-        
+
         return response, 201
 
     except IntegrityError:
@@ -248,3 +279,104 @@ def register():
         db.session.rollback()
         app_logger.error("Erro no register:", exc_info=True)
         return jsonify({"erro": str(e)}), 500
+
+
+@auth_bp.route("/esqueci-senha", methods=["POST"])
+def esqueci_senha():
+
+    try:
+        try:
+            dados = EsqueciSenhaRequest(**request.get_json())
+        except Exception as e:
+            erros = formatar_erros_pydantic(e)
+            app_logger.warning(
+                "Falha estrutural de validação no payload de Esqueci a Senha",
+                extra={"erros_validacao": erros},
+            )
+            return jsonify(erros), 400
+
+        email = dados.email
+
+        # Chama o Service.
+        # Repare que não verificamos se deu True ou False para o usuário.
+        token, usuario = AuthService.gerar_token_recuperacao_senha(email)
+
+        link_recuperacao = (
+            f"{DevelopmentConfig.FRONTEND_URL}/recuperar-senha?token={token}"
+        )
+
+        sucesso = EmailService.enviar_email_recuperacao_senha(
+            email, usuario.nome, link_recuperacao
+        )
+
+        if False in sucesso:
+            data_response = {
+                "status": "erro",
+                "mensagem": "Erro ao enviar e-mail de recuperação de senha, entre em contato com o suporte.",
+            }
+        else:
+            data_response = {
+                "status": "sucesso",
+                "mensagem": "Se o e-mail estiver em nossa base de dados, um link de recuperação será enviado em instantes.",
+            }
+            app_logger.info(
+                "E-mail de recuperação de senha enviado com sucesso",
+                extra={"email": email, "data_response": data_response},
+            )
+        db.session.commit()
+        return jsonify(data_response), 200
+    except Exception as e:
+        db.session.rollback()
+        app_logger.error(
+            "Falha inesperada ao enviar e-mail de recuperação de senha",
+            extra={"email": email, "erro_detalhe": str(e)},
+            exc_info=True,
+        )
+        return (
+            jsonify(
+                {
+                    "Erro": "Erro ao enviar e-mail de recuperação de senha, entre em contato com o suporte."
+                }
+            ),
+            500,
+        )
+
+
+@auth_bp.route("/redefinir-senha", methods=["POST"])
+def redefinir_senha():
+    try:
+        try:
+            dados = RedefinirSenhaRequest(**request.get_json())
+        except Exception as e:
+            erros = formatar_erros_pydantic(e)
+            app_logger.warning(
+                "Falha estrutural de validação no payload para redefinir senha",
+                extra={"erros_validacao": erros},
+            )
+            return jsonify(erros), 400
+
+        # A validação restritiva em tempo de requisição de força do backend está protegida pelo Pydantic
+
+        # O Service faz o trabalho pesado de checar o banco e fazer o hash
+        sucesso, mensagem = AuthService.redefinir_senha(dados.token, dados.nova_senha)
+
+        if sucesso:
+            db.session.commit()
+            return jsonify({"status": "sucesso", "mensagem": mensagem}), 200
+        else:
+            db.session.rollback()
+            # Retorna 400 (Bad Request) se o token for inválido ou expirado
+            return jsonify({"status": "erro", "mensagem": mensagem}), 400
+    except Exception as e:
+        db.session.rollback()
+        app_logger.error(
+            "Falha inesperada ao redefinir senha",
+            extra={"erro_detalhe": str(e)},
+            exc_info=True,
+        )
+        return (
+            jsonify(
+                {"Erro": "Erro ao redefinir senha, entre em contato com o suporte."}
+            ),
+            500,
+        )

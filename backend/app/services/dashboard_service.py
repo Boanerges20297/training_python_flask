@@ -99,12 +99,15 @@ class DashboardService:
         data_inicio = DashboardService._period_start_from_label(periodo)
 
         # Agregação financeira feita no banco para reduzir processamento em Python.
-        total = db.session.query(func.coalesce(func.sum(Servico.preco), 0.0)).join(
-            Agendamento, Agendamento.servico_id == Servico.id
-        ).filter(
-            Agendamento.status == Agendamento.STATUS_CONCLUIDO,
-            Agendamento.data_agendamento >= data_inicio,
-        ).scalar()
+        total = (
+            db.session.query(func.coalesce(func.sum(Servico.preco), 0.0))
+            .join(Agendamento, Agendamento.servico_id == Servico.id)
+            .filter(
+                Agendamento.status == Agendamento.STATUS_CONCLUIDO,
+                Agendamento.data_agendamento >= data_inicio,
+            )
+            .scalar()
+        )
 
         return round(float(total or 0), 2)
 
@@ -113,22 +116,22 @@ class DashboardService:
         data_inicio = DashboardService._period_start_from_label(periodo)
 
         # Ranking por receita já ordenado no SQL (mais eficiente para listas grandes).
-        ganhos = db.session.query(
-            Barbeiro.id.label("barbeiro_id"),
-            Barbeiro.nome.label("barbeiro_nome"),
-            func.coalesce(func.sum(Servico.preco), 0.0).label("total"),
-        ).join(
-            Agendamento, Agendamento.barbeiro_id == Barbeiro.id
-        ).join(
-            Servico, Agendamento.servico_id == Servico.id
-        ).filter(
-            Agendamento.status == Agendamento.STATUS_CONCLUIDO,
-            Agendamento.data_agendamento >= data_inicio,
-        ).group_by(
-            Barbeiro.id, Barbeiro.nome
-        ).order_by(
-            desc("total")
-        ).all()
+        ganhos = (
+            db.session.query(
+                Barbeiro.id.label("barbeiro_id"),
+                Barbeiro.nome.label("barbeiro_nome"),
+                func.coalesce(func.sum(Servico.preco), 0.0).label("total"),
+            )
+            .join(Agendamento, Agendamento.barbeiro_id == Barbeiro.id)
+            .join(Servico, Agendamento.servico_id == Servico.id)
+            .filter(
+                Agendamento.status == Agendamento.STATUS_CONCLUIDO,
+                Agendamento.data_agendamento >= data_inicio,
+            )
+            .group_by(Barbeiro.id, Barbeiro.nome)
+            .order_by(desc("total"))
+            .all()
+        )
 
         return [
             {
@@ -153,21 +156,22 @@ class DashboardService:
         data_inicio, data_fim = DashboardService._parse_date_range(inicio, fim)
 
         # Agrupa por barbeiro no banco para retornar payload pronto para gráfico/tabela.
-        resultados = db.session.query(
-            Barbeiro.id.label("barbeiro_id"),
-            Barbeiro.nome.label("barbeiro_nome"),
-            func.count(Agendamento.id).label("total_atendimentos"),
-        ).join(
-            Agendamento, Agendamento.barbeiro_id == Barbeiro.id
-        ).filter(
-            Agendamento.status == Agendamento.STATUS_CONCLUIDO,
-            Agendamento.data_agendamento >= data_inicio,
-            Agendamento.data_agendamento <= data_fim,
-        ).group_by(
-            Barbeiro.id, Barbeiro.nome
-        ).order_by(
-            desc("total_atendimentos")
-        ).all()
+        resultados = (
+            db.session.query(
+                Barbeiro.id.label("barbeiro_id"),
+                Barbeiro.nome.label("barbeiro_nome"),
+                func.count(Agendamento.id).label("total_atendimentos"),
+            )
+            .join(Agendamento, Agendamento.barbeiro_id == Barbeiro.id)
+            .filter(
+                Agendamento.status == Agendamento.STATUS_CONCLUIDO,
+                Agendamento.data_agendamento >= data_inicio,
+                Agendamento.data_agendamento <= data_fim,
+            )
+            .group_by(Barbeiro.id, Barbeiro.nome)
+            .order_by(desc("total_atendimentos"))
+            .all()
+        )
 
         return [
             {
@@ -181,19 +185,20 @@ class DashboardService:
     @staticmethod
     def get_servico_mais_procurado():
         # first() sobre ranking DESC retorna somente o serviço líder no período global.
-        resultado = db.session.query(
-            Servico.id.label("servico_id"),
-            Servico.nome.label("nome"),
-            func.count(Agendamento.id).label("total"),
-        ).join(
-            Agendamento, Agendamento.servico_id == Servico.id
-        ).filter(
-            Agendamento.status == Agendamento.STATUS_CONCLUIDO,
-        ).group_by(
-            Servico.id, Servico.nome
-        ).order_by(
-            desc("total")
-        ).first()
+        resultado = (
+            db.session.query(
+                Servico.id.label("servico_id"),
+                Servico.nome.label("nome"),
+                func.count(Agendamento.id).label("total"),
+            )
+            .join(Agendamento, Agendamento.servico_id == Servico.id)
+            .filter(
+                Agendamento.status == Agendamento.STATUS_CONCLUIDO,
+            )
+            .group_by(Servico.id, Servico.nome)
+            .order_by(desc("total"))
+            .first()
+        )
 
         if not resultado:
             return None
@@ -207,19 +212,20 @@ class DashboardService:
     @staticmethod
     def get_cliente_mais_atendimentos():
         # Mesmo padrão do serviço mais procurado, agora agregando por cliente.
-        resultado = db.session.query(
-            Cliente.id.label("cliente_id"),
-            Cliente.nome.label("nome"),
-            func.count(Agendamento.id).label("total"),
-        ).join(
-            Agendamento, Agendamento.cliente_id == Cliente.id
-        ).filter(
-            Agendamento.status == Agendamento.STATUS_CONCLUIDO,
-        ).group_by(
-            Cliente.id, Cliente.nome
-        ).order_by(
-            desc("total")
-        ).first()
+        resultado = (
+            db.session.query(
+                Cliente.id.label("cliente_id"),
+                Cliente.nome.label("nome"),
+                func.count(Agendamento.id).label("total"),
+            )
+            .join(Agendamento, Agendamento.cliente_id == Cliente.id)
+            .filter(
+                Agendamento.status == Agendamento.STATUS_CONCLUIDO,
+            )
+            .group_by(Cliente.id, Cliente.nome)
+            .order_by(desc("total"))
+            .first()
+        )
 
         if not resultado:
             return None
@@ -251,11 +257,17 @@ class DashboardService:
         # Mapper: serializa KPIs de um barbeiro a partir da lista de agendamentos.
         # Compartilhado por get_dashboard_barbeiro e _get_barbeiros_desempenho
         # para evitar duplicação do cálculo de receita, tempo e taxa de conclusão.
-        concluidos = [a for a in agendamentos if a.status == Agendamento.STATUS_CONCLUIDO]
-        cancelados = [a for a in agendamentos if a.status == Agendamento.STATUS_CANCELADO]
+        concluidos = [
+            a for a in agendamentos if a.status == Agendamento.STATUS_CONCLUIDO
+        ]
+        cancelados = [
+            a for a in agendamentos if a.status == Agendamento.STATUS_CANCELADO
+        ]
         receita_total = sum(a.servico.preco for a in concluidos if a.servico)
         tempo_total = sum(a.servico.duracao_minutos for a in concluidos if a.servico)
-        taxa_conclusao = len(concluidos) / len(agendamentos) * 100 if agendamentos else 0
+        taxa_conclusao = (
+            len(concluidos) / len(agendamentos) * 100 if agendamentos else 0
+        )
 
         return {
             "barbeiro_id": barbeiro.id,
@@ -286,9 +298,7 @@ class DashboardService:
     @staticmethod
     def _parse_date_range(inicio, fim):
         # Expande fim para 23:59:59.999999 UTC, garantindo filtro inclusivo por dia.
-        data_inicio = datetime.strptime(inicio, "%Y-%m-%d").replace(
-            tzinfo=timezone.utc
-        )
+        data_inicio = datetime.strptime(inicio, "%Y-%m-%d").replace(tzinfo=timezone.utc)
         data_fim = (
             datetime.strptime(fim, "%Y-%m-%d").replace(tzinfo=timezone.utc)
             + timedelta(days=1)
@@ -364,30 +374,35 @@ class DashboardService:
     @staticmethod
     def _get_receita_diaria(data_inicio, data_fim):
         # Receita (concluídos) e pendências são consolidadas por dia em duas agregações.
-        receita_rows = db.session.query(
-            func.date(Agendamento.data_agendamento).label("data"),
-            func.coalesce(func.sum(Servico.preco), 0.0).label("receita"),
-            func.count(Agendamento.id).label("agendamentos_concluidos"),
-        ).join(
-            Servico, Agendamento.servico_id == Servico.id
-        ).filter(
-            Agendamento.status == Agendamento.STATUS_CONCLUIDO,
-            Agendamento.data_agendamento >= data_inicio,
-            Agendamento.data_agendamento <= data_fim,
-        ).group_by(
-            func.date(Agendamento.data_agendamento)
-        ).all()
+        receita_rows = (
+            db.session.query(
+                func.date(Agendamento.data_agendamento).label("data"),
+                func.coalesce(func.sum(Servico.preco), 0.0).label("receita"),
+                func.count(Agendamento.id).label("agendamentos_concluidos"),
+            )
+            .join(Servico, Agendamento.servico_id == Servico.id)
+            .filter(
+                Agendamento.status == Agendamento.STATUS_CONCLUIDO,
+                Agendamento.data_agendamento >= data_inicio,
+                Agendamento.data_agendamento <= data_fim,
+            )
+            .group_by(func.date(Agendamento.data_agendamento))
+            .all()
+        )
 
-        pendentes_rows = db.session.query(
-            func.date(Agendamento.data_agendamento).label("data"),
-            func.count(Agendamento.id).label("agendamentos_pendentes"),
-        ).filter(
-            Agendamento.status == Agendamento.STATUS_PENDENTE,
-            Agendamento.data_agendamento >= data_inicio,
-            Agendamento.data_agendamento <= data_fim,
-        ).group_by(
-            func.date(Agendamento.data_agendamento)
-        ).all()
+        pendentes_rows = (
+            db.session.query(
+                func.date(Agendamento.data_agendamento).label("data"),
+                func.count(Agendamento.id).label("agendamentos_pendentes"),
+            )
+            .filter(
+                Agendamento.status == Agendamento.STATUS_PENDENTE,
+                Agendamento.data_agendamento >= data_inicio,
+                Agendamento.data_agendamento <= data_fim,
+            )
+            .group_by(func.date(Agendamento.data_agendamento))
+            .all()
+        )
 
         resultado = {}
 

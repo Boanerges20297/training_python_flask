@@ -1,11 +1,42 @@
+import json
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt
 
 # Vinicius - 17/04/2026
 from app.services.dashboard_service import DashboardService
+from app.schemas.dashboard_chema import DashboardResumoSchema, DashboardBarbeiroSchema
 from app.utils.decorators import admin_required
 
+# Josue  - 16/04/2026
+# Ajustes de acesso e contrato do dashboard
+# Josue  - 17/04/2026
+
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/api/dashboard")
+
+
+def _has_dashboard_barbeiro_access(role, user_id, barbeiro_id):
+    """Permite acesso para admin ou para o próprio barbeiro."""
+    if role == "admin":
+        return True
+
+    if role == "barbeiro":
+        try:
+            return int(user_id) == barbeiro_id
+        except (TypeError, ValueError):
+            return False
+
+    return False
+
+
+def _serialize_schema(schema_class, payload):
+    """Valida e serializa payload para JSON compatível entre Pydantic v1/v2."""
+    if hasattr(schema_class, "model_validate"):
+        model = schema_class.model_validate(payload)
+        return model.model_dump(mode="json")
+
+    model = schema_class.parse_obj(payload)
+    return json.loads(model.json())
+
 
 # Ian - 15/04/2026
 # Retorna o dashboard geral da barbearia (métricas globais) acessível apenas por administradores
@@ -20,9 +51,13 @@ def get_dashboard_geral():
         return jsonify({"message": "Dias deve estar entre 1 e 365"}), 400
 
     dashboard = DashboardService.get_dashboard_geral(dias=dias)
+    dashboard_data = _serialize_schema(DashboardResumoSchema, dashboard)
 
+    # Retorna os dados
     return (
-        jsonify({"message": "Dashboard geral obtido com sucesso", "data": dashboard}),
+        jsonify(
+            {"message": "Dashboard geral obtido com sucesso", "data": dashboard_data}
+        ),
         200,
     )
 
@@ -38,8 +73,10 @@ def get_receita_periodo():
         return jsonify({"message": "Dias deve estar entre 1 e 365"}), 400
 
     dashboard = DashboardService.get_dashboard_geral(dias=dias)
+    dashboard_data = _serialize_schema(DashboardResumoSchema, dashboard)
 
-    receita_diaria = dashboard.get("receita_diaria", [])
+    # Extrai apenas a parte de receita
+    receita_diaria = dashboard_data.get("receita_diaria", [])
 
     return (
         jsonify(
@@ -61,7 +98,8 @@ def get_dashboard_barbeiro(barbeiro_id):
     role = claims.get("role")
     user_id = claims.get("sub")
 
-    if role == "barbeiro" and int(user_id) != barbeiro_id:
+    # Apenas admin ou o próprio barbeiro podem acessar
+    if not _has_dashboard_barbeiro_access(role, user_id, barbeiro_id):
         return jsonify({"message": "Acesso negado"}), 403
 
     dias = request.args.get("dias", 30, type=int)
@@ -74,9 +112,14 @@ def get_dashboard_barbeiro(barbeiro_id):
     if dashboard is None:
         return jsonify({"message": "Barbeiro não encontrado"}), 404
 
+    dashboard_data = _serialize_schema(DashboardBarbeiroSchema, dashboard)
+
     return (
         jsonify(
-            {"message": "Dashboard do barbeiro obtido com sucesso", "data": dashboard}
+            {
+                "message": "Dashboard do barbeiro obtido com sucesso",
+                "data": dashboard_data,
+            }
         ),
         200,
     )
@@ -91,7 +134,8 @@ def get_servicos_barbeiro(barbeiro_id):
     role = claims.get("role")
     user_id = claims.get("sub")
 
-    if role == "barbeiro" and int(user_id) != barbeiro_id:
+    # Apenas admin ou o próprio barbeiro podem acessar
+    if not _has_dashboard_barbeiro_access(role, user_id, barbeiro_id):
         return jsonify({"message": "Acesso negado"}), 403
 
     dias = request.args.get("dias", 30, type=int)
@@ -104,7 +148,10 @@ def get_servicos_barbeiro(barbeiro_id):
     if dashboard is None:
         return jsonify({"message": "Barbeiro não encontrado"}), 404
 
-    servicos_realizados = dashboard.get("servicos_realizados", [])
+    dashboard_data = _serialize_schema(DashboardBarbeiroSchema, dashboard)
+
+    # Retorna só os serviços (recorte do dashboard)
+    servicos_realizados = dashboard_data.get("servicos_realizados", [])
 
     return (
         jsonify(
@@ -128,8 +175,10 @@ def get_horarios_populares():
         return jsonify({"message": "Dias deve estar entre 1 e 365"}), 400
 
     dashboard = DashboardService.get_dashboard_geral(dias=dias)
+    dashboard_data = _serialize_schema(DashboardResumoSchema, dashboard)
 
-    top_5_horarios = dashboard.get("top_5_horarios", [])
+    # Extrai só os horários mais movimentados
+    top_5_horarios = dashboard_data.get("top_5_horarios", [])
 
     return (
         jsonify(

@@ -13,6 +13,21 @@ class LoginRequest(BaseModel):
     # Exige que a senha tenha no mínimo 3 caracteres (ajuste conforme a regra)
     senha: str = Field(min_length=6, max_length=256, description="Senha do usuário")
 
+
+class EsqueciSenhaRequest(BaseModel):
+    email: EmailStr = Field(
+        min_length=10, max_length=100, description="E-mail do usuário cadastrado"
+    )
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class RedefinirSenhaRequest(BaseModel):
+    token: str = Field(min_length=10, description="Token de recuperação de senha")
+    nova_senha: str = Field(
+        min_length=6, max_length=256, description="Nova senha escolhida"
+    )
+
     model_config = ConfigDict(extra="forbid")
 
 

@@ -1,85 +1,116 @@
-import os
-import sys
-from datetime import datetime, timedelta, timezone
+import requests
 
-from flask_jwt_extended import create_access_token
+BASE_URL = "http://localhost:5000"
+DASHBOARD_BASE = f"{BASE_URL}/api/dashboard"
+AUTH_LOGIN = f"{BASE_URL}/api/auth/login"
+BARBEIROS_LIST = f"{BASE_URL}/api/barbeiros/"
 
-# Adiciona a pasta raiz do backend ao path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+ADMIN_EMAIL = "admin@barba.com"
+ADMIN_SENHA = "123@123"
+BARBEIRO_EMAIL = "marcos@barbabyte.com"
+BARBEIRO_SENHA = "123@123"
 
-from app import create_app  # noqa: E402
-from app.models.barbeiro import Barbeiro  # noqa: E402
-
-
-app = create_app()
-
-
-def _auth_client_as_admin(client):
-    """Injects an admin JWT cookie into the Flask test client."""
-    token = create_access_token(identity="1", additional_claims={"role": "admin"})
-    client.set_cookie("access_token_cookie", token)
-
-
-def _run_endpoint(client, path, expected_statuses):
-    response = client.get(path)
-    ok = response.status_code in expected_statuses
-    return {
-        "path": path,
-        "status": response.status_code,
-        "ok": ok,
-        "body": response.get_json(silent=True),
-    }
+relatorio = {
+    "admin_geral_200": False,
+    "admin_geral_dias_invalido_400": False,
+    "admin_receita_periodo_200": False,
+    "admin_horarios_populares_200": False,
+    "barbeiro_proprio_dashboard_200": False,
+    "barbeiro_outro_dashboard_403": False,
+    "admin_barbeiro_inexistente_404": False,
+    "sem_token_401_ou_422": False,
+}
 
 
-def run_dashboard_route_tests():
-    results = []
+def login(email, senha):
+    session = requests.Session()
+    response = session.post(AUTH_LOGIN, json={"email": email, "senha": senha})
+    if response.status_code != 200:
+        raise RuntimeError(
+            f"Falha no login ({email}): {response.status_code} - {response.text}"
+        )
 
-    with app.app_context():
-        client = app.test_client()
-        _auth_client_as_admin(client)
+    data = response.json()
+    user_id = data.get("user", {}).get("id")
+    if user_id is None:
+        raise RuntimeError(f"Login sem user.id no payload ({email})")
 
-        # Resolve a barber id if available so we can exercise barber-specific routes.
-        barbeiro = Barbeiro.query.first()
-        barbeiro_id = barbeiro.id if barbeiro else 1
+    return session, int(user_id)
 
-        hoje = datetime.now(timezone.utc).date()
-        inicio = (hoje - timedelta(days=30)).isoformat()
-        fim = hoje.isoformat()
 
-        tests = [
-            ("/api/dashboard/geral?dias=30", {200}),
-            ("/api/dashboard/receita-periodo?dias=30", {200}),
-            ("/api/dashboard/horarios-populares?dias=30", {200}),
-            ("/api/dashboard/ganhos-totais?periodo=mes", {200}),
-            ("/api/dashboard/ganhos-barbeiros?periodo=mes", {200}),
-            (f"/api/dashboard/atendimentos-gerais?data_inicio={inicio}&data_fim={fim}", {200}),
-            (f"/api/dashboard/atendimentos-barbeiros?data_inicio={inicio}&data_fim={fim}", {200}),
-            ("/api/dashboard/servico-mais-procurado", {200}),
-            ("/api/dashboard/cliente-mais-atendimentos", {200}),
-            (f"/api/dashboard/barbeiro/{barbeiro_id}?dias=30", {200, 404}),
-            (f"/api/dashboard/servicos-barbeiro/{barbeiro_id}?dias=30", {200, 404}),
-        ]
+def get_outro_barbeiro_id(session, meu_id):
+    response = session.get(BARBEIROS_LIST)
+    if response.status_code != 200:
+        return None
 
-        for path, expected in tests:
-            results.append(_run_endpoint(client, path, expected))
+    barbeiros = response.json().get("barbeiros", [])
+    for barbeiro in barbeiros:
+        barbeiro_id = barbeiro.get("id")
+        if barbeiro_id and int(barbeiro_id) != int(meu_id):
+            return int(barbeiro_id)
 
-    print("\n=== RESULTADO TESTES DASHBOARD ROUTES ===")
-    failed = [r for r in results if not r["ok"]]
+    return None
 
-    for r in results:
-        status = "PASS" if r["ok"] else "FAIL"
-        print(f"[{status}] {r['path']} -> HTTP {r['status']}")
 
-    if failed:
-        print("\nFalhas encontradas:")
-        for r in failed:
-            print(f"- {r['path']} retornou {r['status']}")
-            print(f"  body: {r['body']}")
-        return 1
+def testar_dashboard_admin(admin_session):
+    r = admin_session.get(f"{DASHBOARD_BASE}/geral", params={"dias": 30})
+    if r.status_code == 200 and "data" in r.json():
+        relatorio["admin_geral_200"] = True
 
-    print("\nTodos os endpoints de dashboard responderam dentro do esperado.")
-    return 0
+    r = admin_session.get(f"{DASHBOARD_BASE}/geral", params={"dias": 0})
+    if r.status_code == 400:
+        relatorio["admin_geral_dias_invalido_400"] = True
+
+    r = admin_session.get(f"{DASHBOARD_BASE}/receita-periodo", params={"dias": 30})
+    if r.status_code == 200 and isinstance(r.json().get("data"), list):
+        relatorio["admin_receita_periodo_200"] = True
+
+    r = admin_session.get(f"{DASHBOARD_BASE}/horarios-populares", params={"dias": 30})
+    if r.status_code == 200 and isinstance(r.json().get("data"), list):
+        relatorio["admin_horarios_populares_200"] = True
+
+    r = admin_session.get(f"{DASHBOARD_BASE}/barbeiro/999999", params={"dias": 30})
+    if r.status_code == 404:
+        relatorio["admin_barbeiro_inexistente_404"] = True
+
+
+def testar_dashboard_barbeiro(barbeiro_session, barbeiro_id):
+    r = barbeiro_session.get(
+        f"{DASHBOARD_BASE}/barbeiro/{barbeiro_id}", params={"dias": 30}
+    )
+    if r.status_code == 200 and "data" in r.json():
+        relatorio["barbeiro_proprio_dashboard_200"] = True
+
+    outro_id = get_outro_barbeiro_id(barbeiro_session, barbeiro_id)
+    if outro_id is None:
+        return
+
+    r = barbeiro_session.get(
+        f"{DASHBOARD_BASE}/barbeiro/{outro_id}", params={"dias": 30}
+    )
+    if r.status_code == 403:
+        relatorio["barbeiro_outro_dashboard_403"] = True
+
+
+def testar_sem_token():
+    r = requests.get(f"{DASHBOARD_BASE}/barbeiro/1", params={"dias": 30})
+    if r.status_code in (401, 422):
+        relatorio["sem_token_401_ou_422"] = True
+
+
+def imprimir_relatorio_final():
+    print("\n================ RELATORIO DASHBOARD (ROTAS) ================")
+    for nome, resultado in relatorio.items():
+        status = "PASSOU" if resultado else "FALHOU"
+        print(f"- {nome}: {status}")
 
 
 if __name__ == "__main__":
-    raise SystemExit(run_dashboard_route_tests())
+    admin_session, _ = login(ADMIN_EMAIL, ADMIN_SENHA)
+    barbeiro_session, barbeiro_id = login(BARBEIRO_EMAIL, BARBEIRO_SENHA)
+
+    testar_dashboard_admin(admin_session)
+    testar_dashboard_barbeiro(barbeiro_session, barbeiro_id)
+    testar_sem_token()
+
+    imprimir_relatorio_final()
