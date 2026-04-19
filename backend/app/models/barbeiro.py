@@ -1,12 +1,14 @@
 from app import db
 from datetime import datetime
 from app.models.mixins import HashSenhaMixin
-#josue minima alteracao
+
+
+# josue minima alteracao
 class Barbeiro(HashSenhaMixin, db.Model):
     """Modelo de Barbeiro - profissional que oferece serviços"""
-    
-    __tablename__ = 'barbeiros'
-    
+
+    __tablename__ = "barbeiros"
+
     # Colunas
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False)
@@ -15,11 +17,18 @@ class Barbeiro(HashSenhaMixin, db.Model):
     telefone = db.Column(db.String(20), nullable=False)
     data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
     ativo = db.Column(db.Boolean, default=True)  # Se está trabalhando
-    #Vinicius
-    #Senha hash removida para ser gerenciada pelo Mixin
+    # Vinicius
+    # Senha hash removida para ser gerenciada pelo Mixin
     # Relacionamentos
-    agendamentos = db.relationship('Agendamento', backref='barbeiro', lazy=True)
-    servicos = db.relationship('Servico', secondary='barbeiro_servico', backref=db.backref('barbeiros', lazy='dynamic'), lazy=True)
-    
+    agendamentos = db.relationship("Agendamento", backref="barbeiro", lazy=True)
+    # Vinicius - 19/04/2026
+    # Adicionado relacionamento many-to-many com Servico
+    servicos = db.relationship(
+        "Servico",
+        secondary="barbeiro_servico",
+        backref=db.backref("barbeiros", lazy="dynamic"),
+        lazy=True,
+    )
+
     def __repr__(self):
-        return f'<Barbeiro {self.nome}>'
+        return f"<Barbeiro {self.nome}>"

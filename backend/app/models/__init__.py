@@ -6,4 +6,6 @@ from .agendamento import Agendamento
 from .admin import Admin
 from .barbeiro_servico import BarbeiroServico
 
-__all__ = ['Cliente', 'Barbeiro', 'Servico', 'Agendamento', 'Admin', 'BarbeiroServico']
+# Vinicius - 19/04/2026
+# Adicionado BarbeiroServico na lista de exportação
+__all__ = ["Cliente", "Barbeiro", "Servico", "Agendamento", "Admin", "BarbeiroServico"]

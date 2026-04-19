@@ -399,6 +399,8 @@ def buscar_agendamentos_barbeiro(id):
         )
 
 
+# Vinicius - 19/04/2026
+# Rota para listar os serviços de um barbeiro
 @barbeiros_bp.route("/<int:id>/servicos", methods=["GET"])
 @jwt_required()
 def listar_servicos_barbeiro(id):
@@ -421,6 +423,8 @@ def listar_servicos_barbeiro(id):
         return jsonify({"erro": "Erro ao listar serviços do barbeiro: " + str(e)}), 500
 
 
+# Vinicius - 19/04/2026
+# Rota para associar serviços a um barbeiro
 @barbeiros_bp.route("/<int:id>/servicos", methods=["POST"])
 @jwt_required()
 @admin_required
@@ -463,6 +467,8 @@ def associar_servicos_barbeiro(id):
         return jsonify({"erro": "Erro ao associar serviços: " + str(e)}), 500
 
 
+# Vinicius - 19/04/2026
+# Rota para desassociar serviços de um barbeiro
 @barbeiros_bp.route("/<int:id>/servicos", methods=["DELETE"])
 @jwt_required()
 @admin_required
