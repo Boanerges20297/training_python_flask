@@ -32,6 +32,10 @@ class Agendamento(db.Model):
 
     # Observações (por exemplo: "Alergia a certos produtos")
     observacoes = db.Column(db.Text(500))
+    
+    # Ian - 19/04/2026
+    # Indica se o agendamento já foi pago
+    pago = db.Column(db.Boolean, default=False)
 
     def __repr__(self):
         return f"<Agendamento {self.id} - {self.status}>"
