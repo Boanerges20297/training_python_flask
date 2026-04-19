@@ -82,7 +82,8 @@ def listar_servicos():
                 "nome": s.nome,
                 "preco": s.preco,
                 "duracao_minutos": s.duracao_minutos,
-                "barbeiro_id": s.barbeiro_id,  # Gabriel (09/04/2026) - Adicionado para que o frontend possa receber o id do barbeiro
+                # Vinicius - 19/04/2026
+                # Removido o campo barbeiro_id, agora essa informação é enviada por outra rota
             }
             # Vinicius - 04/04/2026
             # Adicionado o .items para que o list comprehension receba os itens da paginação
@@ -102,7 +103,7 @@ def listar_servicos():
                     "total_paginas": servicos.pages,
                     "tem_proxima": servicos.has_next,
                     "tem_pagina_anterior": servicos.has_prev,
-                }
+                },
             }
         )
 
@@ -168,7 +169,7 @@ def criar_servico():
                             "preco": servico.preco,
                             "duracao_minutos": servico.duracao_minutos,
                         }
-                    }
+                    },
                 }
             ),
             201,
