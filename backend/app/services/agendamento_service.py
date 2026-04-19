@@ -101,8 +101,12 @@ class AgendamentoService:
         if Cliente.query.get(dados.cliente_id) is None:
             raise ValueError("Cliente não encontrado.")
 
-        if Barbeiro.query.get(dados.barbeiro_id) is None:
+        barbeiro = Barbeiro.query.get(dados.barbeiro_id)
+        if barbeiro is None:
             raise ValueError("Barbeiro não encontrado.")
+
+        if servico not in barbeiro.servicos:
+            raise ValueError("O barbeiro selecionado não oferece este serviço.")
 
         inicio_proposto = dados.data_agendamento
         termino_proposto = inicio_proposto + timedelta(minutes=servico.duracao_minutos)
@@ -281,10 +285,8 @@ class AgendamentoService:
             barbeiro_proposto_id = dados_para_atualizar.get(
                 "barbeiro_id", agendamento_atual.barbeiro_id
             )
-            if (
-                "barbeiro_id" in dados_para_atualizar
-                and Barbeiro.query.get(barbeiro_proposto_id) is None
-            ):
+            barbeiro_proposto = Barbeiro.query.get(barbeiro_proposto_id)
+            if barbeiro_proposto is None:
                 raise ValueError("Barbeiro proposto não encontrado.")
 
             servico_proposto_id = dados_para_atualizar.get(
@@ -293,6 +295,9 @@ class AgendamentoService:
             servico_proposto = Servico.query.get(servico_proposto_id)
             if servico_proposto is None:
                 raise ValueError("Serviço proposto não encontrado.")
+                
+            if servico_proposto not in barbeiro_proposto.servicos:
+                raise ValueError("O barbeiro proposto não oferece este serviço.")
 
             inicio_proposto = dados_para_atualizar.get(
                 "data_agendamento", agendamento_atual.data_agendamento

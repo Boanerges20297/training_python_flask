@@ -12,9 +12,7 @@ class Servico(db.Model):
     preco = db.Column(db.Float, nullable=False)  # Em reais
     duracao_minutos = db.Column(db.Integer, nullable=False)  # Quanto tempo leva
     
-    # Chave estrangeira - qual barbeiro oferece este serviço
-    barbeiro_id = db.Column(db.Integer, db.ForeignKey('barbeiros.id'), nullable=False)
-    
+    # A chave estrangeira 'barbeiro_id' foi removida para tornar o serviço global.    
     # Relacionamentos
     agendamentos = db.relationship('Agendamento', backref='servico', lazy=True)
     

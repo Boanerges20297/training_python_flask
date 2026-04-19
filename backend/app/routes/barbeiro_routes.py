@@ -3,6 +3,7 @@
 from flask import Blueprint, jsonify, request
 from app.models.barbeiro import Barbeiro
 from app.models.agendamento import Agendamento
+from app.models.servico import Servico
 from app import db
 from app.utils.decorators import admin_required, barbeiro_required
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
@@ -66,7 +67,7 @@ def listar_barbeiros():
         # Vinicius - 09/04/2026
         # Caso seja passado servicoId, retorna uma lista, pois pode ter varios barbeiros com o mesmo servico
         if servicoId:
-            query = query.filter_by(servico_id=servicoId)
+            query = query.filter(Barbeiro.servicos.any(id=servicoId))
 
         # Vinicius - 04/04/2026
         # Troca do nome da variavel para 'clientes' para melhor identificação
@@ -396,3 +397,108 @@ def buscar_agendamentos_barbeiro(id):
             jsonify({"erro": "Erro ao buscar agendamentos do barbeiro: " + str(e)}),
             500,
         )
+
+
+@barbeiros_bp.route("/<int:id>/servicos", methods=["GET"])
+@jwt_required()
+def listar_servicos_barbeiro(id):
+    try:
+        barbeiro = Barbeiro.query.get(id)
+        if not barbeiro:
+            return jsonify({"erro": "Barbeiro não encontrado"}), 404
+
+        servicos_dict = [
+            {
+                "id": s.id,
+                "nome": s.nome,
+                "preco": s.preco,
+                "duracao_minutos": s.duracao_minutos,
+            }
+            for s in barbeiro.servicos
+        ]
+        return jsonify({"servicos": servicos_dict, "total": len(servicos_dict)}), 200
+    except Exception as e:
+        return jsonify({"erro": "Erro ao listar serviços do barbeiro: " + str(e)}), 500
+
+
+@barbeiros_bp.route("/<int:id>/servicos", methods=["POST"])
+@jwt_required()
+@admin_required
+def associar_servicos_barbeiro(id):
+    try:
+        body = request.get_json() or {}
+        servicos_ids = body.get("servicos_ids", [])
+
+        if not isinstance(servicos_ids, list):
+            return jsonify({"erro": "'servicos_ids' deve ser uma lista de IDs"}), 400
+
+        barbeiro = Barbeiro.query.get(id)
+        if not barbeiro:
+            return jsonify({"erro": "Barbeiro não encontrado"}), 404
+
+        if not servicos_ids:
+            return jsonify({"erro": "Nenhum ID de serviço fornecido"}), 400
+
+        servicos = Servico.query.filter(Servico.id.in_(servicos_ids)).all()
+        # Verificar se algum não foi encontrado (opcional, aqui ignoramos os inexistentes)
+
+        adicionados = 0
+        for servico in servicos:
+            if servico not in barbeiro.servicos:
+                barbeiro.servicos.append(servico)
+                adicionados += 1
+
+        db.session.commit()
+
+        return (
+            jsonify(
+                {
+                    "msg": f"{adicionados} serviço(s) associado(s) ao barbeiro com sucesso"
+                }
+            ),
+            201,
+        )
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"erro": "Erro ao associar serviços: " + str(e)}), 500
+
+
+@barbeiros_bp.route("/<int:id>/servicos", methods=["DELETE"])
+@jwt_required()
+@admin_required
+def desassociar_servicos_barbeiro(id):
+    try:
+        body = request.get_json() or {}
+        servicos_ids = body.get("servicos_ids", [])
+
+        if not isinstance(servicos_ids, list):
+            return jsonify({"erro": "'servicos_ids' deve ser uma lista de IDs"}), 400
+
+        barbeiro = Barbeiro.query.get(id)
+        if not barbeiro:
+            return jsonify({"erro": "Barbeiro não encontrado"}), 404
+
+        if not servicos_ids:
+            return jsonify({"erro": "Nenhum ID de serviço fornecido"}), 400
+
+        servicos = Servico.query.filter(Servico.id.in_(servicos_ids)).all()
+
+        removidos = 0
+        for servico in servicos:
+            if servico in barbeiro.servicos:
+                barbeiro.servicos.remove(servico)
+                removidos += 1
+
+        db.session.commit()
+
+        return (
+            jsonify(
+                {
+                    "msg": f"{removidos} serviço(s) desassociado(s) do barbeiro com sucesso"
+                }
+            ),
+            200,
+        )
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"erro": "Erro ao desassociar serviços: " + str(e)}), 500

@@ -19,7 +19,7 @@ class Barbeiro(HashSenhaMixin, db.Model):
     #Senha hash removida para ser gerenciada pelo Mixin
     # Relacionamentos
     agendamentos = db.relationship('Agendamento', backref='barbeiro', lazy=True)
-    servicos = db.relationship('Servico', backref='barbeiro', lazy=True)
+    servicos = db.relationship('Servico', secondary='barbeiro_servico', backref=db.backref('barbeiros', lazy='dynamic'), lazy=True)
     
     def __repr__(self):
         return f'<Barbeiro {self.nome}>'

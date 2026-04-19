@@ -82,7 +82,6 @@ def listar_servicos():
                 "nome": s.nome,
                 "preco": s.preco,
                 "duracao_minutos": s.duracao_minutos,
-                "barbeiro_id": s.barbeiro_id,  # Gabriel (09/04/2026) - Adicionado para que o frontend possa receber o id do barbeiro
             }
             # Vinicius - 04/04/2026
             # Adicionado o .items para que o list comprehension receba os itens da paginação
