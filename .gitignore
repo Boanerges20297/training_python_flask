@@ -24,3 +24,6 @@
 
 # Logs
 **/logs/
+
+# Keys / Secrets
+*.pem
