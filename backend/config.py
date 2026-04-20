@@ -33,6 +33,19 @@ class Config:
     # Variavel para configurar se os headers do rate limiter devem ser habilitados
     RATELIMIT_HEADERS_ENABLED = True
 
+    # Vinicius - 19/04/2026
+    # Chaves assimetricas RSA implementadas
+    # Carregamento estrito via variaveis de ambiente (RS256)
+    JWT_PRIVATE_KEY = os.environ.get("JWT_PRIVATE_KEY")
+    if JWT_PRIVATE_KEY:
+        JWT_PRIVATE_KEY = JWT_PRIVATE_KEY.replace("\\n", "\n")
+
+    JWT_PUBLIC_KEY = os.environ.get("JWT_PUBLIC_KEY")
+    if JWT_PUBLIC_KEY:
+        JWT_PUBLIC_KEY = JWT_PUBLIC_KEY.replace("\\n", "\n")
+
+    JWT_ALGORITHM = "RS256"
+
     JWT_TOKEN_LOCATION = ["cookies"]
     JWT_ACCESS_COOKIE_PATH = "/"
     JWT_REFRESH_COOKIE_PATH = "/api/auth/refresh"
@@ -76,7 +89,7 @@ class DevelopmentConfig(Config):
     SECURITY_JWT_ENABLED = False
     JWT_COOKIE_SAMESITE = "Lax"
     JWT_COOKIE_SECURE = False
-    JWT_SECRET_KEY = "chave-secreta-do-jwt-mudar-em-producao"
+
     JWT_COOKIE_CSRF_PROTECT = True
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=999)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=999)
@@ -102,7 +115,6 @@ class ProductionConfig(Config):
     SECURITY_JWT_ENABLED = True
     JWT_COOKIE_SECURE = True
     JWT_COOKIE_SAMESITE = "Strict"
-    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
     JWT_COOKIE_CSRF_PROTECT = True
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=15)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=7)

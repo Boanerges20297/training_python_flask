@@ -1,3 +1,6 @@
+# Vinicius
+# Rotas de autenticação
+
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import (
     set_access_cookies,
@@ -166,6 +169,7 @@ def logout():
         )
 
 
+# Felipe
 @auth_bp.route("/protected", methods=["GET"])
 @jwt_required()
 def check_session():
@@ -213,6 +217,7 @@ def check_session():
         )
 
 
+# Felipe
 @auth_bp.route("/register", methods=["POST"])
 def register():
     """
@@ -281,6 +286,8 @@ def register():
         return jsonify({"erro": str(e)}), 500
 
 
+# Vinicius - 18/04/2026
+# Fluxo de recuperação de senha
 @auth_bp.route("/esqueci-senha", methods=["POST"])
 def esqueci_senha():
 
@@ -342,6 +349,8 @@ def esqueci_senha():
         )
 
 
+# Vinicius - 18/04/2026
+# Fluxo de redefinição de senha
 @auth_bp.route("/redefinir-senha", methods=["POST"])
 def redefinir_senha():
     try:
