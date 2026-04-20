@@ -47,23 +47,41 @@ Foi implementado um script nativo caso a equipe de desenvolvimento perca (ou pre
 
 ---
 
-## 4. Salvando no Arquivo `.env`
+## 4. Identificadores de Roteamento Extrito (Issuer e Audience)
 
-A sua cópia local (bem como a Nuvem, quando for implantado) requer que você extraia o conteúdo gerado em bloco longo e o amasse em uma única linha, usando "aspas" para delimitar.
+Para blindar o sistema contra reaproveitamento malicioso de tokens (ex: um usuário usar o token do App Celular para invadir rotas exclusivas do Site Web da Administração), foi implementada a **Validação Estrutural de Crachás**.
+
+Além da criptografia, o payload do token JWT leva duas identificações abertas (Claims):
+* **`iss` (Issuer / Emissor):** Quem fabricou o token. (ex: `barbabyte-api`)
+* **`aud` (Audience / Audiência):** Para qual interface ele é destinado. (ex: `barbabyte-frontend-web`)
+
+**Como funciona na prática?**
+No momento do login/registro (`auth_service.py` e `auth_routes.py`), essas palavras são injetadas no payload recém-criado puxando a string de `current_app.config`.
+
+No arquivo de configuração, se o token recebido pelo usuário não exibir **exatamente** as mesmas palavras, o Flask-JWT o recusa silenciosamente.
+
+---
+
+## 5. Salvando no Arquivo `.env` (Regra Final)
+
+Para fechar o pacote, todos esses fatores de segurança devem obrigatoriamente estar declarados no arquivo `.env` para que o servidor Flask consiga iniciar.
 
 **Formato exigido no `.env`**:
-Abaixo está o modelo limpo, onde cada nova quebra de linha real é substituída voluntariamente por `\n`:
 
 ```env
-# Exemplo correto onde tudo está contido em apenas 1 linha por variável:
+# Chaves Matematicas (RSA) em 1 linha (substituindo o ENTER por \\n voluntariamente):
 JWT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvAIB...<resto_da_hash>...\n-----END PRIVATE KEY-----"
-
 JWT_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----\nMIIBIjAN...<resto_da_hash>...\n-----END PUBLIC KEY-----"
+
+# Chaves de Audiencia (Identificadores):
+JWT_ISSUER="barbabyte-api"
+JWT_AUDIENCE="barbabyte-frontend-web"
 ```
 
 ---
 
-## 5. Benefícios Imediatos
+## 6. Benefícios Imediatos
 
 1. **Escalabilidade Total**: Se futuramente adotar a lógica de microsserviços (ex: desacoplar Relatórios de Agendamentos), apenas o serviço de Autenticação retém o `JWT_PRIVATE_KEY`, enquanto os demais consomem puramente o Public.
-2. **Prevenção de Ataques (RCE / Path Traversal)**: Redução drástica da "Superfície de Ataque". Invadir um serviço adjacente do Backend revelaria apenas a Chave Pública, anulando a escalada de privilégios.
+2. **Prevenção de Ataques de Reaproveitamento**: As variáveis de Audience inibem que tokens feitos para serviços C sejam usados no serviço B.
+3. **Prevenção de Vazamento**: Redução drástica da "Superfície de Ataque". Invadir um serviço web adjacente revelaria apenas a Chave Pública, anulando escaladas para roubar o servidor central.
