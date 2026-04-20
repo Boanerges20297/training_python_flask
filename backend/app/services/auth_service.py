@@ -1,3 +1,4 @@
+from flask import current_app
 from flask_jwt_extended import create_access_token, create_refresh_token
 from app.models.admin import Admin
 from app.models.barbeiro import Barbeiro
@@ -59,7 +60,11 @@ class AuthService:
             raise AuthServiceException("Credenciais inválidas")
 
         user_id = str(user.id)
-        additional_claims = {"role": role}
+        additional_claims = {
+            "role": role,
+            "iss": current_app.config["JWT_DECODE_ISSUER"],
+            "aud": current_app.config["JWT_DECODE_AUDIENCE"],
+        }
 
         # O Serviço cria os tokens puros, mas NÃO mexe em cookies
         access_token = create_access_token(
@@ -134,7 +139,12 @@ class AuthService:
     def renew_access_token(current_user_id: str, role: str) -> str:
         """Gera um novo access token baseado nos dados do refresh token."""
         return create_access_token(
-            identity=current_user_id, additional_claims={"role": role}
+            identity=current_user_id,
+            additional_claims={
+                "role": role,
+                "iss": current_app.config["JWT_DECODE_ISSUER"],
+                "aud": current_app.config["JWT_DECODE_AUDIENCE"],
+            },
         )
 
     # Vinicius 11/04/2026

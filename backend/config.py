@@ -46,6 +46,11 @@ class Config:
 
     JWT_ALGORITHM = "RS256"
 
+    # Vinicius - 19/04/2026
+    # Validação estrita de Emissor (Issuer) e Audiência (Audience)
+    JWT_DECODE_ISSUER = os.environ.get("JWT_ISSUER")
+    JWT_DECODE_AUDIENCE = os.environ.get("JWT_AUDIENCE")
+
     JWT_TOKEN_LOCATION = ["cookies"]
     JWT_ACCESS_COOKIE_PATH = "/"
     JWT_REFRESH_COOKIE_PATH = "/api/auth/refresh"

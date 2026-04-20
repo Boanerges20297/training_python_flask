@@ -1,7 +1,7 @@
 # Vinicius
 # Rotas de autenticação
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import (
     set_access_cookies,
     set_refresh_cookies,
@@ -251,10 +251,20 @@ def register():
         role = "cliente"
 
         access_token = create_access_token(
-            identity=user_id, additional_claims={"role": role}
+            identity=user_id,
+            additional_claims={
+                "role": role,
+                "iss": current_app.config["JWT_DECODE_ISSUER"],
+                "aud": current_app.config["JWT_DECODE_AUDIENCE"],
+            },
         )
         refresh_token = create_refresh_token(
-            identity=user_id, additional_claims={"role": role}
+            identity=user_id,
+            additional_claims={
+                "role": role,
+                "iss": current_app.config["JWT_DECODE_ISSUER"],
+                "aud": current_app.config["JWT_DECODE_AUDIENCE"],
+            },
         )
 
         usuario_dados = {
