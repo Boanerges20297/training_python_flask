@@ -65,6 +65,20 @@ class ClienteUpdateSchema(BaseModel):
         max_length=100,
         description="Senha do serviço (mínimo 6 caracteres)",
     )
+    # Ian - 19/04/2026
+    # Adiciona status do cliente (ativo, ausente, devedor)
+    status: str | None = Field(
+        default=None, 
+        pattern="^(ativo|ausente|devedor)$",
+        description="Status do cliente: ativo, ausente ou devedor"
+    )
+
+    # Adiciona divida total do cliente
+    divida_total: float | None = Field(
+        default=None,
+        ge=0.0,
+        description="Total em dívida do cliente"
+    )
 
     # Adicionado 'extra': 'forbid' para que o campo não aceite campos extras
     # Vinicius - 09/04/2026
