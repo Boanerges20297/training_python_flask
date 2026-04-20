@@ -9,9 +9,10 @@ from app.schemas.agendamento_schema import (
     AgendamentoCreate,
     AgendamentoUpdateSchema,
     AgendamentoUpdateStatusSchema,
-    AgendamentoListResponse,
     AgendamentoResponse,
 )
+from app.utils.pagination import formatar_retorno_paginacao
+
 from app.services.agendamento_service import (
     AgendamentoService,
     ConflitoHorarioError,
@@ -142,22 +143,15 @@ def listar_agendamento():
         )
         # Vinicius - 11/04/2026
         # Transformado o objeto agendamento em dicionário padronizado pelo schema
-        response = AgendamentoListResponse.model_validate(
-            {
-                "pagina": agendamentos.page,
-                "per_page": agendamentos.per_page,
-                "total": agendamentos.total,
-                "total_paginas": agendamentos.pages,
-                "tem_proxima": agendamentos.has_next,
-                "tem_pagina_anterior": agendamentos.has_prev,
-                "items": [
-                    AgendamentoResponse.model_validate(agendamento)
-                    for agendamento in agendamentos.items
-                ],
-            }
-        )
+        agendamentos_dicts = [
+            AgendamentoResponse.model_validate(agendamento).model_dump()
+            for agendamento in agendamentos.items
+        ]
 
-        return jsonify({"sucesso": True, "dados": response.model_dump()}), 200
+        return jsonify({
+            "sucesso": True,
+            "dados": formatar_retorno_paginacao(agendamentos_dicts, agendamentos.total, agendamentos.page, agendamentos.per_page)
+        }), 200
 
     except Exception as e:
         app_logger.error(

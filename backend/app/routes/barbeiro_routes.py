@@ -1,6 +1,7 @@
 # Vinicius - 09/04/2026
 # Criação do arquivo de rotas do barbeiro para CRUD
 from flask import Blueprint, jsonify, request
+import json
 from app.models.barbeiro import Barbeiro
 from app.models.agendamento import Agendamento
 from app.models.servico import Servico
@@ -11,6 +12,7 @@ from app.schemas.barbeiro_schema import BarbeiroSchema, BarbeiroUpdateSchema
 from app.utils.error_formatter import formatar_erros_pydantic
 from app.extensions import app_logger
 from datetime import datetime
+from app.utils.pagination import formatar_retorno_paginacao
 
 barbeiros_bp = Blueprint("barbeiros", __name__, url_prefix="/api/barbeiros")
 
@@ -90,16 +92,9 @@ def listar_barbeiros():
         return jsonify(
             {
                 "sucesso": True,
-                "dados": {
-                    "items": barbeiros_dict,
-                    "total": barbeiros.total,
-                    "items_nessa_pagina": len(barbeiros_dict),
-                    "pagina": barbeiros.page,
-                    "per_page": barbeiros.per_page,
-                    "total_paginas": barbeiros.pages,
-                    "tem_proxima": barbeiros.has_next,
-                    "tem_pagina_anterior": barbeiros.has_prev,
-                }
+                "dados": formatar_retorno_paginacao(
+                    barbeiros_dict, barbeiros.total, barbeiros.page, barbeiros.per_page
+                ),
             }
         )
     except Exception as e:
@@ -159,7 +154,7 @@ def criar_barbeiro():
                             "email": barbeiro.email,
                             "especialidade": barbeiro.especialidade,
                         }
-                    }
+                    },
                 }
             ),
             201,
@@ -169,17 +164,30 @@ def criar_barbeiro():
         # Adicionado log para monitorar erros na criação de barbeiros
         db.session.rollback()
         error_msg = str(e)
-        
+
         # Tratar erro de e-mail duplicado (Felipe)
         if "UNIQUE constraint failed" in error_msg or "Duplicate entry" in error_msg:
-             return jsonify({"sucesso": False, "erro": "Este e-mail já está sendo usado por outro profissional."}), 409
+            return (
+                jsonify(
+                    {
+                        "sucesso": False,
+                        "erro": "Este e-mail já está sendo usado por outro profissional.",
+                    }
+                ),
+                409,
+            )
 
         app_logger.error(
             "Erro estrutural 500 ao criar barbeiro",
             extra={"erro_detalhe": error_msg},
             exc_info=True,
         )
-        return jsonify({"sucesso": False, "erro": "Erro ao incluir barbeiro: " + error_msg}), 500
+        return (
+            jsonify(
+                {"sucesso": False, "erro": "Erro ao incluir barbeiro: " + error_msg}
+            ),
+            500,
+        )
 
 
 # Vinicius - 08/04/2026
@@ -246,8 +254,6 @@ def editar_barbeiro(id):
             },
         )
 
-
-
         return {
             "sucesso": True,
             "mensagem": "Barbeiro atualizado com sucesso!",
@@ -295,7 +301,10 @@ def deletar_barbeiro(id):
                 "data_hora_atual": datetime.utcnow(),
             },
         )
-        return jsonify({"sucesso": True, "mensagem": "Barbeiro deletado com sucesso"}), 200
+        return (
+            jsonify({"sucesso": True, "mensagem": "Barbeiro deletado com sucesso"}),
+            200,
+        )
     except Exception as e:
         # Vinicius - 16/04/2026
         # Adicionado log para monitorar erros na deleção de barbeiros
@@ -328,7 +337,7 @@ def buscar_barbeiro(id):
             "telefone": barbeiro.telefone,
             "email": barbeiro.email,
             "especialidade": barbeiro.especialidade,
-            "ativo": barbeiro.ativo
+            "ativo": barbeiro.ativo,
         }
         return jsonify({"dados": {"barbeiro": barbeiro_dict}, "sucesso": True}), 200
     except Exception as e:
@@ -400,15 +409,12 @@ def buscar_agendamentos_barbeiro(id):
             jsonify(
                 {
                     "sucesso": True,
-                    "dados": {
-                        "items": agendamentos_dict,
-                        "total": agendamentos.total,
-                        "pagina": agendamentos.page,
-                        "per_page": agendamentos.per_page,
-                        "total_paginas": agendamentos.pages,
-                        "tem_proxima": agendamentos.has_next,
-                        "tem_pagina_anterior": agendamentos.has_prev,
-                    }
+                    "dados": formatar_retorno_paginacao(
+                        agendamentos_dict,
+                        agendamentos.total,
+                        agendamentos.page,
+                        agendamentos.per_page,
+                    ),
                 }
             ),
             200,
@@ -529,3 +535,48 @@ def desassociar_servicos_barbeiro(id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"erro": "Erro ao desassociar serviços: " + str(e)}), 500
+
+
+# Vinicius - 20/04/2026
+# Rota para retornar o ranking de desempenho dos barbeiros (removido do dashboard geral)
+@barbeiros_bp.route("/ranking", methods=["GET"])
+@jwt_required()
+@admin_required
+def obter_ranking_barbeiros():
+    try:
+        dias = request.args.get("dias", 30, type=int)
+
+        if dias < 1 or dias > 365:
+            return jsonify({"message": "Dias deve estar entre 1 e 365"}), 400
+
+        from app.services.barbeiro_service import BarbeiroService
+        from app.schemas.barbeiro_schema import BarbeiroDesempenhoSchema
+
+        ranking_data = BarbeiroService.obter_ranking_desempenho(dias=dias)
+
+        dados_validados = []
+        for item in ranking_data:
+            if hasattr(BarbeiroDesempenhoSchema, "model_validate"):
+                dados_validados.append(
+                    BarbeiroDesempenhoSchema.model_validate(item).model_dump(
+                        mode="json"
+                    )
+                )
+            else:
+                dados_validados.append(
+                    json.loads(BarbeiroDesempenhoSchema.parse_obj(item).json())
+                )
+
+        return (
+            jsonify(
+                {
+                    "message": "Ranking de barbeiros obtido com sucesso",
+                    "data": dados_validados,
+                }
+            ),
+            200,
+        )
+
+    except Exception as e:
+        app_logger.error("Erro ao obter ranking de barbeiros", exc_info=True)
+        return jsonify({"erro": f"Erro interno ao listar ranking: {str(e)}"}), 500

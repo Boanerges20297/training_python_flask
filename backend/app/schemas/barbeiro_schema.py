@@ -3,6 +3,7 @@
 
 from pydantic import BaseModel, Field, EmailStr, field_validator
 import re
+from typing import List
 
 
 class BarbeiroSchema(BaseModel):
@@ -31,14 +32,15 @@ class BarbeiroSchema(BaseModel):
     @field_validator("telefone", mode="before")
     @classmethod
     def validar_telefone(cls, value):
-        if not value: return value
+        if not value:
+            return value
         # Remove caracteres comuns de máscara para validar apenas os números
         value = re.sub(r"\D", "", value)
         value = value.strip()
-        
+
         if not (10 <= len(value) <= 11):
             raise ValueError("O telefone deve conter entre 10 e 11 dígitos (com DDD)")
-            
+
         return value
 
 
@@ -68,7 +70,9 @@ class BarbeiroUpdateSchema(BaseModel):
         max_length=256,
         description="Senha de acesso do barbeiro",
     )
-    ativo: bool | None = Field(default=None, description="Se o barbeiro está ativo no sistema")
+    ativo: bool | None = Field(
+        default=None, description="Se o barbeiro está ativo no sistema"
+    )
 
     # Vinicius - 09/04/2026
     # Removido o str_lowercase devido que poderia dar problemas (ex: deixar caracteres da senha em minúsculo)
@@ -94,3 +98,22 @@ class BarbeiroUpdateSchema(BaseModel):
 
         # Opcional: Você pode retornar apenas os números limpos para o banco
         return numeros
+
+
+class ServicoRealizadoSchema(BaseModel):
+    nome: str
+    quantidade: int
+    preco_unitario: float
+    receita: float
+
+
+class BarbeiroDesempenhoSchema(BaseModel):
+    barbeiro_id: int
+    barbeiro_nome: str
+    total_agendamentos: int
+    agendamentos_concluidos: int
+    agendamentos_cancelados: int
+    receita_total: float
+    tempo_total_minutos: int
+    servicos_realizados: List[ServicoRealizadoSchema] = Field(default_factory=list)
+    taxa_conclusao: float

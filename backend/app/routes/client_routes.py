@@ -10,6 +10,7 @@ from app.utils.error_formatter import formatar_erros_pydantic
 from app.services.email_service import EmailService
 from datetime import datetime
 from app.extensions import app_logger
+from app.utils.pagination import formatar_retorno_paginacao
 
 clientes_bp = Blueprint("clientes", __name__, url_prefix="/api/clientes")
 
@@ -63,7 +64,11 @@ def listar_clientes():
                             # Adiciona status e dívida do cliente
                             "status": cliente.status,
                             "divida_total": cliente.divida_total,
-                            "ultima_visita": cliente.ultima_visita.isoformat() if cliente.ultima_visita else None,
+                            "ultima_visita": (
+                                cliente.ultima_visita.isoformat()
+                                if cliente.ultima_visita
+                                else None
+                            ),
                         }
                     }
                 ),
@@ -87,7 +92,9 @@ def listar_clientes():
                 # Adiciona status e dívida do cliente na listagem
                 "status": c.status,
                 "divida_total": c.divida_total,
-                "ultima_visita": c.ultima_visita.isoformat() if c.ultima_visita else None,
+                "ultima_visita": (
+                    c.ultima_visita.isoformat() if c.ultima_visita else None
+                ),
             }
             # Vinicius - 04/04/2026
             # Adicionado o .items para que o list comprehension receba os itens da paginação
@@ -97,16 +104,9 @@ def listar_clientes():
         return jsonify(
             {
                 "sucesso": True,
-                "dados": {
-                    "items": clientes_dict,
-                    "total": clientes.total,
-                    "items_nessa_pagina": len(clientes_dict),
-                    "pagina": clientes.page,
-                    "per_page": clientes.per_page,
-                    "total_paginas": clientes.pages,
-                    "tem_proxima": clientes.has_next,
-                    "tem_pagina_anterior": clientes.has_prev,
-                }
+                "dados": formatar_retorno_paginacao(
+                    clientes_dict, clientes.total, clientes.page, clientes.per_page
+                ),
             }
         )
     except Exception as e:
@@ -156,7 +156,7 @@ def criar_cliente():
                             "telefone": cliente.telefone,
                             "email": cliente.email,
                         }
-                    }
+                    },
                 }
             ),
             201,
@@ -290,7 +290,10 @@ def deletar_cliente(id):
                 "data_hora_atual": datetime.utcnow(),
             },
         )
-        return jsonify({"sucesso": True, "mensagem": "Cliente deletado com sucesso"}), 200
+        return (
+            jsonify({"sucesso": True, "mensagem": "Cliente deletado com sucesso"}),
+            200,
+        )
     except Exception as e:
         # Vinicius - 16/04/2026
         # Adicionado roolback caso ocorra algum erro e logging
@@ -323,7 +326,9 @@ def buscar_cliente(id):
             # Adiciona status e dívida do cliente na resposta
             "status": cliente.status,
             "divida_total": cliente.divida_total,
-            "ultima_visita": cliente.ultima_visita.isoformat() if cliente.ultima_visita else None,
+            "ultima_visita": (
+                cliente.ultima_visita.isoformat() if cliente.ultima_visita else None
+            ),
         }
         return jsonify({"sucesso": True, "dados": {"cliente": cliente_dict}}), 200
     except Exception as e:
@@ -345,97 +350,129 @@ def historico_cliente(cliente_id):
     try:
         current_user_id = int(get_jwt_identity())
         role = get_jwt().get("role")
-        
+
         # Validação de acesso: cliente pode ver apenas seu próprio histórico, admin vê todos
         if role != "admin" and current_user_id != cliente_id:
             return jsonify({"erro": "Acesso negado"}), 403
-        
+
         # Verificar se cliente existe
         cliente = Cliente.query.get(cliente_id)
         if not cliente:
             return jsonify({"erro": "Cliente não encontrado"}), 404
-        
+
         # Filtros opcionais
-        dias_sem_visita = request.args.get("dias_sem_visita", type=int)  # Filtrar clientes inativos
+        dias_sem_visita = request.args.get(
+            "dias_sem_visita", type=int
+        )  # Filtrar clientes inativos
         devedores = request.args.get("devedores", type=bool)  # Apenas devedores
-        
+
         from app.models.agendamento import Agendamento
         from app.models.barbeiro import Barbeiro
         from sqlalchemy import and_
-        
+
         # Query de agendamentos concluídos do cliente
         query = Agendamento.query.filter(
             Agendamento.cliente_id == cliente_id,
-            Agendamento.status == Agendamento.STATUS_CONCLUIDO
+            Agendamento.status == Agendamento.STATUS_CONCLUIDO,
         ).order_by(Agendamento.data_agendamento.desc())
-        
+
         # Filtro: apenas devedores
         if devedores:
             query = query.filter(Agendamento.pago == False)
-        
+
         agendamentos = query.all()
-        
+
         # Calcular métricas
         total_gasto = sum(a.servico.preco for a in agendamentos if a.servico)
-        total_devendo = sum(a.servico.preco for a in agendamentos if a.servico and not a.pago)
+        total_devendo = sum(
+            a.servico.preco for a in agendamentos if a.servico and not a.pago
+        )
         total_concluidos = len(agendamentos)
         total_devedores = len([a for a in agendamentos if not a.pago])
-        
+
         # Formattar resposta de agendamentos
         historico_agendamentos = []
         for ag in agendamentos:
-            historico_agendamentos.append({
-                "id": ag.id,
-                "data_agendamento": ag.data_agendamento.isoformat(),
-                "barbeiro": {
-                    "id": ag.barbeiro.id,
-                    "nome": ag.barbeiro.nome,
-                } if ag.barbeiro else None,
-                "servico": {
-                    "id": ag.servico.id,
-                    "nome": ag.servico.nome,
-                    "preco": float(ag.servico.preco),
-                } if ag.servico else None,
-                "pago": ag.pago,
-                "status": ag.status,
-            })
-        
+            historico_agendamentos.append(
+                {
+                    "id": ag.id,
+                    "data_agendamento": ag.data_agendamento.isoformat(),
+                    "barbeiro": (
+                        {
+                            "id": ag.barbeiro.id,
+                            "nome": ag.barbeiro.nome,
+                        }
+                        if ag.barbeiro
+                        else None
+                    ),
+                    "servico": (
+                        {
+                            "id": ag.servico.id,
+                            "nome": ag.servico.nome,
+                            "preco": float(ag.servico.preco),
+                        }
+                        if ag.servico
+                        else None
+                    ),
+                    "pago": ag.pago,
+                    "status": ag.status,
+                }
+            )
+
         # Calcular dias sem visita
         dias_sem_visit = None
         if cliente.ultima_visita:
             dias_sem_visit = (datetime.utcnow() - cliente.ultima_visita).days
-        
+
         # Filtro: se foi passado dias_sem_visita, retornar apenas se atender critério
-        if dias_sem_visita and dias_sem_visit is not None and dias_sem_visit < dias_sem_visita:
-            return jsonify({
-                "sucesso": True,
-                "dados": {
-                    "cliente_id": cliente_id,
-                    "cliente_nome": cliente.nome,
-                    "status": "cliente_frequente",  # Não atende critério de inativo
-                    "dias_sem_visita": dias_sem_visit,
+        if (
+            dias_sem_visita
+            and dias_sem_visit is not None
+            and dias_sem_visit < dias_sem_visita
+        ):
+            return (
+                jsonify(
+                    {
+                        "sucesso": True,
+                        "dados": {
+                            "cliente_id": cliente_id,
+                            "cliente_nome": cliente.nome,
+                            "status": "cliente_frequente",  # Não atende critério de inativo
+                            "dias_sem_visita": dias_sem_visit,
+                        },
+                    }
+                ),
+                200,
+            )
+
+        return (
+            jsonify(
+                {
+                    "sucesso": True,
+                    "dados": {
+                        "cliente_id": cliente_id,
+                        "cliente_nome": cliente.nome,
+                        "status_cliente": cliente.status,
+                        "divida_total": cliente.divida_total,
+                        "ultima_visita": (
+                            cliente.ultima_visita.isoformat()
+                            if cliente.ultima_visita
+                            else None
+                        ),
+                        "dias_sem_visita": dias_sem_visit,
+                        "metricas": {
+                            "total_agendamentos_concluidos": total_concluidos,
+                            "total_gasto": float(total_gasto),
+                            "total_devendo": float(total_devendo),
+                            "total_devedores": total_devedores,
+                        },
+                        "historico": historico_agendamentos,
+                    },
                 }
-            }), 200
-        
-        return jsonify({
-            "sucesso": True,
-            "dados": {
-                "cliente_id": cliente_id,
-                "cliente_nome": cliente.nome,
-                "status_cliente": cliente.status,
-                "divida_total": cliente.divida_total,
-                "ultima_visita": cliente.ultima_visita.isoformat() if cliente.ultima_visita else None,
-                "dias_sem_visita": dias_sem_visit,
-                "metricas": {
-                    "total_agendamentos_concluidos": total_concluidos,
-                    "total_gasto": float(total_gasto),
-                    "total_devendo": float(total_devendo),
-                    "total_devedores": total_devedores,
-                },
-                "historico": historico_agendamentos
-            }
-        }), 200
-        
+            ),
+            200,
+        )
+
     except Exception as e:
         app_logger.error(
             "Erro ao buscar histórico do cliente",

@@ -16,12 +16,7 @@ from typing import List
 
 from pydantic import BaseModel, Field
 
-
-class ServicoRealizadoSchema(BaseModel):
-    nome: str
-    quantidade: int
-    preco_unitario: float
-    receita: float
+from app.schemas.barbeiro_schema import ServicoRealizadoSchema
 
 
 class HorarioPopularSchema(BaseModel):
@@ -36,18 +31,6 @@ class ReceitaPeriodicaSchema(BaseModel):
     agendamentos_pendentes: int = 0
 
 
-class BarbeiroDesempenhoSchema(BaseModel):
-    barbeiro_id: int
-    barbeiro_nome: str
-    total_agendamentos: int
-    agendamentos_concluidos: int
-    agendamentos_cancelados: int
-    receita_total: float
-    tempo_total_minutos: int
-    servicos_realizados: List[ServicoRealizadoSchema] = Field(default_factory=list)
-    taxa_conclusao: float
-
-
 class DashboardResumoSchema(BaseModel):
     periodo_inicio: datetime
     periodo_fim: datetime
@@ -57,7 +40,6 @@ class DashboardResumoSchema(BaseModel):
     agendamentos_cancelados: int
     agendamentos_pendentes: int
 
-    barbeiros_desempenho: List[BarbeiroDesempenhoSchema] = Field(default_factory=list)
     top_5_horarios: List[HorarioPopularSchema] = Field(default_factory=list)
     receita_diaria: List[ReceitaPeriodicaSchema] = Field(default_factory=list)
     ticket_medio: float

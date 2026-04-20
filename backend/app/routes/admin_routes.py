@@ -9,8 +9,9 @@ from app.schemas.admin_schema import (
     AdminCreate,
     AdminUpdate,
     AdminResponse,
-    AdminListResponse,
 )
+from app.utils.pagination import formatar_retorno_paginacao
+
 
 # Criando o Blueprint para centralizar as rotas do admin
 admin_bp = Blueprint("admin", __name__, url_prefix="/api/admins")
@@ -54,17 +55,21 @@ def listar_admins():
 
     paginacao = AdminService.listar_admins(page, per_page)
 
-    # Empacotando a lista dentro do ListResponse para o front-end navegar
-    resposta = AdminListResponse(
-        page=paginacao.page,
-        per_page=paginacao.per_page,
-        has_next=paginacao.has_next,
-        has_prev=paginacao.has_prev,
-        # Validamos cada item da lista do SQLAlchemy para o Schema Seguro
-        data=[AdminResponse.model_validate(admin) for admin in paginacao.items],
-    )
+    admin_dicts = [
+        AdminResponse.model_validate(admin).model_dump() for admin in paginacao.items
+    ]
 
-    return jsonify(resposta.model_dump()), 200
+    return (
+        jsonify(
+            {
+                "sucesso": True,
+                "dados": formatar_retorno_paginacao(
+                    admin_dicts, paginacao.total, paginacao.page, paginacao.per_page
+                ),
+            }
+        ),
+        200,
+    )
 
 
 @admin_bp.route("/<int:admin_id>", methods=["PATCH"])

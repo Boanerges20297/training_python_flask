@@ -43,6 +43,7 @@ from datetime import datetime
 
 # TODO: servico_bp = Blueprint(...)
 servico_bp = Blueprint("servicos", __name__, url_prefix="/api/servicos")
+from app.utils.pagination import formatar_retorno_paginacao
 
 # ========== PASSO 3: CRIAR ROTA GET ==========
 # Rota: /api/servicos  (GET)
@@ -94,16 +95,9 @@ def listar_servicos():
         return jsonify(
             {
                 "sucesso": True,
-                "dados": {
-                    "items": servicos_dict,
-                    "total": servicos.total,
-                    "per_page": servicos.per_page,
-                    "items_nessa_pagina": len(servicos_dict),
-                    "pagina": servicos.page,
-                    "total_paginas": servicos.pages,
-                    "tem_proxima": servicos.has_next,
-                    "tem_pagina_anterior": servicos.has_prev,
-                },
+                "dados": formatar_retorno_paginacao(
+                    servicos_dict, servicos.total, servicos.page, servicos.per_page
+                ),
             }
         )
 

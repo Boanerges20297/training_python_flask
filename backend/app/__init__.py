@@ -37,7 +37,7 @@ def create_app():
 
     jwt.init_app(app)
     db.init_app(app)
-    
+
     app.url_map.strict_slashes = False
 
     # Configuração de CORS para suportar credenciais e múltiplas origens
@@ -76,6 +76,7 @@ def create_app():
     from app.routes.client_routes import clientes_bp
     from app.routes.servico_routes import servico_bp
     from app.routes.agendamento_routes import agendamento_bp
+    from app.routes.financeiro_routes import financeiro_bp
     from app.routes.auth_routes import auth_bp
     from app.routes.tests_routes import tests_bp
     from app.routes.barbeiro_routes import barbeiros_bp
@@ -85,6 +86,7 @@ def create_app():
     app.register_blueprint(clientes_bp)
     app.register_blueprint(servico_bp)
     app.register_blueprint(agendamento_bp)
+    app.register_blueprint(financeiro_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(barbeiros_bp)
     app.register_blueprint(admin_bp)
