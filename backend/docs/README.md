@@ -92,4 +92,5 @@ Registro das decisões arquiteturais relevantes e o raciocínio por trás delas.
 
 | Arquivo | Descrição |
 |---------|-----------|
+| [migracao_ddd.md](./adr/migracao_ddd.md) | **Migração para arquitetura DDD** — por quê, como e o que mudou |
 | [ranking_barbeiros.md](./adr/ranking_barbeiros.md) | Refatoração do ranking de barbeiros no dashboard |
