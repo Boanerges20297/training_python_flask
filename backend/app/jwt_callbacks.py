@@ -1,5 +1,5 @@
-from flask import jsonify
-from app.services.auth_service import (
+﻿from flask import jsonify
+from app.modules.auth.service import (
     MOCK_BLOCKLIST,
 )  # Importando a blocklist do nosso teste
 

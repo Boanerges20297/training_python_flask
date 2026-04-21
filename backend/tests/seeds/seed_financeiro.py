@@ -1,14 +1,14 @@
-import sys, os
+﻿import sys, os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
 import random
 from datetime import datetime
 from app import create_app, db
-from app.models.barbeiro import Barbeiro
-from app.models.cliente import Cliente
-from app.models.servico import Servico
-from app.models.agendamento import Agendamento
+from app.modules.barbeiro.model import Barbeiro
+from app.modules.cliente.model import Cliente
+from app.modules.servico.model import Servico
+from app.modules.agendamento.model import Agendamento
 
 
 def popular_banco():

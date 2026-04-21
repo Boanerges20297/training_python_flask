@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+﻿from flask import Flask, jsonify, request
 from config import DevelopmentConfig, ProductionConfig
 from app.extensions import db, limiter, jwt, cors, mail
 from app.jwt_callbacks import register_jwt_handlers
@@ -68,20 +68,20 @@ def create_app():
     # Inicializa o Logger (Logging Estruturado)
     # Tem que ser importado aqui por causa do cache db/jwt
     from app.extensions import app_logger
-    from app.utils.logger_setup import setup_logger
+    from app.utils.logging.logger_setup import setup_logger
 
     setup_logger(app, app_logger)
 
     # 4. Registrar blueprints (Rotas Modulares)
-    from app.routes.client_routes import clientes_bp
-    from app.routes.servico_routes import servico_bp
-    from app.routes.agendamento_routes import agendamento_bp
-    from app.routes.financeiro_routes import financeiro_bp
-    from app.routes.auth_routes import auth_bp
-    from app.routes.tests_routes import tests_bp
-    from app.routes.barbeiro_routes import barbeiros_bp
-    from app.routes.admin_routes import admin_bp
-    from app.routes.dashboard_routes import dashboard_bp
+    from app.modules.cliente.routes import clientes_bp
+    from app.modules.servico.routes import servico_bp
+    from app.modules.agendamento.routes import agendamento_bp
+    from app.modules.financeiro.routes import financeiro_bp
+    from app.modules.auth.routes import auth_bp
+    from app.tests_routes import tests_bp
+    from app.modules.barbeiro.routes import barbeiros_bp
+    from app.modules.admin.routes import admin_bp
+    from app.modules.dashboard.routes import dashboard_bp
 
     app.register_blueprint(clientes_bp)
     app.register_blueprint(servico_bp)

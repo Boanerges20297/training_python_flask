@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import os
 from pathlib import Path
 
@@ -6,12 +6,12 @@ from pathlib import Path
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 from app import create_app, db
-from app.models.barbeiro import Barbeiro
-from app.models.cliente import Cliente
-from app.models.servico import Servico
-from app.models.agendamento import Agendamento
-from app.schemas.agendamento_schema import AgendamentoCreate, AgendamentoUpdateSchema
-from app.services.agendamento_service import AgendamentoService
+from app.modules.barbeiro.model import Barbeiro
+from app.modules.cliente.model import Cliente
+from app.modules.servico.model import Servico
+from app.modules.agendamento.model import Agendamento
+from app.modules.agendamento.schema import AgendamentoCreate, AgendamentoUpdateSchema
+from app.modules.agendamento.service import AgendamentoService
 from datetime import datetime, timedelta
 import uuid
 

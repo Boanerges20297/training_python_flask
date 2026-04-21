@@ -1,10 +1,10 @@
-import os
+﻿import os
 import json
 import logging
 from flask import Flask
 from app import create_app
 from app.extensions import db
-from app.models.admin import Admin
+from app.modules.admin.model import Admin
 from datetime import datetime, timedelta
 
 def run_log_triggers():

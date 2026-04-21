@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import os
 
 # Vinicius - 19/04/2026
@@ -8,7 +8,7 @@ if backend_dir not in sys.path:
     sys.path.insert(0, backend_dir)
 
 from app import create_app, db
-from app.models.admin import Admin
+from app.modules.admin.model import Admin
 
 app = create_app()
 
