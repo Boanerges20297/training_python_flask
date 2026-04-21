@@ -1,4 +1,4 @@
-﻿# Vinicius 20/04/2026
+# Vinicius 20/04/2026
 # Módulo financeiro estrito: Rota de Relatórios Escaláveis (Paginadas)
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
@@ -46,10 +46,13 @@ def gerar_nota_fiscal_e_extrato():
         # Gera o Log Auditoria Transparente de acesso
         app_logger.info(
             "Admin acessou o Módulo Financeiro",
-            # Vinicius 20/04/2026 - Adiciona log de auditoria
-            current_user=usuario,
-            role=role,
-            extra={"mes": mes, "ano": ano, "pagina": pagina},
+            extra={
+                "current_user": usuario,
+                "role": role,
+                "mes": mes,
+                "ano": ano,
+                "pagina": pagina,
+            },
         )
 
         paginacao = formatar_retorno_paginacao(

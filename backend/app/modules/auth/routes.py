@@ -1,4 +1,4 @@
-﻿# Vinicius
+# Vinicius
 # Rotas de autenticação
 
 from flask import Blueprint, request, jsonify, current_app
@@ -30,7 +30,6 @@ from app.modules.barbeiro.model import Barbeiro
 from app.modules.cliente.model import Cliente
 from app.modules.cliente.schema import ClienteSchema
 from sqlalchemy.exc import IntegrityError
-from app.modules.auth.email_service import EmailService
 from app.extensions import db
 from config import Config, DevelopmentConfig
 
@@ -301,6 +300,7 @@ def register():
 @auth_bp.route("/esqueci-senha", methods=["POST"])
 def esqueci_senha():
 
+    email = None  # Inicializado antes do try para evitar UnboundLocalError no except
     try:
         try:
             dados = EsqueciSenhaRequest(**request.get_json())
@@ -312,11 +312,26 @@ def esqueci_senha():
             )
             return jsonify(erros), 400
 
-        email = dados.email
+        email = getattr(dados, "email", "desconhecido")
+
+        if email == "desconhecido":
+            return jsonify({"erro": "Email não fornecido."}), 400
 
         # Chama o Service.
         # Repare que não verificamos se deu True ou False para o usuário.
         token, usuario = AuthService.gerar_token_recuperacao_senha(email)
+
+        # Se o usuário não existir, retorna resposta genérica sem revelar o e-mail
+        if token is None:
+            return (
+                jsonify(
+                    {
+                        "status": "sucesso",
+                        "mensagem": "Se o e-mail estiver em nossa base de dados, um link de recuperação será enviado em instantes.",
+                    }
+                ),
+                200,
+            )
 
         link_recuperacao = (
             f"{DevelopmentConfig.FRONTEND_URL}/recuperar-senha?token={token}"

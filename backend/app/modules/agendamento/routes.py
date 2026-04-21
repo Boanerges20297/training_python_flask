@@ -1,9 +1,8 @@
-﻿from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request
 from app.modules.agendamento.model import Agendamento
 from app.modules.cliente.model import Cliente
 from app.modules.barbeiro.model import Barbeiro
 from app.modules.servico.model import Servico
-from app import db
 from datetime import datetime, timedelta
 from app.modules.agendamento.schema import (
     AgendamentoCreate,
@@ -26,7 +25,6 @@ from app.utils.security.decorators import admin_required, role_required
 from app.utils.email.email_layouts import obter_layout_agendamento
 from app.extensions import app_logger, db
 from app.modules.auth.email_service import EmailService
-from datetime import datetime
 
 agendamento_bp = Blueprint("agendamento", __name__, url_prefix="/api/agendamento")
 
@@ -106,7 +104,16 @@ def criar_agendamento():
                 "data_hora_atual": datetime.utcnow(),
             },
         )
-        return jsonify({"sucesso": True, "mensagem": data_response.get("msg"), "dados": {"agendamento": response.model_dump()}}), 201
+        return (
+            jsonify(
+                {
+                    "sucesso": True,
+                    "mensagem": data_response.get("msg"),
+                    "dados": {"agendamento": response.model_dump()},
+                }
+            ),
+            201,
+        )
     except ConflitoHorarioError as e:
         db.session.rollback()
         return jsonify({"erro": "Erro ao criar agendamento: " + str(e)}), 409
@@ -148,10 +155,20 @@ def listar_agendamento():
             for agendamento in agendamentos.items
         ]
 
-        return jsonify({
-            "sucesso": True,
-            "dados": formatar_retorno_paginacao(agendamentos_dicts, agendamentos.total, agendamentos.page, agendamentos.per_page)
-        }), 200
+        return (
+            jsonify(
+                {
+                    "sucesso": True,
+                    "dados": formatar_retorno_paginacao(
+                        agendamentos_dicts,
+                        agendamentos.total,
+                        agendamentos.page,
+                        agendamentos.per_page,
+                    ),
+                }
+            ),
+            200,
+        )
 
     except Exception as e:
         app_logger.error(
@@ -298,7 +315,16 @@ def atualizar_status(id):
             },
         )
 
-        return jsonify({"sucesso": True, "mensagem": "Status atualizado com sucesso", "dados": {"agendamento": response.model_dump()}}), 200
+        return (
+            jsonify(
+                {
+                    "sucesso": True,
+                    "mensagem": "Status atualizado com sucesso",
+                    "dados": {"agendamento": response.model_dump()},
+                }
+            ),
+            200,
+        )
 
     except AcessoNegadoError as e:
         db.session.rollback()
@@ -347,7 +373,10 @@ def deletar_agendamento(id):
                 "data_hora_atual": datetime.utcnow(),
             },
         )
-        return jsonify({"sucesso": True, "mensagem": "Agendamento deletado com sucesso"}), 200
+        return (
+            jsonify({"sucesso": True, "mensagem": "Agendamento deletado com sucesso"}),
+            200,
+        )
 
     except AcessoNegadoError as e:
         db.session.rollback()
@@ -380,7 +409,10 @@ def buscar_agendamento(id):
 
         response = AgendamentoResponse.model_validate(agendamento)
 
-        return jsonify({"sucesso": True, "dados": {"agendamento": response.model_dump()}}), 200
+        return (
+            jsonify({"sucesso": True, "dados": {"agendamento": response.model_dump()}}),
+            200,
+        )
     except AcessoNegadoError as e:
         return jsonify({"erro": "Erro ao buscar agendamento: " + str(e)}), 403
     except ValueError as e:

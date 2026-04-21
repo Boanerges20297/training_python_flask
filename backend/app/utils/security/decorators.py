@@ -1,6 +1,6 @@
 from functools import wraps
-from flask import jsonify  # type: ignore
-from flask_jwt_extended import verify_jwt_in_request, get_jwt, get_jwt_identity  # type: ignore
+from flask import jsonify
+from flask_jwt_extended import verify_jwt_in_request, get_jwt, get_jwt_identity
 
 # Vinicius 11/04/2026
 # Removido loggers deste arquivo, será implementado em outro local e em outra hora
@@ -50,4 +50,3 @@ def role_required(cargos_permitidos):
 admin_required = role_required(["admin"])
 barbeiro_required = role_required(["barbeiro"])
 cliente_required = role_required(["cliente"])
-barbeiro_required = role_required(["barbeiro"])

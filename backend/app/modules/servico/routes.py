@@ -1,4 +1,4 @@
-﻿"""
+"""
 DESAFIO 1: Criar API GET para listar serviços
 
 O que você precisa fazer neste arquivo:
@@ -24,7 +24,6 @@ Não comece a codar ainda! Primeiro leia os comentários abaixo.
 # TODO: from app.models import ...
 from flask import Blueprint, jsonify, request
 from app.modules.servico.model import Servico
-from app.modules.cliente.model import Cliente
 from app import db
 from app.modules.servico.schema import ServicoSchema, ServicoUpdateSchema
 from pydantic import ValidationError
@@ -100,8 +99,6 @@ def listar_servicos():
                 ),
             }
         )
-
-        pass
 
     except Exception as e:
         return jsonify({"erro": str(e)}), 500

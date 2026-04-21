@@ -1,4 +1,4 @@
-﻿from flask import current_app
+from flask import current_app
 from flask_jwt_extended import create_access_token, create_refresh_token
 from app.modules.admin.model import Admin
 from app.modules.barbeiro.model import Barbeiro
@@ -89,14 +89,14 @@ class AuthService:
         }
 
     @staticmethod
-    def gerar_token_recuperacao_senha(email: str) -> bool:
+    def gerar_token_recuperacao_senha(email: str) -> tuple:
         # 1. Busca o usuário
         cliente = Cliente.query.filter_by(email=email).first()
 
         # Regra de Segurança: Não retorne erro se o usuário não existir.
         # Finja que deu certo para evitar enumeração de e-mails por hackers.
         if not cliente:
-            return True
+            return None, None
 
         # 2. Invalida preventivamente todos os tokens anteriores deste usuário
         # que ainda não foram usados e não expiraram
