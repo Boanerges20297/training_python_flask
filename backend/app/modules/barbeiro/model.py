@@ -1,6 +1,7 @@
-﻿from app import db
+from app import db
 from datetime import datetime
 from app.utils.mixins import HashSenhaMixin
+from app.modules.barbeiro.association import BarbeiroServico
 
 
 # josue minima alteracao
@@ -25,7 +26,7 @@ class Barbeiro(HashSenhaMixin, db.Model):
     # Adicionado relacionamento many-to-many com Servico
     servicos = db.relationship(
         "Servico",
-        secondary="barbeiro_servico",
+        secondary=BarbeiroServico.__table__,
         backref=db.backref("barbeiros", lazy="dynamic"),
         lazy=True,
     )
