@@ -75,6 +75,7 @@ def listar_barbeiros():
         barbeiros = query.paginate(page=page, per_page=per_page, error_out=False)
 
         # josue minima alteraço
+        # josue 21/04/2026 01:30 adcionado motivo_ausencia
         barbeiros_dict = [
             {
                 "id": b.id,
@@ -83,6 +84,7 @@ def listar_barbeiros():
                 "email": b.email,
                 "especialidade": b.especialidade,
                 "ativo": b.ativo,
+                "motivo_ausencia": b.motivo_ausencia,
             }
             # Vinicius - 04/04/2026
             # Adicionado o .items para que o list comprehension receba os itens da paginação
@@ -153,6 +155,8 @@ def criar_barbeiro():
                             "telefone": barbeiro.telefone,
                             "email": barbeiro.email,
                             "especialidade": barbeiro.especialidade,
+                            "ativo": barbeiro.ativo,
+                            "motivo_ausencia": barbeiro.motivo_ausencia,
                         }
                     },
                 }
@@ -229,6 +233,17 @@ def editar_barbeiro(id):
         barbeiro = Barbeiro.query.get(id)
         if not barbeiro:
             return {"error": "Barbeiro não encontrado"}, 404
+
+        # Validacao de negocio para motivo_ausencia
+        # josue 21/04/2026 01:30 verifica se o barbeiro esta inativo e se o motivo da ausencia foi informado
+        is_ativo = update_data.get("ativo", barbeiro.ativo)
+        mot_ausenc = update_data.get("motivo_ausencia", barbeiro.motivo_ausencia)
+        if is_ativo is False and not mot_ausenc:
+            return {"error": "Dados inválidos", "detalhes": "1 validation error for BarbeiroUpdateSchema\nmotivo_ausencia\n  O motivo da ausência é obrigatório ao inativar o barbeiro."}, 400
+        
+        if is_ativo is True:
+            # Garanto que seja limpo no db
+            update_data["motivo_ausencia"] = None
 
         # 6. Algoritmo de Atualização Dinâmica
         # Em vez de fazer: user.nome = update_data['nome'] manual para cada campo...
@@ -338,6 +353,7 @@ def buscar_barbeiro(id):
             "email": barbeiro.email,
             "especialidade": barbeiro.especialidade,
             "ativo": barbeiro.ativo,
+            "motivo_ausencia": barbeiro.motivo_ausencia,
         }
         return jsonify({"dados": {"barbeiro": barbeiro_dict}, "sucesso": True}), 200
     except Exception as e:

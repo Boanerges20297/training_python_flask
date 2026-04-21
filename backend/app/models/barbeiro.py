@@ -17,6 +17,8 @@ class Barbeiro(HashSenhaMixin, db.Model):
     telefone = db.Column(db.String(20), nullable=False)
     data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
     ativo = db.Column(db.Boolean, default=True)  # Se está trabalhando
+    # josue 21/04/2026 01:25
+    motivo_ausencia = db.Column(db.Text, nullable=True)
     # Vinicius
     # Senha hash removida para ser gerenciada pelo Mixin
     # Relacionamentos
