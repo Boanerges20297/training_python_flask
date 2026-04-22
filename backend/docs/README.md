@@ -68,6 +68,7 @@ docs/
 | Arquivo | Descrição |
 |---------|-----------|
 | [multi_servicos.md](./modulos/agendamento/multi_servicos.md) | Fluxo de agendamentos com múltiplos serviços (M2M) |
+| [conflitos_pos_atualizacao.md](./modulos/agendamento/conflitos_pos_atualizacao.md) | Guia de erros e impactos nos módulos Dashboard/Financeiro |
 
 ---
 
