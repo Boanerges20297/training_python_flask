@@ -1,4 +1,4 @@
-﻿from app import db
+from app import db
 from app.modules.agendamento.model import Agendamento
 from app.modules.servico.model import Servico
 from app.modules.cliente.model import Cliente
@@ -156,6 +156,7 @@ class AgendamentoService:
         #    observacoes=dados.observacoes
         # )
         novo_agendamento = Agendamento(**dados.model_dump())
+        novo_agendamento.preco_cobrado = servico.preco
 
         db.session.add(novo_agendamento)
 

@@ -1,4 +1,4 @@
-﻿# Vinicius 20/04/2026
+# Vinicius 20/04/2026
 # Módulo financeiro estrito: Service de Relatórios Escaláveis (Paginados)
 
 import calendar

@@ -1,7 +1,7 @@
 # Documentação Técnica: Módulo Financeiro
 
-**Data:** 20 de Abril de 2026
-**Módulo:** `app/services/financeiro_service.py` + `app/routes/financeiro_routes.py`
+**Data:** 21 de Abril de 2026
+**Módulo:** `app/modules/financeiro/service.py` + `app/modules/financeiro/routes.py`
 
 ---
 
@@ -16,11 +16,11 @@ O módulo financeiro é um sistema de **relatórios somente leitura** (read-only
 ## 2. Arquitetura
 
 ```
-financeiro_routes.py   →  recebe request, valida params, monta response
+app/modules/financeiro/routes.py   →  recebe request, valida params, monta response
        ↓
-financeiro_service.py  →  executa as 3 queries SQL, retorna dados crus
+app/modules/financeiro/service.py  →  executa as 3 queries SQL, retorna dados crus
        ↓
-Banco de Dados         →  func.sum, func.count, group_by (sem trazer tudo pro Python)
+Banco de Dados                     →  func.sum, func.count, group_by (sem trazer tudo pro Python)
 ```
 
 O service **nunca** monta envelopes JSON — devolve um dicionário Python puro. A rota é responsável por chamar `formatar_retorno_paginacao()` e empacotar a resposta final.
@@ -164,16 +164,16 @@ GET /api/financeiro/relatorio?mes=4&ano=2026&pagina=1&limite=5
 
 ---
 
-## 7. Futuras Adições
+## 7. Implementações Recentes (21/04/2026)
 
 ### 7.1 Pagamentos — Registro de Transações
 
-**Problema atual:** O campo `pago` no `Agendamento` é apenas um booleano. Não registra como o cliente pagou (dinheiro, cartão, Pix), nem a data exata do pagamento.
+**Status:** Implementado (Arquitetura Module-First)
 
-**Solução planejada:** Criar uma nova tabela `TransacaoFinanceira`.
+Foi criada a tabela `TransacaoFinanceira` para registrar os detalhes exatos de cada pagamento.
 
 ```python
-# Modelo futuro: app/models/transacao.py
+# Modelo: app/modules/transacoes/model.py
 class TransacaoFinanceira(db.Model):
     __tablename__ = "transacoes_financeiras"
 
@@ -187,35 +187,113 @@ class TransacaoFinanceira(db.Model):
     valor_comissao  = db.Column(db.Numeric(10, 2))  # calculado ao criar
 ```
 
-**Fluxo:** Quando `agendamento.status` muda para `concluido`, o `AgendamentoService` chama `FinanceiroService.processar_pagamento(agendamento)` que cria a `TransacaoFinanceira` automaticamente.
+**Fluxo de Uso:** 
+1. Quando um agendamento é concluído e marcado como pago (`status=concluido, pago=True`)
+2. Criar uma transação via `POST /api/financeiro/transacoes` com os dados do pagamento
+3. O serviço `TransacaoFinanceiraService.registrar_pagamento()` processa e registra a transação
+4. Comissões são calculadas automaticamente (padrão 50% do barbeiro)
 
 ### 7.2 Preços Congelados (Histórico Imutável)
 
-**Problema atual:** As notas fiscais exibem o preço **atual** do serviço (`Servico.preco`). Se o salão reajustar o preço do "Corte Degradê" de R$ 55 para R$ 70, todos os relatórios passados serão recalculados com o preço novo — histórico financeiro corrompido.
+**Status:** Implementado
 
-**Solução planejada:** Salvar o preço no momento exato da transação.
-
-Na tabela `TransacaoFinanceira`, o campo `valor_bruto` já resolve isso — ele armazena o valor pago naquele dia, independente de qualquer alteração futura no `Servico.preco`.
-
-Enquanto essa tabela não existe, uma solução intermediária seria adicionar o campo `preco_cobrado` diretamente no `Agendamento`:
+Para garantir que o histórico de notas fiscais não seja corrompido quando o valor base de um serviço aumentar no futuro, foi inserido o pilar da imutabilidade no `Agendamento`:
 
 ```python
-# Adição ao modelo Agendamento (solução interina)
+# Adição ao modelo app/modules/agendamento/model.py
 preco_cobrado = db.Column(db.Numeric(10, 2), nullable=True)
-# Populado no momento da criação do agendamento com Servico.preco
 ```
 
-> [!WARNING]
-> Sem o preço congelado, qualquer mudança de preço de serviço corrompe retroativamente os relatórios financeiros históricos. Este é um **bug de alto impacto** em qualquer sistema de faturamento.
+No momento em que o agendamento é criado, o sistema salva o `preco_cobrado = servico.preco`. A partir de então, a `TransacaoFinanceira` consumirá este valor congelado para registrar a venda e a comissão, invulnerabilizando seu histórico contábil contra inflações de serviços.
 
 ---
 
-## 8. Arquivos Relacionados
+## 9. Endpoints de Transações
+
+### `POST /api/financeiro/transacoes`
+**Segurança:** JWT obrigatório + Role `admin`.
+
+**Payload esperado:**
+```json
+{
+  "agendamento_id": 12,
+  "forma_pagamento": "dinheiro",  // ou "pix", "credito", "debito"
+  "comissao_pct": 50.0,           // opcional, padrão 50%
+  "observacoes": "Pagamento à vista" // opcional
+}
+```
+
+**Resposta de Sucesso (201 Created):**
+```json
+{
+  "sucesso": true,
+  "mensagem": "Pagamento registrado com sucesso",
+  "dados": {
+    "transacao_id": 5,
+    "agendamento_id": 12,
+    "valor_bruto": 55.00,
+    "valor_comissao": 27.50,
+    "forma_pagamento": "dinheiro",
+    "data_pagamento": "2026-04-22T10:30:45.123456+00:00"
+  }
+}
+```
+
+### `DELETE /api/financeiro/transacoes/<transacao_id>`
+**Segurança:** JWT obrigatório + Role `admin`.
+
+**Payload (opcional):**
+```json
+{
+  "motivo": "Cliente pagou em dobro"
+}
+```
+
+**Resposta de Sucesso (200 OK):**
+```json
+{
+  "sucesso": true,
+  "mensagem": "Transação revertida com sucesso"
+}
+```
+
+### `GET /api/financeiro/transacoes/barbeiro/<barbeiro_id>/comissoes`
+**Segurança:** JWT obrigatório + Role `admin`.
+
+**Query Parameters (opcionais):**
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `dias` | int | Últimos X dias retroativos (padrão: 30) |
+| `mes` | int | Mês específico (1-12) |
+| `ano` | int | Ano específico (deve usar com `mes`) |
+
+**Resposta de Sucesso (200 OK):**
+```json
+{
+  "sucesso": true,
+  "mensagem": "Comissões obtidas com sucesso",
+  "dados": {
+    "barbeiro_id": 3,
+    "total_vendas": 1500.00,
+    "total_comissao": 750.00,
+    "quantidade_transacoes": 27
+  }
+}
+```
+
+---
+
+## 10. Arquivos Relacionados
 
 | Arquivo | Responsabilidade |
 |---|---|
-| `app/services/financeiro_service.py` | Lógica das 3 queries SQL |
-| `app/routes/financeiro_routes.py` | Validação de params + montagem do response |
-| `app/utils/pagination.py` | Helper de paginação usado na rota |
-| `scripts/fix_db_financeiro.py` | Script de seed/manutenção do banco financeiro |
-| `docs/testes_financeiro.md` | Roteiro de testes QA detalhado (legado) |
+| `app/modules/financeiro/service.py` | Lógica de agregação e relatórios financeiros |
+| `app/modules/financeiro/routes.py` | Roteamento do endpoint `/api/financeiro/relatorio` |
+| `app/modules/financeiro/model.py` | Modelo `TransacaoFinanceira` (entidade do banco) |
+| `app/modules/transacoes/service.py` | Serviço `TransacaoFinanceiraService` para gerenciar transações |
+| `app/modules/transacoes/routes.py` | Roteamento dos endpoints de transações (`/api/financeiro/transacoes/*`) |
+| `app/modules/transacoes/model.py` | Importação do modelo `TransacaoFinanceira` |
+| `app/modules/agendamento/model.py` | Agendamento, agora com campo `preco_cobrado` |
+| `scripts/fix_db_financeiro.py` | Script de seed/manutenção (legado) |
+| `docs/testes_financeiro.md` | Roteiro de testes QA detalhado |

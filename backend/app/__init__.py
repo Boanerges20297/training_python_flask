@@ -1,4 +1,4 @@
-﻿from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request
 from config import DevelopmentConfig, ProductionConfig
 from app.extensions import db, limiter, jwt, cors, mail
 from app.jwt_callbacks import register_jwt_handlers
@@ -77,6 +77,7 @@ def create_app():
     from app.modules.servico.routes import servico_bp
     from app.modules.agendamento.routes import agendamento_bp
     from app.modules.financeiro.routes import financeiro_bp
+    from app.modules.transacoes.routes import transacoes_bp
     from app.modules.auth.routes import auth_bp
     from app.tests_routes import tests_bp
     from app.modules.barbeiro.routes import barbeiros_bp
@@ -87,6 +88,7 @@ def create_app():
     app.register_blueprint(servico_bp)
     app.register_blueprint(agendamento_bp)
     app.register_blueprint(financeiro_bp)
+    app.register_blueprint(transacoes_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(barbeiros_bp)
     app.register_blueprint(admin_bp)

@@ -300,6 +300,15 @@ def atualizar_status(id):
             id, dados, role, current_user_id
         )
 
+        # Ian - 21/04/2026 - Gatilho financeiro
+        if agendamento_atualizado.status == Agendamento.STATUS_CONCLUIDO and not agendamento_atualizado.pago:
+            from app.modules.transacoes.service import TransacaoFinanceiraService
+            TransacaoFinanceiraService.registrar_pagamento(
+                agendamento_id=id,
+                forma_pagamento="dinheiro", # Default provisório
+                comissao_pct=50.0
+            )
+
         response = AgendamentoResponse.model_validate(agendamento_atualizado)
         db.session.commit()
         # Vinicius - 16/04/2026

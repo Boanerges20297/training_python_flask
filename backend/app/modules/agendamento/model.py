@@ -36,6 +36,11 @@ class Agendamento(db.Model):
     # Ian - 19/04/2026
     # Indica se o agendamento já foi pago
     pago = db.Column(db.Boolean, default=False)
+    
+    # Ian - 21/04/2026
+    # Preço congelado do serviço no momento do agendamento
+    # Isso garante que o histórico financeiro não seja corrompido por mudanças futuras de preço
+    preco_cobrado = db.Column(db.Numeric(10, 2), nullable=True)
 
     def __repr__(self):
         return f"<Agendamento {self.id} - {self.status}>"
