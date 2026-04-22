@@ -1,9 +1,22 @@
 # Vinicius - 11/04/2026
 # Arquivo de schema para o agendamento
 
-from pydantic import BaseModel, Field, ConfigDict
+# Vinicius - 21/04/2026
+# Refatorado para suportar múltiplos serviços por agendamento (M2M)
+
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 from datetime import datetime
 from typing import List, Optional
+
+
+# --- Schema de Serviço Simples (usado dentro da resposta do agendamento) ---
+class ServicoSimples(BaseModel):
+    id: int
+    nome: str
+    preco: float
+    duracao_minutos: int
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- Campos Compartilhados ---
@@ -17,7 +30,6 @@ class AgendamentoBase(BaseModel):
         ..., description="Data e hora do serviço (ISO 8601)"
     )
     barbeiro_id: int = Field(..., gt=0, description="ID único do barbeiro")
-    servico_id: int = Field(..., gt=0, description="ID único do serviço")
     cliente_id: int = Field(..., gt=0)
 
 
@@ -25,37 +37,57 @@ class AgendamentoBase(BaseModel):
 class AgendamentoCreate(AgendamentoBase):
     """
     Especificação Técnica para CRIAÇÃO:
-    Recebe os campos base + dados específicos de quem está agendando.
+    Recebe os campos base + lista de serviços.
     """
 
+    servico_ids: List[int] = Field(
+        ..., min_length=1, description="Lista com pelo menos um ID de serviço"
+    )
     observacoes: Optional[str] = Field(None, max_length=500, description="Notas extras")
+
+    @field_validator("servico_ids")
+    @classmethod
+    def validar_servico_ids(cls, v):
+        if not v:
+            raise ValueError("É obrigatório informar ao menos um serviço.")
+        if any(sid <= 0 for sid in v):
+            raise ValueError("Todos os IDs de serviço devem ser maiores que zero.")
+        if len(v) != len(set(v)):
+            raise ValueError("A lista de serviços não pode conter IDs duplicados.")
+        return v
 
     model_config = ConfigDict(extra="forbid")
 
 
 # --- Contratos de Saída (Responses) ---
-class AgendamentoResponse(AgendamentoBase):
+class AgendamentoResponse(BaseModel):
     """
     Especificação Técnica para RESPOSTA DETALHADA:
-    Retorna os campos base + atributos gerados pelo servidor (ID e Status).
+    Retorna os campos base + lista de serviços vinculados + atributos do servidor.
     """
 
     id: int
+    cliente_id: int
+    barbeiro_id: int
+    data_agendamento: datetime
+    data_criacao: datetime = Field(..., description="Data de registro no sistema")
     status: str = Field(
         ...,
         max_length=20,
         description="Status atual (pendente, confirmado, concluido, cancelado)",
     )
-    data_criacao: datetime = Field(..., description="Data de registro no sistema")
+    observacoes: str | None = Field(None, max_length=500, description="Notas extras")
+    pago: bool = Field(default=False)
 
-    observacoes: str | None = Field(..., max_length=500, description="Notas extras")
+    # Lista dos serviços vinculados (substituiu o antigo servico_id)
+    servicos: List[ServicoSimples] = Field(
+        default_factory=list, description="Serviços vinculados ao agendamento"
+    )
 
-    # Vinicius - 14/04/2026
-    # Adicionado a response uma mensagem e status_email para padronização da resposta e feedback de retorno de email
+    # Campos de feedback interno (e-mail)
     msg: Optional[str] = Field(None, description="Mensagem de retorno para o payload")
-
     status_email: Optional[str] = Field(
-        None, description="Status para sabermos se o email foi enviado ou não"
+        None, description="Status para sabermos se o e-mail foi enviado ou não"
     )
 
     model_config = ConfigDict(from_attributes=True)
@@ -84,13 +116,29 @@ class AgendamentoUpdateSchema(BaseModel):
     Schema para atualização parcial (PATCH).
     Todos os campos são opcionais para permitir que apenas
     os dados enviados sejam processados.
+    Quando servico_ids é enviado, a lista substitui completamente os serviços anteriores.
     """
 
     data_agendamento: Optional[datetime] = None
     barbeiro_id: Optional[int] = Field(None, gt=0)
-    servico_id: Optional[int] = Field(None, gt=0)
+    servico_ids: Optional[List[int]] = Field(
+        None, description="Nova lista completa de serviços (substituição total)"
+    )
     cliente_id: Optional[int] = Field(None, gt=0)
     observacoes: Optional[str] = Field(None, max_length=500)
+
+    @field_validator("servico_ids")
+    @classmethod
+    def validar_servico_ids(cls, v):
+        if v is None:
+            return v
+        if len(v) == 0:
+            raise ValueError("A lista de serviços não pode ser vazia ao atualizar.")
+        if any(sid <= 0 for sid in v):
+            raise ValueError("Todos os IDs de serviço devem ser maiores que zero.")
+        if len(v) != len(set(v)):
+            raise ValueError("A lista de serviços não pode conter IDs duplicados.")
+        return v
 
     model_config = ConfigDict(extra="forbid", from_attributes=True)
 

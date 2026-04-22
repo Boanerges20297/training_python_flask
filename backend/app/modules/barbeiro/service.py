@@ -1,4 +1,4 @@
-﻿from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import desc
 
@@ -11,23 +11,22 @@ class BarbeiroService:
     @staticmethod
     def _formatar_servicos_realizados(agendamentos):
         # Normaliza saída de serviços: consolida duplicados com quantidade e receita acumulada.
+        # Vinicius - 21/04/2026: adaptado para M2M (agendamento.servicos é uma lista)
         servicos = {}
 
         for agendamento in agendamentos:
-            if not agendamento.servico:
-                continue
+            for servico in agendamento.servicos:
+                nome = servico.nome
+                if nome not in servicos:
+                    servicos[nome] = {
+                        "nome": nome,
+                        "quantidade": 0,
+                        "preco_unitario": float(servico.preco),
+                        "receita": 0.0,
+                    }
 
-            nome = agendamento.servico.nome
-            if nome not in servicos:
-                servicos[nome] = {
-                    "nome": nome,
-                    "quantidade": 0,
-                    "preco_unitario": float(agendamento.servico.preco),
-                    "receita": 0.0,
-                }
-
-            servicos[nome]["quantidade"] += 1
-            servicos[nome]["receita"] += float(agendamento.servico.preco)
+                servicos[nome]["quantidade"] += 1
+                servicos[nome]["receita"] += float(servico.preco)
 
         return list(servicos.values())
 

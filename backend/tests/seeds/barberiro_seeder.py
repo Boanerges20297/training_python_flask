@@ -1,6 +1,6 @@
 # josue inicio
 from app import db
-from app.models import Barbeiro
+from app.modules.barbeiro.model import Barbeiro
 from tests.seeds.base import BaseSeeder
 
 
