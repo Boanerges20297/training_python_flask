@@ -1,7 +1,7 @@
 # Vinicius - 08/04/2026
 # Criação do arquivo de schema para o barbeiro
 
-from pydantic import BaseModel, Field, EmailStr, field_validator
+from pydantic import BaseModel, Field, EmailStr, field_validator, model_validator
 import re
 from typing import List
 
@@ -19,8 +19,23 @@ class BarbeiroSchema(BaseModel):
     )
     senha: str = Field(..., min_length=6, description="Senha de acesso do barbeiro")
     ativo: bool = Field(default=True, description="Se o barbeiro está ativo no sistema")
+    # josue 21/04/2026 01:27
+    motivo_ausencia: str | None = Field(
+        default=None, description="Motivo da ausência caso inativo"
+    )
 
     model_config = {"extra": "forbid"}
+
+    # josue 21/04/2026 01:27 metodo para validar se o motivo da ausencia foi informado quando o barbeiro esta inativo
+    @model_validator(mode="after")
+    def validar_ausencia(self):
+        if self.ativo is False and not self.motivo_ausencia:
+            raise ValueError(
+                "O motivo da ausência é obrigatório quando o barbeiro está inativo"
+            )
+        if self.ativo is True:
+            self.motivo_ausencia = None
+        return self
 
     @field_validator("nome", "especialidade", mode="before")
     @classmethod
@@ -73,6 +88,9 @@ class BarbeiroUpdateSchema(BaseModel):
     ativo: bool | None = Field(
         default=None, description="Se o barbeiro está ativo no sistema"
     )
+    motivo_ausencia: str | None = Field(
+        default=None, description="Motivo da ausência caso inativo"
+    )
 
     # Vinicius - 09/04/2026
     # Removido o str_lowercase devido que poderia dar problemas (ex: deixar caracteres da senha em minúsculo)
@@ -88,9 +106,10 @@ class BarbeiroUpdateSchema(BaseModel):
     @field_validator("telefone", mode="before")
     @classmethod
     def validar_telefone(cls, value):
+        if not value:
+            return value
         # Remove caracteres comuns de máscara para validar apenas os números
         numeros = re.sub(r"\D", "", value)
-        print(numeros)
 
         # Validação: Um telefone brasileiro tem entre 10 (fixo) e 11 (celular) dígitos
         if not (10 <= len(numeros) <= 11):

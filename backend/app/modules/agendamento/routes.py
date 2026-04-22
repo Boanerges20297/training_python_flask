@@ -77,7 +77,7 @@ def criar_agendamento():
             data_response = {
                 **agendamento_novo.__dict__,
                 "msg": "Agendamento criado, mas falhou ao enviar o email",
-                "status": "alerta",
+                "status_email": "alerta",
             }
             """
             IMPLEMENTAR UNDO NO BANCO DE DADOS CASO FALHE ALGUMA COISA, DADOS ESTÃO SENDO INSERIDOS MESMO COM MENSAGENS DE ERRO
@@ -87,7 +87,7 @@ def criar_agendamento():
             data_response = {
                 **agendamento_novo.__dict__,
                 "msg": "Agendamento criado e e-mail enviado",
-                "status": "sucesso",
+                "status_email": "sucesso",
             }
 
         response = AgendamentoResponse.model_validate(data_response)
@@ -231,13 +231,13 @@ def editar_agendamento(id):
             data_response = {
                 **agendamento_atualizado.__dict__,
                 "msg": "Agendamento atualizado, mas e-mail não enviado",
-                "status": "sucesso",
+                "status_email": "alerta",
             }
         else:
             data_response = {
                 **agendamento_atualizado.__dict__,
                 "msg": "Agendamento atualizado e e-mail enviado",
-                "status": "sucesso",
+                "status_email": "sucesso",
             }
         response = AgendamentoResponse.model_validate(data_response)
         db.session.commit()
