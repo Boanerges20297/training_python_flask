@@ -529,7 +529,9 @@ class AgendamentoService:
 
         # felipe
         # Notifica cliente e barbeiro via e-mail antes da exclusão física
-        EmailService.notificar_cancelamento_admin(agendamento)
+        # Vinicius - 22/04/2026
+        # Commentado para evitar erros (depois será implementado)
+        # EmailService.notificar_cancelamento_admin(agendamento)
 
         db.session.delete(agendamento)
         db.session.commit()

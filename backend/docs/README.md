@@ -64,6 +64,11 @@ docs/
 |---------|-----------|
 | [status_historico.md](./modulos/cliente/status_historico.md) | Status de clientes e histórico de cortes |
 
+### 📅 Agendamento
+| Arquivo | Descrição |
+|---------|-----------|
+| [multi_servicos.md](./modulos/agendamento/multi_servicos.md) | Fluxo de agendamentos com múltiplos serviços (M2M) |
+
 ---
 
 ## ⚙️ Infraestrutura
