@@ -29,6 +29,14 @@ from app.modules.auth.email_service import EmailService
 agendamento_bp = Blueprint("agendamento", __name__, url_prefix="/api/agendamento")
 
 
+def _build_agendamento_response(agendamento: Agendamento) -> AgendamentoResponse:
+    """
+    Helper: monta o AgendamentoResponse a partir de um objeto Agendamento ORM.
+    O campo 'servicos' é populado diretamente do relacionamento M2M.
+    """
+    return AgendamentoResponse.model_validate(agendamento)
+
+
 @agendamento_bp.route("", methods=["POST"])
 @jwt_required()
 def criar_agendamento():
@@ -51,14 +59,13 @@ def criar_agendamento():
             data, role, current_user_id
         )
 
-        # Vinicius - 15/04/2026
-        # Como não temos service de clientes, serviços e barbeiros, vamos pegar na rota por enquanto
+        # Busca dados para o e-mail
         cliente = Cliente.query.get(agendamento_novo.cliente_id)
-        servico = Servico.query.get(agendamento_novo.servico_id)
         barbeiro = Barbeiro.query.get(agendamento_novo.barbeiro_id)
 
-        # Vinicius - 14/04/2026
-        # Variavel sucesso e mensagem criados para enviar o email e capturar a resposta da função do serviço
+        # Lista os nomes de todos os serviços para o e-mail
+        nomes_servicos = ", ".join(s.nome.title() for s in agendamento_novo.servicos)
+
         sucesso = EmailService.enviar_notificacao_simples(
             destinatario=cliente.email,
             assunto="Agendamento criado com sucesso",
@@ -66,7 +73,7 @@ def criar_agendamento():
                 nome_usuario=cliente.nome.title(),
                 data=agendamento_novo.data_agendamento.strftime("%d/%m/%Y"),
                 hora=agendamento_novo.data_agendamento.strftime("%H:%M"),
-                servico=servico.nome.title(),
+                servico=nomes_servicos,
                 barbeiro=barbeiro.nome.title(),
             ),
         )
@@ -74,26 +81,18 @@ def criar_agendamento():
         # Vinicius - 14/04/2026
         # Caso não tenho sucesso, cria um logger de erro e retorna a mensagem de erro, caso tudo dê certo, retorna mensagem positiva
         if False in sucesso:
-            data_response = {
-                **agendamento_novo.__dict__,
-                "msg": "Agendamento criado, mas falhou ao enviar o email",
-                "status_email": "alerta",
-            }
-            """
-            IMPLEMENTAR UNDO NO BANCO DE DADOS CASO FALHE ALGUMA COISA, DADOS ESTÃO SENDO INSERIDOS MESMO COM MENSAGENS DE ERRO
-            
-            """
+            status_email = "alerta"
+            msg = "Agendamento criado, mas falhou ao enviar o e-mail"
         else:
-            data_response = {
-                **agendamento_novo.__dict__,
-                "msg": "Agendamento criado e e-mail enviado",
-                "status_email": "sucesso",
-            }
+            status_email = "sucesso"
+            msg = "Agendamento criado e e-mail enviado"
 
-        response = AgendamentoResponse.model_validate(data_response)
         db.session.commit()
-        # Vinicius - 16/04/2026
-        # Adicionado log para monitorar a criação de agendamentos
+
+        response = _build_agendamento_response(agendamento_novo)
+        response.msg = msg
+        response.status_email = status_email
+
         app_logger.info(
             "Agendamento criado com sucesso",
             extra={
@@ -108,7 +107,7 @@ def criar_agendamento():
             jsonify(
                 {
                     "sucesso": True,
-                    "mensagem": data_response.get("msg"),
+                    "mensagem": msg,
                     "dados": {"agendamento": response.model_dump()},
                 }
             ),
@@ -151,7 +150,7 @@ def listar_agendamento():
         # Vinicius - 11/04/2026
         # Transformado o objeto agendamento em dicionário padronizado pelo schema
         agendamentos_dicts = [
-            AgendamentoResponse.model_validate(agendamento).model_dump()
+            _build_agendamento_response(agendamento).model_dump()
             for agendamento in agendamentos.items
         ]
 
@@ -211,8 +210,10 @@ def editar_agendamento(id):
         # Vinicius - 15/04/2026
         # Como não temos service de clientes, serviços e barbeiros, vamos pegar na rota por enquanto
         cliente = Cliente.query.get(agendamento_atualizado.cliente_id)
-        servico = Servico.query.get(agendamento_atualizado.servico_id)
         barbeiro = Barbeiro.query.get(agendamento_atualizado.barbeiro_id)
+        nomes_servicos = ", ".join(
+            s.nome.title() for s in agendamento_atualizado.servicos
+        )
 
         # Vinicius - 14/04/2026
         # Variavel sucesso e mensagem criados para enviar o email e capturar a resposta da função do serviço
@@ -222,27 +223,24 @@ def editar_agendamento(id):
             mensagem_texto=f"""Olá, {cliente.nome.title()}! Seu agendamento foi atualizado com sucesso.
             Data: {agendamento_atualizado.data_agendamento.strftime('%d/%m/%Y')}
             Horário: {agendamento_atualizado.data_agendamento.strftime('%H:%M')}
-            Serviço: {servico.nome.title()}
+            Serviços: {nomes_servicos}
             Barbeiro: {barbeiro.nome.title()}
             """,
         )
 
         if False in sucesso:
-            data_response = {
-                **agendamento_atualizado.__dict__,
-                "msg": "Agendamento atualizado, mas e-mail não enviado",
-                "status_email": "alerta",
-            }
+            status_email = "alerta"
+            msg = "Agendamento atualizado, mas e-mail não enviado"
         else:
-            data_response = {
-                **agendamento_atualizado.__dict__,
-                "msg": "Agendamento atualizado e e-mail enviado",
-                "status_email": "sucesso",
-            }
-        response = AgendamentoResponse.model_validate(data_response)
+            status_email = "sucesso"
+            msg = "Agendamento atualizado e e-mail enviado"
+
         db.session.commit()
-        # Vinicius - 16/04/2026
-        # Adicionado log para monitorar a edição de agendamentos
+
+        response = _build_agendamento_response(agendamento_atualizado)
+        response.msg = msg
+        response.status_email = status_email
+
         app_logger.info(
             "Agendamento atualizado com sucesso",
             extra={
@@ -301,18 +299,21 @@ def atualizar_status(id):
         )
 
         # Ian - 21/04/2026 - Gatilho financeiro
-        if agendamento_atualizado.status == Agendamento.STATUS_CONCLUIDO and not agendamento_atualizado.pago:
+        if (
+            agendamento_atualizado.status == Agendamento.STATUS_CONCLUIDO
+            and not agendamento_atualizado.pago
+        ):
             from app.modules.transacoes.service import TransacaoFinanceiraService
+
             TransacaoFinanceiraService.registrar_pagamento(
                 agendamento_id=id,
-                forma_pagamento="dinheiro", # Default provisório
-                comissao_pct=50.0
+                forma_pagamento="dinheiro",  # Default provisório
+                comissao_pct=50.0,
             )
 
-        response = AgendamentoResponse.model_validate(agendamento_atualizado)
+        response = _build_agendamento_response(agendamento_atualizado)
         db.session.commit()
-        # Vinicius - 16/04/2026
-        # Adicionado log para monitorar a atualização de status de agendamentos
+
         app_logger.info(
             "Agendamento atualizado com sucesso",
             extra={
@@ -366,17 +367,15 @@ def deletar_agendamento(id):
         current_user_id = int(get_jwt_identity())
         role = get_jwt().get("role")
 
-        # Vinicius - 11/04/2026
-        # Migrado toda a logica de negocios para dentro do services
-        agendamento = AgendamentoService.deletar_registro_fisico(id)
+        agendamento_id = id  # captura antes do delete para usar no log
+        AgendamentoService.deletar_registro_fisico(id)
 
         db.session.commit()
-        # Vinicius - 16/04/2026
-        # Adicionado log para monitorar a deleção de agendamentos
+
         app_logger.info(
             "Agendamento deletado com sucesso",
             extra={
-                "agendamento_id": agendamento.id,
+                "agendamento_id": agendamento_id,
                 "realizado_por": current_user_id,
                 "role": role,
                 "data_hora_atual": datetime.utcnow(),
@@ -415,8 +414,7 @@ def buscar_agendamento(id):
         # Vinicius - 11/04/2026
         # Migrado toda a logica de negocios para dentro do services
         agendamento = AgendamentoService.buscar_agendamento(id, role, current_user_id)
-
-        response = AgendamentoResponse.model_validate(agendamento)
+        response = _build_agendamento_response(agendamento)
 
         return (
             jsonify({"sucesso": True, "dados": {"agendamento": response.model_dump()}}),

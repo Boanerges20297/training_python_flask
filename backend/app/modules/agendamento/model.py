@@ -1,9 +1,10 @@
 from app import db
 from datetime import datetime
+from app.modules.agendamento.association import AgendamentoServico
 
 
 class Agendamento(db.Model):
-    """Modelo de Agendamento - marca um horário para um serviço"""
+    """Modelo de Agendamento - marca um horário para um ou mais serviços"""
 
     __tablename__ = "agendamentos"
 
@@ -19,7 +20,7 @@ class Agendamento(db.Model):
     # Chaves estrangeiras
     cliente_id = db.Column(db.Integer, db.ForeignKey("clientes.id"), nullable=False)
     barbeiro_id = db.Column(db.Integer, db.ForeignKey("barbeiros.id"), nullable=False)
-    servico_id = db.Column(db.Integer, db.ForeignKey("servicos.id"), nullable=False)
+    # servico_id removido — substituído pelo relacionamento M2M via agendamento_servico
 
     # Data e hora do agendamento
     data_agendamento = db.Column(db.DateTime, nullable=False)  # Quando será feito
@@ -32,7 +33,7 @@ class Agendamento(db.Model):
 
     # Observações (por exemplo: "Alergia a certos produtos")
     observacoes = db.Column(db.Text(500))
-    
+
     # Ian - 19/04/2026
     # Indica se o agendamento já foi pago
     pago = db.Column(db.Boolean, default=False)
@@ -41,6 +42,15 @@ class Agendamento(db.Model):
     # Preço congelado do serviço no momento do agendamento
     # Isso garante que o histórico financeiro não seja corrompido por mudanças futuras de preço
     preco_cobrado = db.Column(db.Numeric(10, 2), nullable=True)
+
+    # Vinicius - 21/04/2026
+    # Relacionamento M2M: um agendamento pode ter vários serviços
+    servicos = db.relationship(
+        "Servico",
+        secondary=AgendamentoServico.__table__,
+        lazy="select",
+        overlaps="agendamentos",  # Informa ao SQLAlchemy que Servico.agendamentos cobre o lado oposto
+    )
 
     def __repr__(self):
         return f"<Agendamento {self.id} - {self.status}>"
