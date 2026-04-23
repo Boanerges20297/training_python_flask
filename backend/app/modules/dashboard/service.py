@@ -1,9 +1,11 @@
 ﻿from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 
 from sqlalchemy import desc, func
 
 from app import db
 from app.modules.agendamento.model import Agendamento
+from app.modules.agendamento.association import AgendamentoServico
 from app.modules.barbeiro.model import Barbeiro
 from app.modules.cliente.model import Cliente
 from app.modules.servico.model import Servico
@@ -11,6 +13,16 @@ from app.modules.barbeiro.service import BarbeiroService
 
 
 class DashboardService:
+    @staticmethod
+    def _valor_agendamento(agendamento: Agendamento) -> Decimal:
+        if agendamento.preco_cobrado is not None:
+            return Decimal(str(agendamento.preco_cobrado))
+        return sum(Decimal(str(servico.preco)) for servico in agendamento.servicos)
+
+    @staticmethod
+    def _duracao_total_agendamento(agendamento: Agendamento) -> int:
+        return sum(servico.duracao_minutos for servico in agendamento.servicos)
+
     @staticmethod
     def get_dashboard_geral(dias=30):
         # Janela temporal única (UTC) para manter consistência entre todos os KPIs.
@@ -32,9 +44,8 @@ class DashboardService:
         ).count()
 
         receita_total = sum(
-            agendamento.servico.preco
+            DashboardService._valor_agendamento(agendamento)
             for agendamento in agendamentos_concluidos
-            if agendamento.servico
         )
         ticket_medio = (
             receita_total / len(agendamentos_concluidos)
@@ -99,16 +110,14 @@ class DashboardService:
         # Converte o rótulo funcional (dia/semana/mes) em data de corte UTC.
         data_inicio = DashboardService._period_start_from_label(periodo)
 
-        # Agregação financeira feita no banco para reduzir processamento em Python.
-        total = (
-            db.session.query(func.coalesce(func.sum(Servico.preco), 0.0))
-            .join(Agendamento, Agendamento.servico_id == Servico.id)
-            .filter(
+        agendamentos = (
+            Agendamento.query.filter(
                 Agendamento.status == Agendamento.STATUS_CONCLUIDO,
                 Agendamento.data_agendamento >= data_inicio,
-            )
-            .scalar()
+            ).all()
         )
+
+        total = sum(DashboardService._valor_agendamento(agendamento) for agendamento in agendamentos)
 
         return round(float(total or 0), 2)
 
@@ -116,29 +125,33 @@ class DashboardService:
     def get_ganhos_barbeiros(periodo="mes"):
         data_inicio = DashboardService._period_start_from_label(periodo)
 
-        # Ranking por receita já ordenado no SQL (mais eficiente para listas grandes).
-        ganhos = (
-            db.session.query(
-                Barbeiro.id.label("barbeiro_id"),
-                Barbeiro.nome.label("barbeiro_nome"),
-                func.coalesce(func.sum(Servico.preco), 0.0).label("total"),
-            )
-            .join(Agendamento, Agendamento.barbeiro_id == Barbeiro.id)
-            .join(Servico, Agendamento.servico_id == Servico.id)
-            .filter(
+        agendamentos = (
+            Agendamento.query.filter(
                 Agendamento.status == Agendamento.STATUS_CONCLUIDO,
                 Agendamento.data_agendamento >= data_inicio,
-            )
-            .group_by(Barbeiro.id, Barbeiro.nome)
-            .order_by(desc("total"))
-            .all()
+            ).all()
         )
+
+        ganhos_map = {}
+        for agendamento in agendamentos:
+            barbeiro = agendamento.barbeiro
+            if barbeiro.id not in ganhos_map:
+                ganhos_map[barbeiro.id] = {
+                    "barbeiro_id": barbeiro.id,
+                    "barbeiro_nome": barbeiro.nome,
+                    "total": 0.0,
+                }
+            ganhos_map[barbeiro.id]["total"] += float(
+                DashboardService._valor_agendamento(agendamento)
+            )
+
+        ganhos = sorted(ganhos_map.values(), key=lambda item: item["total"], reverse=True)
 
         return [
             {
-                "barbeiro_id": ganho.barbeiro_id,
-                "barbeiro_nome": ganho.barbeiro_nome,
-                "total": round(float(ganho.total or 0), 2),
+                "barbeiro_id": ganho["barbeiro_id"],
+                "barbeiro_nome": ganho["barbeiro_nome"],
+                "total": round(float(ganho["total"] or 0), 2),
             }
             for ganho in ganhos
         ]
@@ -190,9 +203,10 @@ class DashboardService:
             db.session.query(
                 Servico.id.label("servico_id"),
                 Servico.nome.label("nome"),
-                func.count(Agendamento.id).label("total"),
+                func.count(AgendamentoServico.id).label("total"),
             )
-            .join(Agendamento, Agendamento.servico_id == Servico.id)
+            .join(AgendamentoServico, AgendamentoServico.servico_id == Servico.id)
+            .join(Agendamento, Agendamento.id == AgendamentoServico.agendamento_id)
             .filter(
                 Agendamento.status == Agendamento.STATUS_CONCLUIDO,
             )
@@ -264,8 +278,10 @@ class DashboardService:
         cancelados = [
             a for a in agendamentos if a.status == Agendamento.STATUS_CANCELADO
         ]
-        receita_total = sum(a.servico.preco for a in concluidos if a.servico)
-        tempo_total = sum(a.servico.duracao_minutos for a in concluidos if a.servico)
+        receita_total = sum(DashboardService._valor_agendamento(a) for a in concluidos)
+        tempo_total = sum(
+            DashboardService._duracao_total_agendamento(a) for a in concluidos
+        )
         taxa_conclusao = (
             len(concluidos) / len(agendamentos) * 100 if agendamentos else 0
         )
@@ -313,20 +329,18 @@ class DashboardService:
         servicos = {}
 
         for agendamento in agendamentos:
-            if not agendamento.servico:
-                continue
+            for servico in agendamento.servicos:
+                nome = servico.nome
+                if nome not in servicos:
+                    servicos[nome] = {
+                        "nome": nome,
+                        "quantidade": 0,
+                        "preco_unitario": float(servico.preco),
+                        "receita": 0.0,
+                    }
 
-            nome = agendamento.servico.nome
-            if nome not in servicos:
-                servicos[nome] = {
-                    "nome": nome,
-                    "quantidade": 0,
-                    "preco_unitario": float(agendamento.servico.preco),
-                    "receita": 0.0,
-                }
-
-            servicos[nome]["quantidade"] += 1
-            servicos[nome]["receita"] += float(agendamento.servico.preco)
+                servicos[nome]["quantidade"] += 1
+                servicos[nome]["receita"] += float(servico.preco)
 
         return list(servicos.values())
 
@@ -375,20 +389,12 @@ class DashboardService:
     @staticmethod
     def _get_receita_diaria(data_inicio, data_fim):
         # Receita (concluídos) e pendências são consolidadas por dia em duas agregações.
-        receita_rows = (
-            db.session.query(
-                func.date(Agendamento.data_agendamento).label("data"),
-                func.coalesce(func.sum(Servico.preco), 0.0).label("receita"),
-                func.count(Agendamento.id).label("agendamentos_concluidos"),
-            )
-            .join(Servico, Agendamento.servico_id == Servico.id)
-            .filter(
+        concluidos = (
+            Agendamento.query.filter(
                 Agendamento.status == Agendamento.STATUS_CONCLUIDO,
                 Agendamento.data_agendamento >= data_inicio,
                 Agendamento.data_agendamento <= data_fim,
-            )
-            .group_by(func.date(Agendamento.data_agendamento))
-            .all()
+            ).all()
         )
 
         pendentes_rows = (
@@ -407,15 +413,19 @@ class DashboardService:
 
         resultado = {}
 
-        # Primeira passagem: inicializa mapa diário com receita e concluídos.
-        for row in receita_rows:
-            chave = str(row.data)
-            resultado[chave] = {
-                "data": chave,
-                "receita": round(float(row.receita or 0), 2),
-                "agendamentos_concluidos": row.agendamentos_concluidos,
-                "agendamentos_pendentes": 0,
-            }
+        for agendamento in concluidos:
+            chave = str(agendamento.data_agendamento.date())
+            if chave not in resultado:
+                resultado[chave] = {
+                    "data": chave,
+                    "receita": 0.0,
+                    "agendamentos_concluidos": 0,
+                    "agendamentos_pendentes": 0,
+                }
+            resultado[chave]["receita"] += float(
+                DashboardService._valor_agendamento(agendamento)
+            )
+            resultado[chave]["agendamentos_concluidos"] += 1
 
         # Segunda passagem: injeta pendentes e cria dias sem receita, se necessário.
         for row in pendentes_rows:
@@ -428,5 +438,8 @@ class DashboardService:
                     "agendamentos_pendentes": 0,
                 }
             resultado[chave]["agendamentos_pendentes"] = row.agendamentos_pendentes
+
+        for chave in resultado:
+            resultado[chave]["receita"] = round(resultado[chave]["receita"], 2)
 
         return [resultado[chave] for chave in sorted(resultado.keys())]

@@ -302,14 +302,18 @@ def atualizar_status(id):
         if (
             agendamento_atualizado.status == Agendamento.STATUS_CONCLUIDO
             and not agendamento_atualizado.pago
+            and dados.pago is True
         ):
             from app.modules.transacoes.service import TransacaoFinanceiraService
 
-            TransacaoFinanceiraService.registrar_pagamento(
+            # Josue - 22/04/2026: registra financeiro apenas quando admin confirma pago=true no PATCH de status.
+            resultado_pagamento = TransacaoFinanceiraService.registrar_pagamento(
                 agendamento_id=id,
-                forma_pagamento="dinheiro",  # Default provisório
-                comissao_pct=50.0,
+                forma_pagamento=dados.forma_pagamento,
+                comissao_pct=dados.comissao_pct,
             )
+            if not resultado_pagamento.get("sucesso"):
+                raise ValueError(resultado_pagamento.get("erro", "Falha ao registrar pagamento"))
 
         response = _build_agendamento_response(agendamento_atualizado)
         db.session.commit()

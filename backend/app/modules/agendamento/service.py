@@ -504,6 +504,7 @@ class AgendamentoService:
             )
 
         # 3. Atualização
+        # Josue - a troca de status fica centralizada no service para garantir a mesma regra para qualquer rota futura.
         agendamento.status = dados.status
 
         app_logger.info(

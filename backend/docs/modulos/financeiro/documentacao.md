@@ -27,6 +27,30 @@ O service **nunca** monta envelopes JSON — devolve um dicionário Python puro.
 
 ---
 
+## 2.1. Novo padrão: Camada de Repositório (a partir de 23/04/2026)
+
+Agora, o acesso ao banco de dados para agendamentos é feito por meio de uma camada de repositório dedicada:
+
+- Arquivo: `app/repositories/agendamento_repository.py`
+- Responsabilidade: centralizar queries e filtros relacionados a agendamentos, desacoplando o service do ORM.
+- Exemplo de uso no service:
+
+```python
+from app.repositories.agendamento_repository import AgendamentoRepository
+
+# Busca agendamentos filtrados e ordenados
+agendamentos_query = AgendamentoRepository.buscar_por_filtros(
+    filtros, order_by=Agendamento.data_agendamento.desc()
+)
+```
+
+Vantagens:
+- Facilita manutenção e testes
+- Permite trocar ORM ou lógica de acesso sem alterar os services
+- Centraliza regras de acesso a dados
+
+---
+
 ## 3. As 3 Consultas Internas
 
 ### Consulta 1 — Resumo Agregado (receita e ticket médio)

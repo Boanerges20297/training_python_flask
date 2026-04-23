@@ -4,7 +4,7 @@
 # Vinicius - 21/04/2026
 # Refatorado para suportar múltiplos serviços por agendamento (M2M)
 
-from pydantic import BaseModel, Field, ConfigDict, field_validator
+from pydantic import BaseModel, Field, ConfigDict, field_validator, model_validator
 from datetime import datetime
 from typing import List, Optional
 
@@ -144,9 +144,57 @@ class AgendamentoUpdateSchema(BaseModel):
 
 
 class AgendamentoUpdateStatusSchema(BaseModel):
+    # Josue - 22/04/2026: admin deve informar explicitamente estado de pagamento ao concluir.
     status: str = Field(
         ...,
         max_length=20,
         description="Status atual (pendente, confirmado, concluido, cancelado)",
     )
+    pago: Optional[bool] = Field(
+        None,
+        description="Se o agendamento foi pago no momento da conclusão",
+    )
+    forma_pagamento: Optional[str] = Field(
+        None,
+        description="Forma de pagamento (dinheiro, pix, credito, debito)",
+    )
+    comissao_pct: float = Field(
+        50.0,
+        ge=0,
+        le=100,
+        description="Percentual de comissão aplicado na transação financeira",
+    )
+
+    @field_validator("forma_pagamento")
+    @classmethod
+    def validar_forma_pagamento(cls, v):
+        if v is None:
+            return v
+        forma_normalizada = v.strip().lower()
+        formas_validas = {"dinheiro", "pix", "credito", "debito"}
+        if forma_normalizada not in formas_validas:
+            raise ValueError(
+                "forma_pagamento inválida. Use: dinheiro, pix, credito ou debito."
+            )
+        return forma_normalizada
+
+    @model_validator(mode="after")
+    def validar_regras_pagamento(self):
+        # Josue - 22/04/2026: evita concluir sem decisão de pagamento e garante consistência de forma_pagamento.
+        status_normalizado = self.status.strip().lower()
+        if status_normalizado == "concluido":
+            if self.pago is None:
+                raise ValueError(
+                    "Ao concluir o agendamento, informe explicitamente se foi pago."
+                )
+            if self.pago and not self.forma_pagamento:
+                raise ValueError(
+                    "Ao informar pago=true, a forma_pagamento é obrigatória."
+                )
+            if not self.pago and self.forma_pagamento:
+                raise ValueError(
+                    "Não informe forma_pagamento quando pago=false."
+                )
+        return self
+
     model_config = ConfigDict(from_attributes=True, extra="forbid")

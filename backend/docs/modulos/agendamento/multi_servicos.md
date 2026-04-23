@@ -84,5 +84,25 @@ Exclusão física do registro (Apenas Admin).
 
 ---
 
+### Pagamento e Forma de Pagamento (Admin)
+
+A partir de 2026-04-23, o admin é responsável por informar explicitamente a forma de pagamento e marcar o agendamento como pago ao concluir o serviço. Isso é feito via payload na atualização do agendamento:
+
+- O campo `pago` deve ser definido como `true` pelo admin.
+- O campo `forma_pagamento` deve ser preenchido (ex: "dinheiro", "pix", "credito", "debito").
+- Apenas após essa confirmação o sistema registra a transação financeira e libera o valor para relatórios e comissões.
+
+Exemplo de payload para PATCH:
+```json
+{
+  "pago": true,
+  "forma_pagamento": "pix"
+}
+```
+
+Essa regra garante que só o admin pode liberar pagamentos e definir a forma, trazendo mais controle e rastreabilidade ao financeiro.
+
+---
+
 > [!TIP]
 > Para calcular o valor total do agendamento no Front-end, deve-se somar o campo `preco` de todos os itens dentro da lista `servicos` retornada pela API.

@@ -1,6 +1,5 @@
 # Ian - 22/04/2026
 from decimal import Decimal
-from datetime import datetime
 from app import db
 from app.extensions import app_logger
 from app.modules.transacoes.model import TransacaoFinanceira
@@ -44,12 +43,19 @@ class TransacaoFinanceiraService:
                     "erro": "Apenas agendamentos concluídos podem ter pagamento registrado",
                 }
 
-            # Determinar valor a cobrar (preco_cobrado ou preco do serviço)
-            valor_bruto = Decimal(
-                str(agendamento.preco_cobrado)
-                if agendamento.preco_cobrado
-                else agendamento.servico.preco
-            )
+            # Determinar valor a cobrar (preco_cobrado ou soma dos serviços do agendamento)
+            # Josue - preco_cobrado tem precedencia para preservar historico financeiro mesmo se o catalogo mudar depois.
+            if agendamento.preco_cobrado is not None:
+                valor_bruto = Decimal(str(agendamento.preco_cobrado))
+            else:
+                if not agendamento.servicos:
+                    return {
+                        "sucesso": False,
+                        "erro": "Agendamento sem serviços vinculados para calcular pagamento",
+                    }
+                valor_bruto = sum(
+                    Decimal(str(servico.preco)) for servico in agendamento.servicos
+                )
 
             # Calcular comissão
             valor_comissao = valor_bruto * Decimal(comissao_pct) / Decimal(100)
@@ -69,9 +75,8 @@ class TransacaoFinanceiraService:
 
             db.session.add(transacao)
 
-            # Atualizar agendamento
+            # Atualizar agendamento sem alterar data_criacao (histórico de criação)
             agendamento.pago = True
-            agendamento.data_criacao = datetime.utcnow()
 
             db.session.commit()
 

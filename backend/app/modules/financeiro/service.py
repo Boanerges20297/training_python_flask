@@ -1,19 +1,32 @@
+from app.repositories.agendamento_repository import AgendamentoRepository
 # Vinicius 20/04/2026
 # Módulo financeiro estrito: Service de Relatórios Escaláveis (Paginados)
 
 import calendar
+from decimal import Decimal
 from datetime import datetime, timezone
-from sqlalchemy import func, desc
-from app import db
 from app.modules.agendamento.model import Agendamento
-from app.modules.barbeiro.model import Barbeiro
-from app.modules.cliente.model import Cliente
-from app.modules.servico.model import Servico
 
 
 class FinanceiroService:
     @staticmethod
+    def _valor_agendamento(agendamento: Agendamento) -> Decimal:
+        if agendamento.preco_cobrado is not None:
+            return Decimal(str(agendamento.preco_cobrado))
+        return sum(Decimal(str(servico.preco)) for servico in agendamento.servicos)
+
+    @staticmethod
+    def _servicos_label(agendamento: Agendamento) -> str:
+                # Josue 23/04/2026 - Refatoração M2M:
+                # Agora somamos todos os serviços do agendamento (M2M), pois não existe mais servico_id único.
+                # Se preco_cobrado foi definido manualmente (caso especial), ele tem prioridade.
+        nomes = [servico.nome for servico in agendamento.servicos]
+        return ", ".join(nomes) if nomes else "Sem serviços"
+
+    @staticmethod
     def _base_filter(mes: int, ano: int) -> list:
+        # Josue 23/04/2026 - Sugestão: este filtro pode virar um helper reutilizável para outros módulos (ex: dashboard, agendamento).
+                # Josue 23/04/2026 - Exibe todos os nomes dos serviços vinculados ao agendamento (M2M).
         """
         Produz os filtros centrais para não precisarmos repetir as condicionais em múltiplas queries.
 
@@ -37,55 +50,47 @@ class FinanceiroService:
 
     @staticmethod
     def obter_relatorio(mes: int, ano: int, pagina: int = 1, limite: int = 50) -> dict:
+        # Josue 23/04/2026 - Sugestão: acesso ao banco pode ser feito via camada de repositório, separando queries do service.
         # Regatamos a âncora mestre das condições de pesquisa de data e status
         filtros = FinanceiroService._base_filter(mes, ano)
-
-        # =======================================================
-        # CONSULTA 1: Total e Ticket Médio (Delegação para o Banco)
-        # =======================================================
-        # Esta é uma operação O(1) de altíssima performance. Em vez de trazermos
-        # os dados para o Python, usamos o 'func.sum' e 'func.count' do SQLAlchemy.
-        # O 'func.coalesce' funciona como um salva-vidas: se o salão não teve vendas
-        # naquele mês (sum retornaria Null), ele injeta 0.0 de forma segura.
-        agg_result = (
-            db.session.query(
-                func.coalesce(func.sum(Servico.preco), 0.0),
-                func.count(Agendamento.id),
-            )
-            .join(Servico, Agendamento.servico_id == Servico.id)
-            .filter(*filtros)
-            .first()
+        # Josue 23/04/2026 - Refatorado para modelo M2M: cálculos e agregações agora usam todos os serviços do agendamento.
+        # Josue 23/04/2026 - Busca via repositório, desacoplando service do ORM.
+        agendamentos_query = AgendamentoRepository.buscar_por_filtros(
+            filtros, order_by=Agendamento.data_agendamento.desc()
         )
-
-        receita_total = float(agg_result[0]) if agg_result else 0.0
-        qtd_agendamentos = int(agg_result[1]) if agg_result else 0
+    
+        agendamentos = agendamentos_query.all()
+        # Josue 23/04/2026 - Sugestão: validar saída com schema Pydantic antes de retornar para o frontend.
+        qtd_agendamentos = len(agendamentos)
+        receita_total = float(
+            sum(FinanceiroService._valor_agendamento(ag) for ag in agendamentos)
+        )
         ticket_medio = receita_total / qtd_agendamentos if qtd_agendamentos > 0 else 0.0
 
-        # =======================================================
-        # CONSULTA 2: Agrupamento Dinâmico por Barbeiro (Ranking)
-        # =======================================================
-        # Aqui geramos o relatório do qual barbeiro faturou mais na barbearia.
-        # A mágica acontece no '.group_by(Barbeiro.id)', que faz o banco de dados
-        # compactar os milhares de cortes em algumas dezenas de linhas: uma para
-        # cada barbeiro somando ('func.sum') tudo automaticamente e já ordenado
-        # decrescentemente ('.order_by(desc("lucro"))').
-        barbeiros_query = (
-            db.session.query(
-                Barbeiro.nome.label("nome"),
-                func.coalesce(func.sum(Servico.preco), 0.0).label("lucro"),
+        lucro_por_barbeiro_map = {}
+        # Josue 23/04/2026 - Sugestão: agregações como esta podem ser centralizadas em helpers para evitar repetição em outros relatórios.
+        for agendamento in agendamentos:
+            chave = agendamento.barbeiro_id
+            if chave not in lucro_por_barbeiro_map:
+                lucro_por_barbeiro_map[chave] = {
+                    "barbeiro_nome": agendamento.barbeiro.nome,
+                    "lucro": 0.0,
+                }
+            lucro_por_barbeiro_map[chave]["lucro"] += float(
+                FinanceiroService._valor_agendamento(agendamento)
             )
-            .join(Agendamento, Agendamento.barbeiro_id == Barbeiro.id)
-            .join(Servico, Agendamento.servico_id == Servico.id)
-            .filter(*filtros)
-            .group_by(Barbeiro.id, Barbeiro.nome)
-            .order_by(desc("lucro"))
-            .all()
-        )
 
-        lucro_por_barbeiro = [
-            {"barbeiro_nome": r.nome, "lucro": round(float(r.lucro), 2)}
-            for r in barbeiros_query
-        ]
+        lucro_por_barbeiro = sorted(
+            [
+                {
+                    "barbeiro_nome": item["barbeiro_nome"],
+                    "lucro": round(item["lucro"], 2),
+                }
+                for item in lucro_por_barbeiro_map.values()
+            ],
+            key=lambda item: item["lucro"],
+            reverse=True,
+        )
 
         # =======================================================
         # CONSULTA 3: Offset Pagination para as Notas Fiscais (Extrato)
@@ -95,34 +100,21 @@ class FinanceiroService:
         # O uso tático de '.offset()' (Pular N registros) e '.limit()' (Pegar apenas os próximos N)
         # garante que só uma "página" minúscula entre no processador Python por vez.
         notas_query = (
-            db.session.query(
-                Agendamento.id.label("agendamento_id"),
-                Agendamento.data_agendamento,
-                Barbeiro.nome.label("barbeiro_nome"),
-                Cliente.nome.label("cliente_nome"),
-                Servico.nome.label("servico_nome"),
-                Servico.preco.label("valor"),
-            )
-            .join(Barbeiro, Agendamento.barbeiro_id == Barbeiro.id)
-            .join(Cliente, Agendamento.cliente_id == Cliente.id)
-            .join(Servico, Agendamento.servico_id == Servico.id)
-            .filter(*filtros)
-            .order_by(Agendamento.data_agendamento.desc())
-            .offset((pagina - 1) * limite)
-            .limit(limite)
-            .all()
+            agendamentos_query.offset((pagina - 1) * limite).limit(limite).all()
         )
+        # Josue - offset/limit evita carregar o extrato inteiro quando o volume financeiro crescer.
 
         notas_fiscais = []
         for row in notas_query:
             notas_fiscais.append(
                 {
-                    "agendamento_id": row.agendamento_id,
+                    "agendamento_id": row.id,
+                    # Josue 23/04/2026 - Cada nota fiscal pode ter múltiplos serviços (M2M), exibidos em string.
                     "data": row.data_agendamento.isoformat(),
-                    "barbeiro_nome": row.barbeiro_nome,
-                    "cliente_nome": row.cliente_nome,
-                    "servico": row.servico_nome,
-                    "valor": float(row.valor),
+                    "barbeiro_nome": row.barbeiro.nome,
+                    "cliente_nome": row.cliente.nome,
+                    "servico": FinanceiroService._servicos_label(row),
+                    "valor": float(FinanceiroService._valor_agendamento(row)),
                 }
             )
 
