@@ -299,6 +299,7 @@ export default function AppointmentsView() {
         onSuccess={fetchData}
         clientes={clientes}
         servicos={servicos}
+        barbeiros={barbeiros}
         agendamentoParaEditar={agendamentoParaEditar}
       />
 

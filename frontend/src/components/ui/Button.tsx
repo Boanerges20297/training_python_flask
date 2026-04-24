@@ -1,16 +1,41 @@
+// Gabriel (Dev 1) — Componente Button com CSS Modules
+// Mesma interface pública de antes, agora consumindo Design Tokens
 import React, { forwardRef } from 'react';
 import type { ButtonHTMLAttributes } from 'react';
 import { Loader2 } from 'lucide-react';
-import './Button.css';
+import styles from './Button.module.css';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'normal' |'danger' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'normal' | 'danger' | 'ghost';
   theme?: 'blue' | 'green' | 'purple' | 'amber' | 'slate';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
   icon?: React.ReactNode;
   fullWidth?: boolean;
 }
+
+// Mapas de lookup para converter props em classes do CSS Module
+const variantMap: Record<string, string> = {
+  primary: styles.btnPrimary,
+  secondary: styles.btnSecondary,
+  normal: styles.btnNormal,
+  danger: styles.btnDanger,
+  ghost: styles.btnGhost,
+};
+
+const themeMap: Record<string, string> = {
+  blue: styles.themeBlue,
+  purple: styles.themePurple,
+  green: styles.themeGreen,
+  amber: styles.themeAmber,
+  slate: styles.themeSlate,
+};
+
+const sizeMap: Record<string, string> = {
+  sm: styles.btnSm,
+  md: styles.btnMd,
+  lg: styles.btnLg,
+};
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
@@ -28,21 +53,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
-    // Agrupa as classes: base, variant, theme e modifiers
-    const baseClass = 'btn';
-    const variantClass = `btn-${variant}`;
-    const themeClass = `theme-${theme}`;
-    const sizeClass = `btn-${size}`;
-    const widthClass = fullWidth ? 'w-full' : '';
-    const loadingClass = isLoading ? 'is-loading' : '';
-
+    // Monta a string de classes usando o CSS Module
     const combinedClassName = [
-      baseClass,
-      variantClass,
-      themeClass,
-      sizeClass,
-      widthClass,
-      loadingClass,
+      styles.btn,
+      variantMap[variant],
+      themeMap[theme],
+      sizeMap[size],
+      fullWidth ? styles.wFull : '',
       className,
     ]
       .filter(Boolean)
@@ -58,9 +75,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {isLoading ? (
           <Loader2 size={18} className="animate-spin" />
         ) : (
-          icon && <span className="btn-icon">{icon}</span>
+          icon && <span className={styles.btnIcon}>{icon}</span>
         )}
-        <span className="btn-text">{children}</span>
+        <span className={styles.btnText}>{children}</span>
       </button>
     );
   }

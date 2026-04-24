@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { getClientes, deleteCliente } from '../../../api/clients';
 import type { Cliente } from '../../../types';
 import { Users, Phone, Mail } from 'lucide-react';
-import ClientModal from '../../../components/ui/modals/ClientModal/ClientModal';
+import ClientDrawer from '../components/ClientDrawer';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import { useToast } from '../../../components/ui/Toast';
 import ActionButtons from '../../../components/ui/ActionButtons';
@@ -102,7 +102,7 @@ export default function ClientsView() {
       header: 'Ações', 
       render: (cliente: Cliente) => (
         <ActionButtons 
-          onEdit={() => handleEditClick(cliente)}
+          onView={() => handleEditClick(cliente)}
           onDelete={() => handleDeleteClick(cliente.id!)}
           theme="blue"
         />
@@ -142,7 +142,7 @@ export default function ClientsView() {
         }}
       />
 
-      <ClientModal
+      <ClientDrawer
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);

@@ -4,6 +4,7 @@ export interface Cliente {
   email: string;
   telefone: string;
   senha?: string;
+  observacoes?: string;
 }
 
 export interface Servico {
@@ -12,7 +13,6 @@ export interface Servico {
   descricao?: string;
   preco: number;
   duracao_minutos: number;
-  barbeiro_id: number;
 }
 
 export interface Agendamento {
@@ -34,6 +34,8 @@ export interface Barbeiro {
   telefone: string;
   senha?: string;
   ativo: boolean;
+  justificativa?: string;
+  servicos_ids?: number[];
 }
 
 // Tipos de autenticação

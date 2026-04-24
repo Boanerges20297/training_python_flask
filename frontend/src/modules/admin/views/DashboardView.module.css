@@ -1,0 +1,245 @@
+.dashboardContainer {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(12, 1fr);
+  padding-bottom: 2rem;
+}
+
+.loadingState {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 60vh;
+  color: var(--color-blue);
+  gap: 1rem;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.dashboardControls {
+  grid-column: span 12;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  margin-bottom: 0.5rem;
+}
+
+.controlsTagline {
+  color: var(--text-tertiary);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.dashboardControlsLeft, .dashboardControlsRight {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+/* Bento Cards */
+.chartCard, .kpiCard, .statMiniCard {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: 2rem;
+  padding: 1.75rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.chartCard:hover, .kpiCard:hover, .statMiniCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+  border-color: var(--border-medium);
+}
+
+/* Spans */
+.span4 { grid-column: span 4; }
+.span6 { grid-column: span 6; }
+.span8 { grid-column: span 8; }
+.span12 { grid-column: span 12; }
+
+/* Heights */
+.h1 { height: 140px; }
+.h1_5 { height: 180px; }
+.h2 { height: 360px; }
+.h3 { height: 500px; }
+
+/* Card Header */
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.cardTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.cardSubtitle {
+  font-size: 0.85rem;
+  color: var(--text-tertiary);
+  margin: 0.25rem 0 0 0;
+}
+
+.headerIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* KPI Styles */
+.kpiContent {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+}
+
+.kpiLabel {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  margin-bottom: 0.5rem;
+}
+
+.kpiValue {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.kpiTrendPositive {
+  font-size: 0.75rem;
+  color: var(--color-success);
+  margin-top: 0.5rem;
+  font-weight: 600;
+}
+
+.kpiIconBox {
+  position: absolute;
+  top: 1.75rem;
+  right: 1.75rem;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* List Styles */
+.bentoList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.bentoListItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background: var(--bg-tertiary);
+  border-radius: 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.bentoListItem:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-light);
+  transform: translateX(4px);
+}
+
+.itemInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.itemAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--color-blue-light);
+  color: var(--color-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.itemName {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.itemTag {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  margin: 0;
+}
+
+.itemAction {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: var(--text-tertiary);
+}
+
+.itemValue {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Mini Cards */
+.statMiniCard {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  height: 140px;
+}
+
+.miniLabel {
+  font-size: 0.85rem;
+  color: var(--text-tertiary);
+  margin-bottom: 0.5rem;
+}
+
+.miniValue {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.chartWrapper { height: 340px; margin-top: auto; }
+.chartWrapperSmall { height: 240px; margin-top: auto; }
+
+@media (max-width: 1024px) {
+  .span8, .span4 { grid-column: span 12; }
+}
+

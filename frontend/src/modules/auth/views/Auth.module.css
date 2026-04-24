@@ -1,0 +1,362 @@
+/* ===================================================================
+   Auth.module.css — Layout "Floating Card" Premium
+   =================================================================== */
+
+.authContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  min-height: 100vh;
+  background: var(--bg-tertiary);
+  padding: var(--space-xl);
+  position: relative;
+}
+
+/* No Dark Mode, o fundo de trás fica mais integrado */
+:global([data-theme="dark"]) .authContainer {
+  background: var(--bg-primary);
+}
+
+/* ── Container para o seletor de tema ── */
+.themeToggleWrapper {
+  position: absolute;
+  top: var(--space-lg);
+  right: var(--space-lg);
+  z-index: 100;
+  animation: fadeIn var(--transition-slow) ease-out;
+}
+
+/* ── O "Card" Principal que flutua no meio da tela ── */
+.contentBox {
+  display: flex;
+  width: 95%;
+  max-width: 1200px;
+  height: 90vh;
+  max-height: 850px;
+  background: var(--bg-secondary);
+  border-radius: 2rem;
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--border-color);
+}
+
+:global([data-theme="dark"]) .contentBox {
+  background: var(--bg-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ── Painel de Hero (Imagem) ── */
+.heroPanel {
+  position: relative;
+  flex: 0 0 50%;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.heroImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Overlay sutil para a marca */
+.heroOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(15, 23, 42, 0.1) 0%,
+    transparent 40%,
+    rgba(15, 23, 42, 0.7) 100%
+  );
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: var(--space-2xl);
+  z-index: 3;
+}
+
+.heroBrand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.heroBrandIcon {
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.heroBrandText {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+}
+
+.heroTagline {
+  font-size: var(--font-size-base);
+  color: rgba(255, 255, 255, 0.8);
+  max-width: 380px;
+  line-height: 1.6;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* ── Painel de Formulário ── */
+.formPanel {
+  flex: 0 0 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2xl);
+  background: var(--bg-secondary);
+  z-index: 5;
+  position: relative;
+}
+
+/* ── Grid para inputs lado a lado ── */
+.inputGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+  width: 100%;
+}
+
+/* ── Card Estilizado ── */
+.authCard {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+/* .authCardLarge não é mais necessário pois o painel já é grande, mas manteremos por segurança */
+.authCardLarge {
+  max-width: 420px;
+}
+
+.authHeader {
+  text-align: center;
+  margin-bottom: var(--space-xl);
+}
+
+.logoIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-md);
+  border: 1px solid;
+}
+
+.logoBlue { background: var(--color-client-light); border-color: var(--color-client-border); }
+.logoGreen { background: var(--color-service-light); border-color: var(--color-service-border); }
+.logoAmber { background: var(--color-barber-light); border-color: var(--color-barber-border); }
+
+.authTitle {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  margin: 0 0 var(--space-xs);
+  color: var(--text-primary);
+}
+
+.authSubtitle {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  margin: 0;
+}
+
+.authForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.formDescription {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  text-align: center;
+  margin: 0 0 var(--space-lg);
+  line-height: 1.5;
+}
+
+.formButtons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--space-sm);
+}
+
+.authFooter {
+  margin-top: var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--text-tertiary);
+}
+
+.authLink {
+  color: var(--color-client);
+  text-decoration: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.authLink:hover {
+  color: var(--color-client-hover);
+  text-decoration: underline;
+}
+
+.clickableText {
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-weight: 500;
+  transition: color var(--transition-fast);
+}
+
+.clickableText:hover {
+  color: var(--text-primary);
+}
+
+.devHint {
+  margin-top: var(--space-lg);
+  opacity: 0.6;
+  font-size: var(--font-size-xs);
+  line-height: 1.6;
+  padding: var(--space-sm);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+}
+
+/* ── Password Strength Meter ── */
+.strengthContainer {
+  margin-top: calc(-1 * var(--space-sm));
+  margin-bottom: var(--space-xs);
+}
+
+.strengthBars {
+  display: flex;
+  gap: 4px;
+  height: 4px;
+  margin-bottom: var(--space-xs);
+}
+
+.strengthBar {
+  flex: 1;
+  background: var(--bg-tertiary);
+  border-radius: 2px;
+  transition: all var(--transition-slow);
+}
+
+.strength1 { background: var(--color-danger); }
+.strength2 { background: var(--color-warning); }
+.strength3 { background: var(--color-client); }
+.strength4 { background: var(--color-success); }
+
+.strengthLabel {
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+  text-align: right;
+  display: block;
+}
+
+/* ── Mensagens (Fallback se não usar toast) ── */
+.errorMessage {
+  background: var(--color-danger-light);
+  color: var(--color-danger);
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  border: 1px solid var(--color-danger-border);
+  text-align: center;
+}
+
+.successMessage {
+  background: var(--color-service-light);
+  color: var(--color-service);
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  border: 1px solid var(--color-service-border);
+  text-align: center;
+}
+
+/* Estado de Sucesso */
+.successState {
+  text-align: center;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.successIcon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-md);
+}
+
+.successTitle {
+  color: var(--text-primary);
+  margin: 0 0 var(--space-sm);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+}
+
+.successDescription {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  margin: 0 0 var(--space-xl);
+  line-height: 1.5;
+}
+
+/* ── Animações ── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ── Responsividade ── */
+@media (max-width: 900px) {
+  .contentBox {
+    flex-direction: column !important;
+    height: auto;
+    min-height: 0;
+    max-width: 500px;
+  }
+  
+  .heroPanel {
+    flex: 0 0 200px;
+    width: 100%;
+  }
+
+  .formPanel {
+    flex: 1;
+    width: 100%;
+    padding: var(--space-xl);
+  }
+}
+
+@media (max-width: 600px) {
+  .authContainer {
+    padding: var(--space-sm);
+  }
+  .heroPanel { display: none; }
+  .contentBox {
+    border-radius: var(--radius-lg);
+  }
+}

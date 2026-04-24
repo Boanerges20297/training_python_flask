@@ -1,8 +1,11 @@
+// Register — Cadastro com Password Strength Meter e CSS Modules
 import React, { useState } from 'react';
 import { User, Lock, Mail, Phone, UserPlus, ArrowLeft } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import { useAuth } from '../../../auth/useAuth';
+import { useToast } from '../../../components/ui/Toast';
+import styles from './Auth.module.css';
 
 interface RegisterProps {
   onRegisterSuccess?: (user: any) => void;
@@ -11,70 +14,94 @@ interface RegisterProps {
 
 const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
   const { register } = useAuth();
+  const { showToast } = useToast();
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [telefone, setTelefone] = useState('');
   const [senha, setSenha] = useState('');
   const [confirmSenha, setConfirmSenha] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   // Lógica da Senha Forte
-const calcStrength = (pw: string) => {
-  if (pw.length < 6) return 0; 
-
-  let score = 1; 
-  if (pw.length > 10) score += 1;
-  if (/[A-Z]/.test(pw)) score += 1;
-  if (/[0-9]/.test(pw)) score += 1;
-  if (/[^a-zA-Z0-9]/.test(pw)) score += 1;
-
-  return Math.min(4, score);
-};
+  const calcStrength = (pw: string) => {
+    if (pw.length < 6) return 0; 
+    let score = 1; 
+    if (pw.length > 10) score += 1;
+    if (/[A-Z]/.test(pw)) score += 1;
+    if (/[0-9]/.test(pw)) score += 1;
+    if (/[^a-zA-Z0-9]/.test(pw)) score += 1;
+    return Math.min(4, score);
+  };
   
   const strength = calcStrength(senha);
   const strengthLabels = ['Muito Fraca', 'Fraca', 'Razoável', 'Forte', 'Muito Forte'];
 
+  // Mapeia nível de força para a classe CSS correta
+  const getStrengthClass = (barIndex: number) => {
+    if (strength >= barIndex) {
+      const classMap: Record<number, string> = {
+        1: styles.strength1,
+        2: styles.strength2,
+        3: styles.strength3,
+        4: styles.strength4,
+      };
+      return classMap[strength] || '';
+    }
+    return '';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (senha !== confirmSenha) {
-      setError('As senhas não coincidem.');
+      showToast('As senhas não coincidem.', 'error');
       return;
     }
     
     setLoading(true);
-    setError('');
 
     try {
       await register(nome, email, senha, telefone);
-      // O App.tsx detectará o estado autenticado via Contexto
+      showToast('Conta criada com sucesso!', 'success');
     } catch (err: any) {
-      setError(err.toString());
+      showToast(err.toString(), 'error');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="auth-card large">
-      <div className="auth-header">
-        <div className="logo-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
-          <UserPlus size={32} color="#10b981" />
+    <div className={`${styles.authCard} ${styles.authCardLarge}`}>
+      <div className={styles.authHeader}>
+        <div className={`${styles.logoIcon} ${styles.logoGreen}`}>
+          <UserPlus size={32} color="var(--color-service)" />
         </div>
-        <h1>Criar Conta</h1>
-        <p>Junte-se à Barba & Byte agora mesmo</p>
+        <h1 className={styles.authTitle}>Criar Conta</h1>
+        <p className={styles.authSubtitle}>Junte-se à Barba & Byte agora mesmo</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="modern-form">
-        <Input 
-          label="Nome Completo"
-          type="text" 
-          icon={<User size={18} />}
-          placeholder="Seu nome completo" 
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
-          required
-        />
+      <form onSubmit={handleSubmit} className={styles.authForm}>
+        <div className={styles.inputGrid}>
+          <Input 
+            label="Nome"
+            type="text" 
+            icon={<User size={18} />}
+            placeholder="Seu nome" 
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+            required
+          />
+          
+          <Input
+            label="Telefone"
+            type="text"
+            mask="phone"
+            icon={<Phone size={18} />}
+            placeholder="(00) 00000-0000"
+            value={telefone}
+            onChange={(e) => setTelefone(e.target.value)}
+            required
+          />
+        </div>
         
         <Input 
           label="E-mail"
@@ -86,52 +113,40 @@ const calcStrength = (pw: string) => {
           required
         />
 
-        <Input
-          label="Telefone"
-          type="text"
-          mask="phone"
-          icon={<Phone size={18} />}
-          placeholder="Seu telefone"
-          value={telefone}
-          onChange={(e) => setTelefone(e.target.value)}
-          required
-        />
-
-        <div style={{ position: 'relative' }}>
+        <div className={styles.inputGrid}>
           <Input 
             label="Senha"
             type="password" 
             icon={<Lock size={18} />}
-            placeholder="Crie uma senha forte" 
+            placeholder="Senha" 
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
             required
           />
+
+          <Input 
+            label="Confirmar"
+            type="password" 
+            icon={<Lock size={18} />}
+            placeholder="Repita" 
+            value={confirmSenha}
+            onChange={(e) => setConfirmSenha(e.target.value)}
+            required
+          />
         </div>
-        
-        <div className="password-strength-container" style={{ marginBottom: '0.1rem' }}>
-          <div className="password-strength-bars">
-            <div className={`pw-bar ${strength >= 1 ? 'active-1' : ''}`} />
-            <div className={`pw-bar ${strength >= 2 ? `active-${strength}` : ''}`} />
-            <div className={`pw-bar ${strength >= 3 ? `active-${strength}` : ''}`} />
-            <div className={`pw-bar ${strength >= 4 ? `active-4` : ''}`} />
+
+        {/* Password Strength Meter */}
+        <div className={styles.strengthContainer}>
+          <div className={styles.strengthBars}>
+            <div className={`${styles.strengthBar} ${getStrengthClass(1)}`} />
+            <div className={`${styles.strengthBar} ${getStrengthClass(2)}`} />
+            <div className={`${styles.strengthBar} ${getStrengthClass(3)}`} />
+            <div className={`${styles.strengthBar} ${getStrengthClass(4)}`} />
           </div>
-          <span className="password-strength-label">Força: {strengthLabels[strength]}</span>
+          <span className={styles.strengthLabel}>Força: {strengthLabels[strength]}</span>
         </div>
 
-        <Input 
-          label="Confirmar Senha"
-          type="password" 
-          icon={<Lock size={18} />}
-          placeholder="Repita sua senha" 
-          value={confirmSenha}
-          onChange={(e) => setConfirmSenha(e.target.value)}
-          required
-        />
-
-        {error && <div className="error-message">{error}</div>}
-
-        <div className="auth-form-buttons">
+        <div className={styles.formButtons}>
           <Button 
             variant="ghost" 
             type="button"
@@ -147,7 +162,7 @@ const calcStrength = (pw: string) => {
             isLoading={loading}
             icon={<UserPlus size={18} />}
           >
-            Finalizar Cadastro
+            Cadastrar
           </Button>
         </div>
       </form>

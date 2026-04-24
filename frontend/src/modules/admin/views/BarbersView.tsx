@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import { getBarbeiros, deleteBarbeiro } from '../../../api/barbers';
 import type { Barbeiro } from '../../../types';
 import { Scissors, Phone, Mail, Award, Circle } from 'lucide-react';
-import BarbersModal from '../../../components/ui/modals/BarbersModal/BarbersModal';
+import BarberDrawer from '../components/BarberDrawer';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import { useToast } from '../../../components/ui/Toast';
 import ActionButtons from '../../../components/ui/ActionButtons';
 import DataTable from '../../../components/ui/DataTable';
 import type { Column } from '../../../components/ui/DataTable';
 import { formatPhone } from '../../../components/ui/Input';
+import { getSpecialtyLabel } from '../constants/specialties';
 
 export default function BarbersView() {
   const [barbeiros, setBarbeiros] = useState<Barbeiro[]>([]);
@@ -94,7 +95,7 @@ export default function BarbersView() {
           color: '#94a3b8'
         }}>
           <Award size={14} color="#f59e0b" style={{ flexShrink: 0 }} />
-          <span className="text-capitalize">{barbeiro.especialidade}</span>
+          <span className="text-capitalize">{getSpecialtyLabel(barbeiro.especialidade)}</span>
         </div>
       ),
       align: 'center',
@@ -133,7 +134,7 @@ export default function BarbersView() {
       header: 'Ações',
       render: (barbeiro: Barbeiro) => (
         <ActionButtons 
-          onEdit={() => handleEditClick(barbeiro)}
+          onView={() => handleEditClick(barbeiro)}
           onDelete={() => handleDeleteClick(barbeiro.id!)}
           theme="amber"
         />
@@ -176,7 +177,7 @@ export default function BarbersView() {
         }}
       />
 
-      <BarbersModal
+      <BarberDrawer
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);

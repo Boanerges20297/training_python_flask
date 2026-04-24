@@ -1,9 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { getServicos, deleteServico } from '../../../api/services';
-import { getBarbeiros } from '../../../api/barbers';
-import type { Servico, Barbeiro } from '../../../types';
+import type { Servico } from '../../../types';
 import { Briefcase, DollarSign, Clock } from 'lucide-react';
-import ServiceModal from '../../../components/ui/modals/ServiceModal/ServiceModal';
+import ServiceDrawer from '../components/ServiceDrawer';
 import { useToast } from '../../../components/ui/Toast';
 import ActionButtons from '../../../components/ui/ActionButtons';
 import DataTable from '../../../components/ui/DataTable';
@@ -13,7 +12,6 @@ import Popover from '../../../components/ui/Popover';
 
 export default function ServicesView() {
   const [servicos, setServicos] = useState<Servico[]>([]);
-  const [barbeiros, setBarbeiros] = useState<Barbeiro[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [page, setPage] = useState(1);
@@ -31,13 +29,9 @@ export default function ServicesView() {
   const fetchServicos = async (currentPage = page) => {
     setLoading(true);
     try {
-      const [serviceResponse, barberResponse] = await Promise.all([
-        getServicos(currentPage, 10),
-        getBarbeiros(1, 100)
-      ]);
+      const serviceResponse = await getServicos(currentPage, 10);
       setServicos(serviceResponse.items || []);
       setTotalPages(serviceResponse.total_paginas || 1);
-      setBarbeiros(barberResponse.items || []);
     } catch (e) {
       showToast('Erro ao carregar serviços.', 'error');
     } finally {
@@ -116,27 +110,9 @@ export default function ServicesView() {
     {
       header: 'Ações',
       render: (servico: Servico) => {
-        // REMOVER QUANDO: O Backend retornar informações do barbeiro junto ao serviço (JOIN).
-        const barbeiro = barbeiros.find(b => b.id === servico.barbeiro_id);
-        const isInativo = barbeiro ? !barbeiro.ativo : false;
-        const infoColor = isInativo ? '#ef4444' : '#10b981';
-        const infoContent = barbeiro ? (
-          <>
-            <b>Profissional:</b> {barbeiro.nome}
-            <br />
-            <b>Status:</b> {barbeiro.ativo ? ' Ativo' : ' Inativo - Conflito detectado!'}
-          </>
-        ) : (
-          'Barbeiro não encontrado.'
-        );
         return (
           <ActionButtons
-            onInfo={(e) => setActivePopover({
-              anchor: e.currentTarget as HTMLElement,
-              content: infoContent,
-              themeColor: infoColor
-            })}
-            onEdit={() => handleEditClick(servico)}
+            onView={() => handleEditClick(servico)}
             onDelete={() => handleDeleteClick(servico.id!)}
             theme="green"
           />
@@ -185,7 +161,7 @@ export default function ServicesView() {
         themeColor={activePopover?.themeColor || '#10b981'}
       />
 
-      <ServiceModal
+      <ServiceDrawer
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);

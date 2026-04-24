@@ -1,0 +1,156 @@
+/* ===================================================================
+   Design Tokens — Barbabyte
+   Variáveis CSS centralizadas para Light e Dark mode.
+   Consumidas por CSS Modules em todo o projeto.
+   =================================================================== */
+
+:root {
+  /* ── Fundos ── */
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f5f9;
+
+  /* ── Texto ── */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #64748b;
+  --text-inverse: #ffffff;
+
+  /* ── Bordas ── */
+  --border-color: #e2e8f0;
+  --border-color-hover: #cbd5e1;
+
+  /* ── Cores de Marca (Light) ── */
+  --color-client: #3b82f6;
+  --color-client-hover: #2563eb;
+  --color-client-light: #eff6ff;
+  --color-client-border: rgba(59, 130, 246, 0.25);
+
+  --color-barber: #f59e0b;
+  --color-barber-hover: #d97706;
+  --color-barber-light: #fffbeb;
+  --color-barber-border: rgba(245, 158, 11, 0.25);
+
+  --color-service: #10b981;
+  --color-service-hover: #059669;
+  --color-service-light: #ecfdf5;
+  --color-service-border: rgba(16, 185, 129, 0.25);
+
+  --color-appointment: #8b5cf6;
+  --color-appointment-hover: #7c3aed;
+  --color-appointment-light: #f5f3ff;
+  --color-appointment-border: rgba(139, 92, 246, 0.25);
+
+  --color-danger: #ef4444;
+  --color-danger-hover: #dc2626;
+  --color-danger-light: #fef2f2;
+  --color-danger-border: rgba(239, 68, 68, 0.25);
+
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-info: #3b82f6;
+
+  /* ── Sombras ── */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+
+  /* ── Glassmorphism ── */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.5);
+  --glass-blur: blur(12px);
+
+  /* ── Focus Ring ── */
+  --focus-ring: 0 0 0 3px rgba(59, 130, 246, 0.35);
+  --focus-ring-danger: 0 0 0 3px rgba(239, 68, 68, 0.35);
+
+  /* ── Transições ── */
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ── Raios de Borda ── */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-full: 9999px;
+
+  /* ── Espaçamento ── */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+
+  /* ── Tipografia ── */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+
+  /* ── Overlays ── */
+  --overlay-bg: rgba(0, 0, 0, 0.4);
+}
+
+/* ===================================================================
+   Dark Mode — tom escuro vibrante, nunca preto puro
+   =================================================================== */
+[data-theme="dark"] {
+  /* ── Fundos ── */
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+
+  /* ── Texto ── */
+  --text-primary: rgba(255, 255, 255, 0.87);
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
+  --text-inverse: #0f172a;
+
+  /* ── Bordas ── */
+  --border-color: rgba(255, 255, 255, 0.06);
+  --border-color-hover: rgba(255, 255, 255, 0.12);
+
+  /* ── Cores de Marca (Dark) — mesma cor principal, fundo sutil diferente ── */
+  --color-client-light: rgba(59, 130, 246, 0.1);
+  --color-client-border: rgba(59, 130, 246, 0.2);
+
+  --color-barber-light: rgba(245, 158, 11, 0.1);
+  --color-barber-border: rgba(245, 158, 11, 0.2);
+
+  --color-service-light: rgba(16, 185, 129, 0.1);
+  --color-service-border: rgba(16, 185, 129, 0.2);
+
+  --color-appointment-light: rgba(139, 92, 246, 0.1);
+  --color-appointment-border: rgba(139, 92, 246, 0.2);
+
+  --color-danger-light: rgba(239, 68, 68, 0.12);
+  --color-danger-border: rgba(239, 68, 68, 0.2);
+
+  /* ── Sombras ── */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+
+  /* ── Glassmorphism ── */
+  --glass-bg: rgba(30, 41, 59, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: blur(16px);
+
+  /* ── Focus Ring ── */
+  --focus-ring: 0 0 0 3px rgba(59, 130, 246, 0.4);
+  --focus-ring-danger: 0 0 0 3px rgba(239, 68, 68, 0.4);
+
+  /* ── Overlays ── */
+  --overlay-bg: rgba(0, 0, 0, 0.6);
+}

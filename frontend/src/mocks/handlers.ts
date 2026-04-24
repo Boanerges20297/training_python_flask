@@ -1,7 +1,7 @@
 import { http, HttpResponse, delay } from 'msw';
 import { db } from './db';
 
-const API_BASE = 'http://127.0.0.1:5000/api';
+const API_BASE = 'http://localhost:5000/api';
 
 export const handlers = [
   // --- AUTH ---
@@ -50,7 +50,7 @@ export const handlers = [
   // Mock de Cadastro (Register) - Registra como cliente com validação de email único
   http.post(`${API_BASE}/auth/register`, async ({ request }) => {
     await delay(500);
-    const { nome, email, senha, telefone } = await request.json() as any;
+    const { nome, email, telefone } = await request.json() as any;
     
     // Validação: email já existe?
     const clientes = db.getAll('clientes');

@@ -1,44 +1,128 @@
-import React, { useState } from 'react';
+// AuthContainer — Com animação de Swap (Framer Motion) e Theme Toggle
+import React, { useState, useRef } from 'react';
+import { useAuth } from '../../../auth/useAuth';
+import { Navigate } from 'react-router-dom';
+import { Scissors } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Login from './Login';
 import Register from './Register';
 import ForgotPassword from './ForgotPassword';
-import './Auth.css';
+import ThemeToggle from '../../../components/ui/ThemeToggle';
+import authBg from '../../../assets/images/auth-bg.png';
+import styles from './Auth.module.css';
 
 interface AuthContainerProps {}
 
 type AuthView = 'login' | 'register' | 'forgot-password';
 
 const AuthContainer: React.FC<AuthContainerProps> = () => {
+  const { isAuthenticated } = useAuth();
   const [currentView, setCurrentView] = useState<AuthView>('login');
+  const constraintsRef = useRef(null);
+
+  if (isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  // Define se o formulário deve estar na esquerda ou direita
+  // Login e ForgotPassword na direita (padrão), Register na esquerda (swap)
+  const isReversed = currentView === 'register';
 
   const renderView = () => {
-    switch (currentView) {
-      case 'login':
-        return (
-          <Login 
-            onNavigate={(view: AuthView) => setCurrentView(view)} 
-          />
-        );
-      case 'register':
-        return (
-          <Register 
-            onNavigate={(view: AuthView) => setCurrentView(view)} 
-          />
-        );
-      case 'forgot-password':
-        return (
-          <ForgotPassword 
-            onNavigate={(view: AuthView) => setCurrentView(view)} 
-          />
-        );
-      default:
-        return <Login onNavigate={() => setCurrentView('login')} />;
-    }
+    return (
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentView}
+          initial={{ opacity: 0, x: isReversed ? -20 : 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: isReversed ? 20 : -20 }}
+          transition={{ duration: 0.4, ease: "easeInOut" }}
+          style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
+        >
+          {currentView === 'login' && (
+            <Login onNavigate={(view: AuthView) => setCurrentView(view)} />
+          )}
+          {currentView === 'register' && (
+            <Register onNavigate={(view: AuthView) => setCurrentView(view)} />
+          )}
+          {currentView === 'forgot-password' && (
+            <ForgotPassword onNavigate={(view: AuthView) => setCurrentView(view)} />
+          )}
+        </motion.div>
+      </AnimatePresence>
+    );
   };
 
   return (
-    <div className="auth-container">
-      {renderView()}
+    <div className={styles.authContainer} ref={constraintsRef}>
+      {/* ── Seletor de Tema Arrastável (UX Fun factor) ── */}
+      <motion.div 
+        drag
+        dragConstraints={constraintsRef}
+        dragElastic={0.1}
+        // Lógica para atrair para os cantos ao soltar
+        dragTransition={{
+          power: 0.3,
+          modifyTarget: (target) => {
+            // Define o "imã" para os cantos (aproximadamente 0 ou limites da tela)
+            // Se o alvo final for maior que a metade da tela, joga para o canto direito/inferior
+            const snapX = target > window.innerWidth / 2 ? window.innerWidth - 80 : 20;
+            return snapX; // Você pode aplicar lógica similar para o 'y' se desejar
+          }
+        }}
+        whileHover={{ scale: 1 }}
+        whileTap={{ scale: 0.9, cursor: 'grabbing' }}
+        className={styles.themeToggleWrapper}
+        style={{ cursor: 'grab', position: 'absolute', zIndex: 1000 }}
+      >
+        <ThemeToggle />
+      </motion.div>
+
+      <div 
+        className={styles.contentBox}
+        style={{ flexDirection: isReversed ? 'row-reverse' : 'row' }}
+      >
+        {/* ── Painel de Hero (50%) ── */}
+        <motion.div 
+          layout
+          className={styles.heroPanel}
+          transition={{ type: "spring", stiffness: 100, damping: 20 }}
+        >
+          <img 
+            src={authBg} 
+            alt="Barba & Byte Concept" 
+            className={styles.heroImage}
+          />
+          <div className={styles.heroOverlay}>
+            <div className={styles.heroBrand}>
+              <div className={styles.heroBrandIcon}>
+                <Scissors size={24} color="var(--color-client)" />
+              </div>
+              <span className={styles.heroBrandText}>Barba & Byte</span>
+            </div>
+            <motion.p 
+              key={currentView}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={styles.heroTagline}
+            >
+              {currentView === 'register' 
+                ? "Crie sua conta e agende seu estilo em segundos. A tecnologia que sua barba merece."
+                : "Seu estilo, nossa tecnologia. Acesse a plataforma e gerencie seus agendamentos."
+              }
+            </motion.p>
+          </div>
+        </motion.div>
+
+        {/* ── Painel de Formulário (50%) ── */}
+        <motion.div 
+          layout
+          className={styles.formPanel}
+          transition={{ type: "spring", stiffness: 100, damping: 20 }}
+        >
+          {renderView()}
+        </motion.div>
+      </div>
     </div>
   );
 };

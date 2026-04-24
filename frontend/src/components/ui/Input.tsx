@@ -1,10 +1,11 @@
-// Gabriel (Dev 1) - Componente Input inteligente e polimórfico
+// Gabriel (Dev 1) — Componente Input inteligente e polimórfico
+// Migrado para CSS Modules. Todas as funções de máscara e limpeza foram PRESERVADAS.
 import React, { forwardRef } from 'react';
-import './Input.css';
+import styles from './Input.module.css';
 
 export type InputMaskType = 'phone' | 'currency' | 'none';
 
-// # Gabriel (Dev 1) - Interface flexível para suportar input, select e textarea
+// Interface flexível para suportar input, select e textarea
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement> {
   as?: 'input' | 'select' | 'textarea';
   mask?: InputMaskType;
@@ -12,8 +13,10 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement | HTMLSe
   label?: string;
   error?: string;
   rows?: number;
-  asSelect?: boolean; // Prop auxiliar para garantir cast de tipo se necessário
+  asSelect?: boolean;
 }
+
+// ── Funções de Formatação (exportadas para uso externo) ──
 
 export const formatPhone = (value: string) => {
   if (!value) return "";
@@ -40,7 +43,6 @@ export const formatCurrency = (value: string | number) => {
  */
 export const cleanCurrency = (value: string): number => {
   if (!value) return 0;
-  // Remove R$, pontos e troca vírgula por ponto
   const cleanValue = value
     .replace(/\D/g, "")
     .replace(/(\d+)(\d{2})$/, "$1.$2");
@@ -58,6 +60,7 @@ export const cleanPhone = (value: string): string => {
 const Input = forwardRef<any, InputProps>(
   ({ as = 'input', mask = 'none', icon, label, error, onChange, className, type, value, children, ...props }, ref) => {
     
+    // Lógica de máscara de telefone e moeda no onChange
     const handleChange = (e: React.ChangeEvent<any>) => {
       if (!onChange) return;
 
@@ -70,6 +73,7 @@ const Input = forwardRef<any, InputProps>(
       onChange(e);
     };
 
+    // Bloqueia caracteres inválidos em inputs numéricos
     const handleKeyDown = (e: React.KeyboardEvent<any>) => {
       if (as === 'input' && type === 'number') {
         if (['e', 'E', '+', '-'].includes(e.key)) {
@@ -79,12 +83,14 @@ const Input = forwardRef<any, InputProps>(
       if (props.onKeyDown) props.onKeyDown(e);
     };
 
+    // Formata o valor de exibição para máscara de moeda
     let displayValue = value;
     if (as === 'input' && mask === 'currency' && value !== undefined) {
        const safeValue = Array.isArray(value) ? value[0] : value;
        displayValue = formatCurrency(safeValue as string | number);
     }
 
+    // Renderiza o elemento correto (input, select ou textarea)
     const renderElement = () => {
       const commonProps = {
         ...props,
@@ -117,14 +123,21 @@ const Input = forwardRef<any, InputProps>(
       );
     };
 
+    // Classes do CSS Module compostas
+    const groupClasses = [
+      styles.inputGroup,
+      icon ? styles.hasIcon : '',
+      as === 'textarea' ? styles.isTextarea : '',
+    ].filter(Boolean).join(' ');
+
     return (
-      <div className={`form-group-modern ${className || ''}`}>
+      <div className={styles.formGroup}>
         {label && <label>{label}</label>}
-        <div className={`input-group-modern ${icon ? 'has-icon' : ''} ${as === 'textarea' ? 'is-textarea' : ''}`}>
-          {icon && <span className={`input-icon ${as === 'textarea' ? 'at-top' : ''}`}>{icon}</span>}
+        <div className={groupClasses}>
+          {icon && <span className={`${styles.inputIcon} ${as === 'textarea' ? styles.iconAtTop : ''}`}>{icon}</span>}
           {renderElement()}
         </div>
-        {error && <span style={{ color: '#f87171', fontSize: '0.8rem', marginTop: '4px' }}>{error}</span>}
+        {error && <span className={styles.errorText}>{error}</span>}
       </div>
     );
   }

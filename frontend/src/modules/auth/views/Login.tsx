@@ -1,8 +1,11 @@
+// Login — Tela de acesso com Glassmorphism e CSS Modules
 import React, { useState } from 'react';
 import { Lock, Mail, Scissors, LogIn } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import { useAuth } from '../../../auth/useAuth';
+import { useToast } from '../../../components/ui/Toast';
+import styles from './Auth.module.css';
 
 interface LoginProps {
   onNavigate?: (view: any) => void;
@@ -10,37 +13,36 @@ interface LoginProps {
 
 const Login: React.FC<LoginProps> = ({ onNavigate }) => {
   const { login } = useAuth();
+  const { showToast } = useToast();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
 
     try {
       await login(email, senha);
-      // O App.tsx detectará o estado autenticado via Contexto
+      // O AuthContext dispara redirect automaticamente
     } catch (err: any) {
-      setError(err.toString());
+      showToast(err.toString(), 'error');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="auth-card">
-      <div className="auth-header">
-        <div className="logo-icon">
-          <Scissors size={32} color="#3b82f6" />
+    <div className={styles.authCard}>
+      <div className={styles.authHeader}>
+        <div className={`${styles.logoIcon} ${styles.logoBlue}`}>
+          <Scissors size={32} color="var(--color-client)" />
         </div>
-        <h1>Barba & Byte</h1>
-        <p>Acesse sua conta</p>
+        <h1 className={styles.authTitle}>Barba & Byte</h1>
+        <p className={styles.authSubtitle}>Acesse sua conta</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="modern-form">
+      <form onSubmit={handleSubmit} className={styles.authForm}>
         <Input 
           label="E-mail"
           type="email" 
@@ -62,8 +64,6 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
           required
         />
 
-        {error && <div className="error-message">{error}</div>}
-
         <Button 
           type="submit" 
           variant="primary" 
@@ -77,18 +77,27 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
         </Button>
       </form>
 
-      <div className="auth-footer auth-links">
+      <div className={styles.authFooter}>
         {onNavigate && (
           <>
-            <span onClick={() => onNavigate('forgot-password')} className="clickable-text" style={{ cursor: 'pointer', color: '#94a3b8' }}>
+            <span 
+              className={styles.clickableText}
+              onClick={() => onNavigate('forgot-password')}
+            >
               Esqueceu sua senha?
             </span>
             <span>
-              Ainda não tem conta? <a onClick={() => onNavigate('register')}>Criar nova conta</a>
+              Ainda não tem conta?{' '}
+              <a 
+                className={styles.authLink} 
+                onClick={() => onNavigate('register')}
+              >
+                Criar nova conta
+              </a>
             </span>
           </>
         )}
-        <div style={{ marginTop: '1.5rem', opacity: 0.6 }}>
+        <div className={styles.devHint}>
           <p>Dica: <strong>admin@barba.com</strong> → Admin</p>
           <p><strong>cliente@barba.com</strong> → Cliente • <strong>barbeiro@barba.com</strong> → Barbeiro</p>
         </div>
@@ -98,4 +107,3 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
 };
 
 export default Login;
-

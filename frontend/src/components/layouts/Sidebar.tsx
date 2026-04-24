@@ -1,4 +1,6 @@
-import { Database, LogOut, User, Users, Scissors, Briefcase, Calendar, ChevronLeft, Menu, Home, History, LayoutDashboard } from 'lucide-react';
+// Sidebar — Migrado para CSS Modules com Design Tokens
+import { Database, LogOut, User, Users, Scissors, Briefcase, Calendar, ChevronLeft, Home, History, LayoutDashboard } from 'lucide-react';
+import styles from './Sidebar.module.css';
 
 type AdminTab = 'dashboard' | 'clientes' | 'servicos' | 'agendamentos' | 'barbeiros';
 type ClientTab = 'inicio' | 'agendamentos_cliente';
@@ -18,71 +20,104 @@ interface SidebarProps {
 export default function Sidebar({ activeTab, onTabChange, isCollapsed, onToggle, user, onLogout }: SidebarProps) {
   const role = user?.role || 'admin';
 
+  // Função auxiliar para montar classes com active state
+  const navClass = (tab: string) =>
+    `${styles.navItem} ${activeTab === tab ? styles.active : ''}`;
+
   return (
-    <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
-      <div className="sidebar-header">
-        <Database size={28} color="#3b82f6" />
-        {!isCollapsed && <span>{role === 'admin' ? 'Barber Admin' : 'Barba & Byte'}</span>}
-        <button className="toggle-sidebar" onClick={onToggle}>
-          {isCollapsed ? <Menu size={20} /> : <ChevronLeft size={20} />}
+    <aside className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ''}`}>
+      <div className={styles.sidebarHeader}>
+        <button 
+          className={styles.brandCard} 
+          data-active-tab={activeTab} 
+          onClick={onToggle}
+          title={isCollapsed ? "Expandir Menu" : "Recolher Menu"}
+        >
+          <div className={styles.brandAvatar}>
+            <Database size={20} color="#fff" />
+          </div>
+          {!isCollapsed && (
+            <>
+              <div className={styles.brandText}>
+                <h3 className={styles.brandName}>Barba & Byte</h3>
+                <p className={styles.brandTagline}>Gestão Inteligente</p>
+              </div>
+              <div className={styles.headerAction}>
+                <ChevronLeft size={16} />
+              </div>
+            </>
+          )}
         </button>
       </div>
 
-      <nav className="sidebar-nav">
+
+
+      <nav className={styles.nav}>
         {role === 'admin' && (
           <>
-            <button className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => onTabChange('dashboard')}>
-              <LayoutDashboard size={20} /> {!isCollapsed && <span>Dashboard</span>}
+            <button className={navClass('dashboard')} onClick={() => onTabChange('dashboard')} data-tab="dashboard">
+              <div className={styles.iconBox}><LayoutDashboard size={20} /></div>
+              {!isCollapsed && <span>Dashboard</span>}
             </button>
-            <button className={`nav-item ${activeTab === 'clientes' ? 'active' : ''}`} onClick={() => onTabChange('clientes')}>
-              <Users size={20} /> {!isCollapsed && <span>Clientes</span>}
+            <button className={navClass('clientes')} onClick={() => onTabChange('clientes')} data-tab="clientes">
+              <div className={styles.iconBox}><Users size={20} /></div>
+              {!isCollapsed && <span>Clientes</span>}
             </button>
-            <button className={`nav-item ${activeTab === 'barbeiros' ? 'active' : ''}`} onClick={() => onTabChange('barbeiros')}>
-              <Scissors size={20} /> {!isCollapsed && <span>Barbeiros</span>}
-            </button> 
-            <button className={`nav-item ${activeTab === 'servicos' ? 'active' : ''}`} onClick={() => onTabChange('servicos')}>
-              <Briefcase size={20} /> {!isCollapsed && <span>Serviços</span>}
+            <button className={navClass('barbeiros')} onClick={() => onTabChange('barbeiros')} data-tab="barbeiros">
+              <div className={styles.iconBox}><Scissors size={20} /></div>
+              {!isCollapsed && <span>Barbeiros</span>}
             </button>
-            <button className={`nav-item ${activeTab === 'agendamentos' ? 'active' : ''}`} onClick={() => onTabChange('agendamentos')}>
-              <Calendar size={20} /> {!isCollapsed && <span>Agendamentos</span>}
+            <button className={navClass('servicos')} onClick={() => onTabChange('servicos')} data-tab="servicos">
+              <div className={styles.iconBox}><Briefcase size={20} /></div>
+              {!isCollapsed && <span>Serviços</span>}
+            </button>
+            <button className={navClass('agendamentos')} onClick={() => onTabChange('agendamentos')} data-tab="agendamentos">
+              <div className={styles.iconBox}><Calendar size={20} /></div>
+              {!isCollapsed && <span>Agendamentos</span>}
             </button>
           </>
         )}
 
+
         {role === 'cliente' && (
           <>
-            <button className={`nav-item ${activeTab === 'inicio' ? 'active' : ''}`} onClick={() => onTabChange('inicio')}>
-              <Home size={20} /> {!isCollapsed && <span>Início</span>}
+            <button className={navClass('inicio')} onClick={() => onTabChange('inicio')} data-tab="clientes">
+              <div className={styles.iconBox}><Home size={20} /></div>
+              {!isCollapsed && <span>Início</span>}
             </button>
-            <button className={`nav-item ${activeTab === 'agendamentos_cliente' ? 'active' : ''}`} onClick={() => onTabChange('agendamentos_cliente')}>
-              <Calendar size={20} /> {!isCollapsed && <span>Meus Agendamentos</span>}
+            <button className={navClass('agendamentos_cliente')} onClick={() => onTabChange('agendamentos_cliente')} data-tab="agendamentos">
+              <div className={styles.iconBox}><Calendar size={20} /></div>
+              {!isCollapsed && <span>Meus Agendamentos</span>}
             </button>
           </>
         )}
 
         {role === 'barbeiro' && (
           <>
-            <button className={`nav-item ${activeTab === 'agenda' ? 'active' : ''}`} onClick={() => onTabChange('agenda')}>
-              <Calendar size={20} /> {!isCollapsed && <span>Agenda do Dia</span>}
+            <button className={navClass('agenda')} onClick={() => onTabChange('agenda')} data-tab="barbeiros">
+              <div className={styles.iconBox}><Calendar size={20} /></div>
+              {!isCollapsed && <span>Agenda do Dia</span>}
             </button>
-            <button className={`nav-item ${activeTab === 'historico' ? 'active' : ''}`} onClick={() => onTabChange('historico')}>
-              <History size={20} /> {!isCollapsed && <span>Histórico</span>}
+            <button className={navClass('historico')} onClick={() => onTabChange('historico')} data-tab="barbeiros">
+              <div className={styles.iconBox}><History size={20} /></div>
+              {!isCollapsed && <span>Histórico</span>}
             </button>
           </>
         )}
       </nav>
 
-      <div className="sidebar-footer">
-        <div className="user-info">
-          <div className="user-avatar"><User size={16} /></div>
+
+      <div className={styles.footer}>
+        <div className={styles.userInfo}>
+          <div className={styles.userAvatar}><User size={16} /></div>
           {!isCollapsed && (
-            <div className="user-text">
-              <p className="user-name text-capitalize">{user?.nome || 'Usuário'}</p>
-              <p className="user-role text-capitalize">{user?.role || 'Admin'}</p>
+            <div className={styles.userText}>
+              <p className={styles.userName}>{user?.nome || 'Usuário'}</p>
+              <p className={styles.userRole}>{user?.role || 'Admin'}</p>
             </div>
           )}
         </div>
-        <button onClick={onLogout} className="logout-btn">
+        <button onClick={onLogout} className={styles.logoutBtn}>
           <LogOut size={18} /> {!isCollapsed && <span>Sair</span>}
         </button>
       </div>

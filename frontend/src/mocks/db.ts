@@ -1,6 +1,6 @@
 import type { Cliente, Barbeiro, Servico, Agendamento } from '../types';
 
-const STORAGE_KEY = 'barbabyte_mock_db_v2';
+const STORAGE_KEY = 'barbabyte_mock_db_v4';
 
 interface MockDB {
   clientes: Cliente[];
@@ -10,11 +10,51 @@ interface MockDB {
   currentSession: any | null;
 }
 
-// Inicia vazio conforme solicitado: Experiência de criar do zero
+// Dados iniciais para testes imediatos (Populado para evitar tela vazia no desenvolvimento)
 const initialData: MockDB = {
-  clientes: [],
-  barbeiros: [],
-  servicos: [],
+  clientes: [
+    { 
+      id: 1, 
+      nome: 'Gabriel Castro', 
+      email: 'gabriel@email.com', 
+      telefone: '11999999999', 
+      observacoes: 'Cliente VIP, prefere corte degradê.' 
+    },
+    { 
+      id: 2, 
+      nome: 'Felipe Amorim', 
+      email: 'felipe@email.com', 
+      telefone: '11888888888', 
+      observacoes: 'Inadimplente no mês de Março. Cobrar taxa de atraso.' 
+    }
+  ],
+  barbeiros: [
+    { 
+      id: 1, 
+      nome: 'Pedro Alvares', 
+      especialidade: 'corte_masculino', 
+      email: 'pedro@barba.com', 
+      telefone: '11777777777', 
+      ativo: true,
+      justificativa: '',
+      servicos_ids: [1, 2] 
+    },
+    { 
+      id: 2, 
+      nome: 'Carlos Junior', 
+      especialidade: 'barba', 
+      email: 'carlos@barba.com', 
+      telefone: '11666666666', 
+      ativo: false,
+      justificativa: 'Afastado para curso de especialização em SP.',
+      servicos_ids: [3]
+    }
+  ],
+  servicos: [
+    { id: 1, nome: 'Corte Degradê', preco: 45.00, duracao_minutos: 40 },
+    { id: 2, nome: 'Barba Terapia', preco: 30.00, duracao_minutos: 30 },
+    { id: 3, nome: 'Combo Master', preco: 70.00, duracao_minutos: 60 }
+  ],
   agendamentos: [],
   currentSession: null
 };

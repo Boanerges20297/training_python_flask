@@ -52,12 +52,12 @@ const BookingModal: React.FC<BookingModalProps> = ({
   const servicoSelecionado = servicos.find((s) => s.id === parseInt(formData.servico_id));
 
   const handleServicoChange = (servicoId: string) => {
-    setFormData((prev) => ({ ...prev, servico_id: servicoId }));
+    setFormData((prev) => ({ ...prev, servico_id: servicoId, barbeiro_id: '' }));
     const servSelecionado = servicos.find((s) => s.id === parseInt(servicoId));
     if (servSelecionado) {
-      const barbeiroDoServico = barbeirosAtivos.find((b) => b.id === servSelecionado.barbeiro_id);
-      if (barbeiroDoServico) {
-        setFormData((prev) => ({ ...prev, servico_id: servicoId, barbeiro_id: String(barbeiroDoServico.id) }));
+      const barbeirosDoServico = barbeirosAtivos.filter((b) => b.servicos_ids?.includes(servSelecionado.id));
+      if (barbeirosDoServico.length === 1) {
+        setFormData((prev) => ({ ...prev, barbeiro_id: String(barbeirosDoServico[0].id) }));
       }
     }
   };
@@ -154,7 +154,9 @@ const BookingModal: React.FC<BookingModalProps> = ({
                   onChange={(e) => setFormData({ ...formData, barbeiro_id: e.target.value })}
                 >
                   <option value="">Selecione um profissional...</option>
-                  {barbeirosAtivos.map((b) => (
+                  {barbeirosAtivos
+                    .filter((b) => !servicoSelecionado || b.servicos_ids?.includes(servicoSelecionado.id))
+                    .map((b) => (
                     <option key={b.id} value={b.id}>
                       {b.nome} — {b.especialidade || 'Geral'}
                     </option>

@@ -2,8 +2,7 @@ import React from 'react';
 import { Loader2, Plus, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import Button from './Button';
 import type { LucideIcon } from 'lucide-react';
-import './DataTable.css';
-
+import styles from './DataTable.module.css';
 
 export interface Column<T> {
   header: string;
@@ -79,39 +78,50 @@ function DataTable<T>({
   });
 
   return (
-    <section className="card animate-in" id={id}>
-      {/* Cabeçalho da Tabela */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Icon size={20} color={themeColor} />
-          <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#f8fafc' }}>{title}</h2>
+    <section className={`${styles.container}`} id={id}>
+      {/* Cabeçalho da Tabela - Moderno e Bento */}
+      <div className={styles.headerRow}>
+        <div className={styles.headerTop}>
+          <div className={styles.titleGroup}>
+            <div className={styles.iconWrapper} style={{ backgroundColor: `${themeColor}15`, color: themeColor }}>
+              <Icon size={22} />
+            </div>
+            <div>
+              <h2 className={styles.title}>{title}</h2>
+              <p className={styles.subtitle}>Gerenciamento de dados em tempo real</p>
+            </div>
+          </div>
+          <div className={styles.actionsGroup}>
+            {addButtonText && onAddClick && (
+              <Button 
+                onClick={onAddClick} 
+                theme={buttonTheme}
+                variant={buttonVariant}
+                size={buttonSize}
+                icon={<Plus size={18} />}
+              >
+                {addButtonText}
+              </Button>
+            )}
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          {enableSearch && (
-            <div className="table-search-box">
-              <Search size={16} className="search-icon" />
+
+        {enableSearch && (
+          <div className={styles.searchRow}>
+            <div className={styles.searchBox}>
+              <Search size={18} className={styles.searchIcon} />
               <input 
                 type="search" 
                 placeholder={searchPlaceholder} 
                 value={internalQuery}
                 onChange={handleSearchChange}
-                className="table-search-input"
+                className={styles.searchInput}
               />
             </div>
-          )}
-          {addButtonText && onAddClick && (
-            <Button 
-              onClick={onAddClick} 
-              theme={buttonTheme}
-              variant={buttonVariant}
-              size={buttonSize}
-              icon={<Plus size={16} />}
-            >
-              {addButtonText}
-            </Button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
+
 
       {/* Corpo / Tabela */}
       {loading ? (
@@ -119,8 +129,8 @@ function DataTable<T>({
           <Loader2 className="animate-spin" size={32} color={themeColor} />
         </div>
       ) : (
-        <div className="table-container">
-          <table>
+        <div className={styles.tableWrapper}>
+          <table className={styles.table}>
             <thead>
               <tr>
                 {columns.map((col, idx) => (
@@ -139,10 +149,11 @@ function DataTable<T>({
             <tbody>
               {filteredData.length > 0 ? (
                 filteredData.map((item, rowIdx) => (
-                  <tr key={rowIdx} className="fade-in">
+                  <tr key={rowIdx}>
                     {columns.map((col, colIdx) => (
                       <td 
                         key={colIdx} 
+                        data-label={col.header}
                         style={{ 
                           textAlign: col.align || 'center',
                           ...col.style 
@@ -155,9 +166,9 @@ function DataTable<T>({
                 ))
               ) : (
                 <tr>
-                  <td colSpan={columns.length} style={{ textAlign: 'center', padding: '4rem', color: '#64748b' }}>
-                    <div style={{ opacity: 0.5, marginBottom: '1rem' }}>
-                      <EmptyIcon size={48} style={{ margin: '0 auto' }} />
+                  <td colSpan={columns.length} className={styles.emptyState}>
+                    <div className={styles.emptyIconWrapper}>
+                      <EmptyIcon size={48} />
                     </div>
                     {emptyStateText}
                   </td>
@@ -170,13 +181,13 @@ function DataTable<T>({
 
       {/* Rodapé de Paginação */}
       {pagination && pagination.totalPages > 1 && (
-        <div className="table-pagination">
-          <div className="pagination-info">
+        <div className={styles.pagination}>
+          <div className={styles.paginationInfo}>
             Página <strong>{pagination.currentPage}</strong> de {pagination.totalPages}
           </div>
-          <div className="pagination-controls">
+          <div className={styles.paginationControls}>
             <button
-              className="pagination-btn"
+              className={styles.paginationBtn}
               onClick={() => pagination.onPageChange(pagination.currentPage - 1)}
               disabled={pagination.currentPage <= 1}
               title="Página Anterior"
@@ -184,7 +195,7 @@ function DataTable<T>({
               <ChevronLeft size={18} />
             </button>
             <button
-              className="pagination-btn"
+              className={styles.paginationBtn}
               onClick={() => pagination.onPageChange(pagination.currentPage + 1)}
               disabled={pagination.currentPage >= pagination.totalPages}
               title="Próxima Página"

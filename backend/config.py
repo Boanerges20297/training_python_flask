@@ -48,8 +48,8 @@ class Config:
 
     # Vinicius - 19/04/2026
     # Validação estrita de Emissor (Issuer) e Audiência (Audience)
-    JWT_DECODE_ISSUER = os.environ.get("JWT_ISSUER")
-    JWT_DECODE_AUDIENCE = os.environ.get("JWT_AUDIENCE")
+    JWT_DECODE_ISSUER = os.environ.get("JWT_ISSUER", "barbabyte-api")
+    JWT_DECODE_AUDIENCE = os.environ.get("JWT_AUDIENCE", "barbabyte-app")
 
     JWT_TOKEN_LOCATION = ["cookies"]
     JWT_ACCESS_COOKIE_PATH = "/"
@@ -100,6 +100,7 @@ class DevelopmentConfig(Config):
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=999)
 
     SECRET_KEY = "chave-secreta"
+    JWT_ALGORITHM = "HS256"
 
 
 class ProductionConfig(Config):

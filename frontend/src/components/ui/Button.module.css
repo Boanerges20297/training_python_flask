@@ -1,0 +1,170 @@
+/* Gabriel (Dev 1) — Estilos atômicos para o componente Button (CSS Module)
+   Todas as cores vêm dos Design Tokens. Suporte completo a Light e Dark mode. */
+
+/* ── Base ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-slow);
+  border: none;
+  outline: none;
+  font-family: var(--font-sans);
+}
+
+.wFull {
+  width: 100%;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.btnIcon {
+  display: flex;
+  align-items: center;
+}
+
+.btnText {
+  display: flex;
+  align-items: center;
+}
+
+/* ── Temas (Paleta de Cores) ── */
+.themeBlue {
+  --btn-color-strong: var(--color-client-hover);
+  --btn-color-base: var(--color-client);
+  --btn-color-light: #60a5fa;
+  --btn-color-transparent: var(--color-client-light);
+  --btn-shadow: rgba(59, 130, 246, 0.3);
+  --btn-shadow-hover: rgba(59, 130, 246, 0.5);
+}
+
+.themePurple {
+  --btn-color-strong: var(--color-appointment-hover);
+  --btn-color-base: var(--color-appointment);
+  --btn-color-light: #a78bfa;
+  --btn-color-transparent: var(--color-appointment-light);
+  --btn-shadow: rgba(109, 40, 217, 0.3);
+  --btn-shadow-hover: rgba(109, 40, 217, 0.5);
+}
+
+.themeGreen {
+  --btn-color-strong: var(--color-service-hover);
+  --btn-color-base: var(--color-service);
+  --btn-color-light: #34d399;
+  --btn-color-transparent: var(--color-service-light);
+  --btn-shadow: rgba(16, 185, 129, 0.3);
+  --btn-shadow-hover: rgba(16, 185, 129, 0.5);
+}
+
+.themeAmber {
+  --btn-color-strong: var(--color-barber-hover);
+  --btn-color-base: var(--color-barber);
+  --btn-color-light: #fbbf24;
+  --btn-color-transparent: var(--color-barber-light);
+  --btn-shadow: rgba(245, 158, 11, 0.3);
+  --btn-shadow-hover: rgba(245, 158, 11, 0.5);
+}
+
+.themeSlate {
+  --btn-color-strong: #475569;
+  --btn-color-base: #64748b;
+  --btn-color-light: #94a3b8;
+  --btn-color-transparent: var(--bg-tertiary);
+  --btn-shadow: rgba(100, 116, 139, 0.3);
+  --btn-shadow-hover: rgba(100, 116, 139, 0.5);
+}
+
+/* ── Tamanhos ── */
+.btnSm {
+  padding: 0.4rem 0.7rem;
+  font-size: var(--font-size-xs);
+  border-radius: var(--radius-md);
+}
+
+.btnMd {
+  padding: 0.8rem 1.2rem;
+  font-size: var(--font-size-sm);
+  border-radius: var(--radius-lg);
+}
+
+.btnLg {
+  padding: 1rem 2rem;
+  font-size: var(--font-size-base);
+  border-radius: var(--radius-xl);
+}
+
+/* ── Variantes ── */
+
+/* Primária — Gradiente com glow */
+.btnPrimary {
+  color: white;
+  background: linear-gradient(135deg, var(--btn-color-base) 0%, var(--btn-color-strong) 100%);
+  box-shadow: 0 4px 12px var(--btn-shadow);
+}
+
+.btnPrimary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--btn-shadow-hover);
+  filter: brightness(1.1);
+}
+
+/* Secundária — Discreta, sem glow */
+.btnSecondary {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  box-shadow: none;
+}
+
+.btnSecondary:hover:not(:disabled) {
+  background: var(--border-color);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+/* Normal — Gradiente sem glow */
+.btnNormal {
+  color: white;
+  background: linear-gradient(135deg, var(--btn-color-base) 0%, var(--btn-color-strong) 100%);
+  box-shadow: none;
+  border: 1px solid var(--border-color);
+}
+
+.btnNormal:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+/* Danger */
+.btnDanger {
+  background: var(--color-danger-light);
+  color: var(--color-danger);
+  border: 1px solid var(--color-danger-border);
+  box-shadow: none;
+}
+
+.btnDanger:hover:not(:disabled) {
+  background: var(--color-danger-border);
+  color: var(--color-danger-hover);
+  border-color: var(--color-danger);
+  transform: translateY(-1px);
+}
+
+/* Ghost — Sem fundo */
+.btnGhost {
+  background: transparent;
+  color: var(--btn-color-base);
+  box-shadow: none;
+}
+
+.btnGhost:hover:not(:disabled) {
+  background: var(--btn-color-transparent);
+}

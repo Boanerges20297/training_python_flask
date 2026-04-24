@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createAgendamento, updateAgendamento } from '../../../../api/appointments';
-import type { Cliente, Servico, Agendamento } from '../../../../types';
-import { User, ShoppingBag, Calendar, FileText, Plus, Edit2 } from 'lucide-react';
+import type { Cliente, Servico, Agendamento, Barbeiro } from '../../../../types';
+import { User, ShoppingBag, Calendar, FileText, Plus, Edit2, Scissors } from 'lucide-react';
 import Modal from '../../Modal';
 import Input from '../../Input';
 import Button from '../../Button';
@@ -13,6 +13,7 @@ interface AppointmentModalProps {
   onSuccess: () => void;
   clientes: Cliente[];
   servicos: Servico[];
+  barbeiros: Barbeiro[];
   agendamentoParaEditar?: Agendamento | null;
 }
 
@@ -23,11 +24,13 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   onSuccess,
   clientes,
   servicos,
+  barbeiros,
   agendamentoParaEditar
 }) => {
   const [formData, setFormData] = useState({
     cliente_id: '',
     servico_id: '',
+    barbeiro_id: '',
     data_agendamento: '',
     observacoes: ''
   });
@@ -45,11 +48,12 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
         setFormData({
           cliente_id: String(agendamentoParaEditar.cliente_id),
           servico_id: String(agendamentoParaEditar.servico_id),
+          barbeiro_id: String(agendamentoParaEditar.barbeiro_id),
           data_agendamento: dataFormatada,
           observacoes: agendamentoParaEditar.observacoes || ''
         });
       } else {
-        setFormData({ cliente_id: '', servico_id: '', data_agendamento: '', observacoes: '' });
+        setFormData({ cliente_id: '', servico_id: '', barbeiro_id: '', data_agendamento: '', observacoes: '' });
       }
       setSuccess(false);
       setError(null);
@@ -79,14 +83,10 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
         throw "A barbearia funciona apenas das 08h às 20h.";
       }
 
-      // Busca o barbeiro_id atrelado ao serviço selecionado
-      const selectedService = servicos.find(s => s.id === parseInt(formData.servico_id));
-      if (!selectedService) throw "Serviço não encontrado.";
-
       const payload = {
         cliente_id: parseInt(formData.cliente_id),
         servico_id: parseInt(formData.servico_id),
-        barbeiro_id: selectedService.barbeiro_id,
+        barbeiro_id: parseInt(formData.barbeiro_id),
         data_agendamento: formData.data_agendamento,
         observacoes: formData.observacoes,
       };
@@ -107,7 +107,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
         onSuccess();
         onClose();
         setSuccess(false);
-        setFormData({ cliente_id: '', servico_id: '', data_agendamento: '', observacoes: '' });
+        setFormData({ cliente_id: '', servico_id: '', barbeiro_id: '', data_agendamento: '', observacoes: '' });
       }, 1500);
     } catch (err: any) {
       const msg = err.response?.data?.message || err || 'Erro ao processar agendamento.';
@@ -160,6 +160,22 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
               >
                 <option value="">Selecione...</option>
                 {servicos.map(s => <option key={s.id} value={s.id}>{s.nome} - R$ {Number(s.preco).toFixed(2)}</option>)}
+              </Input>
+            </div>
+
+            <div className="form-group-modern">
+              <label>Profissional</label>
+              <Input
+                as="select"
+                icon={<Scissors size={18} />}
+                required
+                value={formData.barbeiro_id}
+                onChange={(e) => setFormData({ ...formData, barbeiro_id: e.target.value })}
+              >
+                <option value="">Selecione...</option>
+                {barbeiros
+                  .filter(b => b.ativo && (!formData.servico_id || b.servicos_ids?.includes(parseInt(formData.servico_id))))
+                  .map(b => <option key={b.id} value={b.id}>{b.nome}</option>)}
               </Input>
             </div>
           </div>

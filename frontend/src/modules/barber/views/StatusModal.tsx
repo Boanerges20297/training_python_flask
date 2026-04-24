@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { updateAgendamento } from '../../../api/appointments';
 import type { Agendamento } from '../../../types';
-import { CheckCircle2, Clock, XCircle, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import Modal from '../../../components/ui/Modal';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';

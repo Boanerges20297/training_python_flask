@@ -1,0 +1,93 @@
+/* ===================================================================
+   Select.module.css — Componente Select estilizado
+   Segue o mesmo padrão visual do Input.module.css.
+   =================================================================== */
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  width: 100%;
+}
+
+.formGroup label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.selectWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.selectWrapper.hasIcon select {
+  padding-left: 2.75rem;
+}
+
+.selectIcon {
+  position: absolute;
+  left: 0.875rem;
+  color: var(--text-tertiary);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  z-index: 2;
+  transition: color var(--transition-fast);
+}
+
+.selectWrapper:focus-within .selectIcon {
+  color: var(--color-client);
+}
+
+.selectElement {
+  width: 100%;
+  padding: 0.75rem 2.5rem 0.75rem 0.875rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-sans);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  appearance: none;
+  cursor: pointer;
+  outline: none;
+}
+
+.selectElement:hover {
+  border-color: var(--border-color-hover);
+}
+
+.selectElement:focus {
+  border-color: var(--color-client);
+  box-shadow: var(--focus-ring);
+}
+
+/* Placeholder style (first disabled option) */
+.selectElement:invalid,
+.selectElement option[value=""] {
+  color: var(--text-tertiary);
+}
+
+/* Chevron customizado */
+.chevron {
+  position: absolute;
+  right: 0.75rem;
+  color: var(--text-tertiary);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  transition: transform var(--transition-fast);
+}
+
+.selectWrapper:focus-within .chevron {
+  color: var(--color-client);
+}
+
+.errorText {
+  color: var(--color-danger);
+  font-size: var(--font-size-xs);
+  margin-top: 2px;
+}

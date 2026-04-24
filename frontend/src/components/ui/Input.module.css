@@ -1,0 +1,119 @@
+/* Gabriel (Dev 1) — Estilos do Input polimórfico (CSS Module)
+   Suporta input, select e textarea com Design Tokens. */
+
+/* ── Form Group ── */
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.formGroup label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ── Input Group ── */
+.inputGroup {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* ── Ícone ── */
+.inputIcon {
+  position: absolute;
+  left: 1rem;
+  color: var(--text-secondary);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-base);
+  opacity: 0.7;
+  z-index: 2;
+}
+
+.iconAtTop {
+  top: 1rem;
+  transform: none;
+}
+
+/* ── Campos (input, select, textarea) ── */
+.inputGroup input,
+.inputGroup select,
+.inputGroup textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.8rem 1rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  font-family: var(--font-sans);
+  transition: all var(--transition-fast);
+}
+
+/* Padding condicional quando há ícone */
+.hasIcon input,
+.hasIcon select,
+.hasIcon textarea {
+  padding-left: 2.4rem;
+}
+
+/* Select customizado (Chevron) */
+.inputGroup select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 2.5rem;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: calc(100% - 1rem) 50%;
+  background-size: 18px;
+}
+
+/* Textarea */
+.inputGroup textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.isTextarea {
+  align-items: flex-start;
+}
+
+/* ── Foco ── */
+.inputGroup input:focus,
+.inputGroup select:focus,
+.inputGroup textarea:focus {
+  outline: none;
+  border-color: var(--color-client);
+  background-color: var(--bg-secondary);
+  box-shadow: var(--focus-ring);
+}
+
+/* Ícone brilha no foco */
+.inputGroup:focus-within .inputIcon {
+  color: var(--color-client);
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+/* ── Placeholder ── */
+.inputGroup input::placeholder,
+.inputGroup textarea::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* ── Erro inline ── */
+.errorText {
+  color: var(--color-danger);
+  font-size: var(--font-size-xs);
+  margin-top: var(--space-xs);
+}

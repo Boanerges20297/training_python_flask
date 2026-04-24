@@ -1,14 +1,16 @@
 // Gabriel (Dev 1) - Botões de ação feitos por Ian (Dev 2) componentizados
 import React from 'react';
-import { Edit2, Trash2, Info } from 'lucide-react';
+import { Edit2, Trash2, Info, Eye } from 'lucide-react';
 
 interface ActionButtonsProps {
   onEdit?: () => void;
   onDelete?: () => void;
   onInfo?: (e: React.MouseEvent) => void;
+  onView?: () => void;
   editTitle?: string;
   deleteTitle?: string;
   infoTitle?: string;
+  viewTitle?: string;
   theme?: 'blue' | 'green' | 'purple' | 'amber' | 'default';
 }
 
@@ -24,9 +26,11 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
   onEdit, 
   onDelete, 
   onInfo,
+  onView,
   editTitle = "Editar", 
   deleteTitle = "Excluir",
   infoTitle = "Mais informações",
+  viewTitle = "Visualizar",
   theme = 'blue'
 }) => {
   const mainColor = themeColors[theme];
@@ -57,6 +61,29 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
           aria-label={infoTitle}
         >
           <Info size={19} />
+        </button>
+      )}
+
+      {onView && (
+        <button
+          onClick={onView}
+          title={viewTitle}
+          style={{ 
+            background: 'transparent', 
+            border: 'none', 
+            cursor: 'pointer', 
+            color: mainColor, 
+            padding: '0.5rem',
+            margin: '-0.25rem',
+            transition: 'transform 0.2s',
+            display: 'flex',
+            alignItems: 'center'
+          }}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.15)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          aria-label={viewTitle}
+        >
+          <Eye size={18} />
         </button>
       )}
 
