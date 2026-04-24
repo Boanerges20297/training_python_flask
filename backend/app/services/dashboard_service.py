@@ -109,6 +109,7 @@ class DashboardService:
 
         return round(float(total or 0), 2)
 
+    # felipe
     @staticmethod
     def get_ganhos_barbeiros(periodo="mes"):
         data_inicio = DashboardService._period_start_from_label(periodo)
