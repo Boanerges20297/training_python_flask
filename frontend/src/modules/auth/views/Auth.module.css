@@ -8,9 +8,65 @@
   justify-content: center;
   width: 100vw;
   min-height: 100vh;
-  background: var(--bg-tertiary);
-  padding: var(--space-xl);
+  background: var(--bg-primary); 
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.authContainer::before {
+  content: '';
+  position: absolute;
+  width: 160%;
+  height: 160%;
+  top: -30%;
+  left: -30%;
+  z-index: -1;
+  opacity: 0.7;
+  background-image:
+    radial-gradient(at 10% 20%, var(--auth-color-1) 0px, transparent 45%),
+    radial-gradient(at 90% 10%, var(--auth-color-2) 0px, transparent 40%),
+    radial-gradient(at 50% 50%, var(--auth-color-3) 0px, transparent 50%),
+    radial-gradient(at 80% 90%, var(--auth-color-1) 0px, transparent 45%),
+    radial-gradient(at 20% 80%, var(--auth-color-4) 0px, transparent 35%),
+    radial-gradient(at 0% 50%, var(--auth-color-2) 0px, transparent 40%);
+  
+  filter: blur(70px); 
+  animation: liquidMesh 20s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes liquidMesh {
+  0% { transform: rotate(0deg) scale(1) translate(0, 0); }
+  50% { transform: rotate(3deg) scale(1.1) translate(2%, 3%); }
+  100% { transform: rotate(-3deg) scale(1) translate(-1%, -2%); }
+}
+
+.loginTheme {
+  --auth-bg-base: #0f172a;
+  --auth-color-1: #1e40af; /* Azul Forte */
+  --auth-color-2: #3b82f6; /* Azul Médio */
+  --auth-color-3: #93c5fd; /* Azul Brilhante/Céu */
+  --auth-color-4: #1d4ed8; /* Azul Royal */
+}
+
+.registerTheme {
+  --auth-bg-base: #064e3b;
+  --auth-color-1: #059669; /* Esmeralda */
+  --auth-color-2: #10b981; /* Verde Médio */
+  --auth-color-3: #a7f3d0; /* Verde Água Brilhante */
+  --auth-color-4: #047857; /* Verde Floresta */
+}
+
+.forgotPasswordTheme {
+  --auth-bg-base: #451a03; /* Marrom Âmbar profundo */
+  --auth-color-1: #d97706; /* Âmbar Forte */
+  --auth-color-2: #f59e0b; /* Âmbar Médio */
+  --auth-color-3: #fef3c7; /* Âmbar Brilhante */
+  --auth-color-4: #b45309; /* Bronze/Laranja queimado */
 }
 
 /* No Dark Mode, o fundo de trás fica mais integrado */
@@ -30,29 +86,50 @@
 /* ── O "Card" Principal que flutua no meio da tela ── */
 .contentBox {
   display: flex;
-  width: 95%;
-  max-width: 1200px;
-  height: 90vh;
-  max-height: 850px;
-  background: var(--bg-secondary);
-  border-radius: 2rem;
-  box-shadow: var(--shadow-xl);
+  width: 96%;
+  max-width: 1550px; 
+  height: 92vh; 
+  max-height: 900px;
+  background: rgba(255, 255, 255, 0.585);
+  backdrop-filter: blur(25px) saturate(120%);
+  -webkit-backdrop-filter: blur(25px) saturate(120%);
+  border-radius: 3.5rem;
+  box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.7);
   overflow: hidden;
   position: relative;
-  border: 1px solid var(--border-color);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 1rem;
+  z-index: 1;
+}
+
+.reversed {
+  flex-direction: row-reverse;
 }
 
 :global([data-theme="dark"]) .contentBox {
-  background: var(--bg-secondary);
+  background: rgba(15, 23, 42, 0.585);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /* ── Painel de Hero (Imagem) ── */
 .heroPanel {
   position: relative;
-  flex: 0 0 50%;
+  flex: 0 0 60%; /* 60% para a imagem */
+  border-radius: 2.5rem;
   overflow: hidden;
   z-index: 1;
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.15);
+}
+
+.formPanel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem; /* Reduzido para eliminar scroll */
+  z-index: 2;
+  overflow: hidden; 
+  position: relative;
 }
 
 .heroImage {
@@ -115,17 +192,6 @@
 }
 
 /* ── Painel de Formulário ── */
-.formPanel {
-  flex: 0 0 50%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-2xl);
-  background: var(--bg-secondary);
-  z-index: 5;
-  position: relative;
-}
 
 /* ── Grid para inputs lado a lado ── */
 .inputGrid {
@@ -140,6 +206,33 @@
   width: 100%;
   max-width: 440px;
   margin: 0 auto;
+  min-height: 520px; /* Reduzi um pouco para o formato quadrado */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+
+.socialButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  height: 3.5rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: 2rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.socialButton:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--text-tertiary);
+  transform: translateY(-2px);
 }
 
 /* .authCardLarge não é mais necessário pois o painel já é grande, mas manteremos por segurança */
@@ -149,7 +242,7 @@
 
 .authHeader {
   text-align: center;
-  margin-bottom: var(--space-xl);
+  margin-bottom: 1rem;
 }
 
 .logoIcon {
@@ -168,9 +261,9 @@
 .logoAmber { background: var(--color-barber-light); border-color: var(--color-barber-border); }
 
 .authTitle {
-  font-size: var(--font-size-xl);
-  font-weight: 700;
-  margin: 0 0 var(--space-xs);
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin: 0 0 0.25rem;
   color: var(--text-primary);
 }
 
@@ -183,7 +276,7 @@
 .authForm {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: 0.5rem;
 }
 
 .formDescription {
@@ -201,14 +294,86 @@
   margin-top: var(--space-sm);
 }
 
-.authFooter {
-  margin-top: var(--space-xl);
+.divider {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-  text-align: center;
-  font-size: var(--font-size-sm);
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin: 1rem 0;
+  width: 100%;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--text-tertiary); /* Cor mais forte para ser visível */
+  opacity: 0.3;
+}
+
+.divider span {
+  font-size: 0.75rem;
   color: var(--text-tertiary);
+  font-weight: 700;
+  text-transform: lowercase;
+  padding: 0 0.75rem;
+}
+
+.checkboxContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  user-select: none;
+  margin-top: 1.5rem;
+}
+
+.checkboxContainer input {
+  display: none;
+}
+
+.customCheckbox {
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid var(--border-light);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  background: var(--bg-primary);
+}
+
+.checkboxContainer:hover .customCheckbox {
+  border-color: var(--auth-color-1);
+}
+
+.checkboxContainer input:checked + .customCheckbox {
+  background: var(--auth-color-1);
+  border-color: var(--auth-color-1);
+}
+
+.customCheckbox::after {
+  content: '✓';
+  color: white;
+  font-size: 0.8rem;
+  display: none;
+}
+
+.checkboxContainer input:checked + .customCheckbox::after {
+  display: block;
+}
+
+.checkboxLabel {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.checkboxLabel strong {
+  color: var(--text-primary);
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .authLink {
@@ -245,7 +410,6 @@
   border-radius: var(--radius-md);
 }
 
-/* ── Password Strength Meter ── */
 .strengthContainer {
   margin-top: calc(-1 * var(--space-sm));
   margin-bottom: var(--space-xs);
@@ -331,32 +495,45 @@
 }
 
 /* ── Responsividade ── */
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
   .contentBox {
-    flex-direction: column !important;
+    width: 95%;
     height: auto;
-    min-height: 0;
-    max-width: 500px;
+    max-height: none;
+    flex-direction: column !important;
+    padding: 1rem;
+    border-radius: 2rem;
   }
-  
+
   .heroPanel {
-    flex: 0 0 200px;
+    flex: 0 0 350px;
     width: 100%;
   }
 
   .formPanel {
-    flex: 1;
+    padding: 2.5rem 1.5rem;
+    flex: 1 !important; /* Ocupa o restante do espaço vertical */
     width: 100%;
-    padding: var(--space-xl);
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 640px) {
   .authContainer {
-    padding: var(--space-sm);
+    padding: 0;
+    background: var(--bg-secondary);
   }
-  .heroPanel { display: none; }
+  
+  .heroPanel {
+    display: none;
+  }
+  
   .contentBox {
-    border-radius: var(--radius-lg);
+    width: 100%;
+    height: 100vh;
+    max-height: none;
+    border-radius: 0;
+    padding: 2rem 1rem;
+    box-shadow: none;
+    border: none;
   }
 }

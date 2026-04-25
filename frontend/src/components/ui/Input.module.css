@@ -42,6 +42,15 @@
   transform: none;
 }
 
+.rightElement {
+  position: absolute;
+  right: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
 /* ── Campos (input, select, textarea) ── */
 .inputGroup input,
 .inputGroup select,
@@ -62,7 +71,13 @@
 .hasIcon input,
 .hasIcon select,
 .hasIcon textarea {
-  padding-left: 2.4rem;
+  padding-left: 2.8rem;
+}
+
+.hasRightElement input,
+.hasRightElement select,
+.hasRightElement textarea {
+  padding-right: 2.8rem;
 }
 
 /* Select customizado (Chevron) */

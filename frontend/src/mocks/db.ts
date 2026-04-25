@@ -51,9 +51,27 @@ const initialData: MockDB = {
     }
   ],
   servicos: [
-    { id: 1, nome: 'Corte Degradê', preco: 45.00, duracao_minutos: 40 },
-    { id: 2, nome: 'Barba Terapia', preco: 30.00, duracao_minutos: 30 },
-    { id: 3, nome: 'Combo Master', preco: 70.00, duracao_minutos: 60 }
+    { 
+      id: 1, 
+      nome: 'Corte Degradê', 
+      preco: 45.00, 
+      duracao_minutos: 40,
+      imagem_url: 'https://images.unsplash.com/photo-1599351431247-f10b218d73b2?w=100&h=100&fit=crop'
+    },
+    { 
+      id: 2, 
+      nome: 'Barba Terapia', 
+      preco: 30.00, 
+      duracao_minutos: 30,
+      imagem_url: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=100&h=100&fit=crop'
+    },
+    { 
+      id: 3, 
+      nome: 'Combo Master', 
+      preco: 70.00, 
+      duracao_minutos: 60,
+      imagem_url: 'https://images.unsplash.com/photo-1517832606299-7ae9b720a186?w=100&h=100&fit=crop'
+    }
   ],
   agendamentos: [],
   currentSession: null

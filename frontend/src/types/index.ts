@@ -13,6 +13,7 @@ export interface Servico {
   descricao?: string;
   preco: number;
   duracao_minutos: number;
+  imagem_url?: string;
 }
 
 export interface Agendamento {

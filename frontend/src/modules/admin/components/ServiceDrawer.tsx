@@ -18,7 +18,7 @@ interface ServiceDrawerProps {
 
 const ServiceDrawer: React.FC<ServiceDrawerProps> = ({ isOpen, onClose, onSuccess, servicoParaEditar }) => {
   const { showToast } = useToast();
-  const [formData, setFormData] = useState({ nome: '', preco: '', duracao_minutos: '' });
+  const [formData, setFormData] = useState({ nome: '', preco: '', duracao_minutos: '', imagem_url: '' });
   const [mode, setMode] = useState<'view' | 'edit'>('view');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -29,10 +29,11 @@ const ServiceDrawer: React.FC<ServiceDrawerProps> = ({ isOpen, onClose, onSucces
           nome: servicoParaEditar.nome,
           preco: servicoParaEditar.preco.toString(),
           duracao_minutos: servicoParaEditar.duracao_minutos.toString(),
+          imagem_url: servicoParaEditar.imagem_url || ''
         });
         setMode('view');
       } else {
-        setFormData({ nome: '', preco: '', duracao_minutos: '' });
+        setFormData({ nome: '', preco: '', duracao_minutos: '', imagem_url: '' });
         setMode('edit');
       }
     }
@@ -46,7 +47,8 @@ const ServiceDrawer: React.FC<ServiceDrawerProps> = ({ isOpen, onClose, onSucces
       const payload = {
         nome: formData.nome,
         preco: cleanCurrency(formData.preco),
-        duracao_minutos: parseInt(formData.duracao_minutos)
+        duracao_minutos: parseInt(formData.duracao_minutos),
+        imagem_url: formData.imagem_url || undefined
       };
 
       if (isNaN(payload.preco) || isNaN(payload.duracao_minutos)) {
@@ -78,7 +80,7 @@ const ServiceDrawer: React.FC<ServiceDrawerProps> = ({ isOpen, onClose, onSucces
       isOpen={isOpen}
       onClose={onClose}
       title={mode === 'view' ? servicoParaEditar?.nome || "Detalhes" : (servicoParaEditar ? "Editar Serviço" : "Novo Serviço")}
-      subtitle={mode === 'view' ? 'Serviço' : (servicoParaEditar ? 'Atualize os detalhes do serviço.' : 'Cadastre um novo serviço oferecido.')}
+      subtitle={mode === 'view' ? 'Catálogo de Serviços' : (servicoParaEditar ? 'Atualize os detalhes do serviço.' : 'Cadastre um novo serviço oferecido.')}
       icon={<Briefcase size={20} color="var(--color-service)" />}
       iconBg="var(--color-service-light)"
       iconBorder="var(--color-service-border)"
@@ -115,97 +117,121 @@ const ServiceDrawer: React.FC<ServiceDrawerProps> = ({ isOpen, onClose, onSucces
     >
       {mode === 'view' && servicoParaEditar ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {/* Header Bento */}
-          <div style={{ 
-            background: 'var(--bg-secondary)', 
-            padding: '1.5rem', 
-            borderRadius: 'var(--radius-lg)',
-            border: '1px solid var(--border-color)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '1rem'
-          }}>
-            <div style={{ 
-              width: '64px', height: '64px', 
-              borderRadius: '50%', 
-              background: 'var(--color-service-light)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'var(--color-service)'
-            }}>
-              <Briefcase size={32} />
+          {/* Profile Hero com Imagem */}
+          <div className={drawerStyles.bentoProfile}>
+            <div 
+              className={drawerStyles.bentoAvatar} 
+              style={{ 
+                background: 'var(--color-service-light)', 
+                color: 'var(--color-service)',
+                borderRadius: '16px',
+                overflow: 'hidden'
+              }}
+            >
+              {servicoParaEditar.imagem_url ? (
+                <img 
+                  src={servicoParaEditar.imagem_url} 
+                  alt={servicoParaEditar.nome} 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              ) : (
+                <Briefcase size={28} />
+              )}
             </div>
-            <div>
-              <h3 style={{ margin: 0, fontSize: '1.125rem', color: 'var(--text-primary)' }}>{servicoParaEditar.nome}</h3>
-              <p style={{ margin: 0, color: 'var(--text-tertiary)', fontSize: '0.875rem' }}>Serviço do Catálogo</p>
+            <div className={drawerStyles.bentoProfileText}>
+              <h3>{servicoParaEditar.nome}</h3>
+              <p>Serviço ID: #{servicoParaEditar.id}</p>
             </div>
           </div>
 
-          {/* Details Bento */}
-          <div style={{ 
-            background: 'var(--bg-secondary)', 
-            padding: '1.5rem', 
-            borderRadius: 'var(--radius-lg)',
-            border: '1px solid var(--border-color)'
-          }}>
-            <h4 style={{ margin: '0 0 1rem 0', color: 'var(--text-secondary)', fontSize: '0.875rem', textTransform: 'uppercase' }}>Detalhes do Serviço</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <DollarSign size={20} color="var(--color-green)" />
-                <div>
-                  <div style={{ color: 'var(--text-tertiary)', fontSize: '0.75rem' }}>Preço</div>
-                  <div style={{ color: 'var(--text-primary)', fontSize: '1rem', fontWeight: 'bold' }}>
-                    R$ {Number(servicoParaEditar.preco).toFixed(2).replace('.', ',')}
-                  </div>
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <Clock size={20} color="var(--color-amber)" />
-                <div>
-                  <div style={{ color: 'var(--text-tertiary)', fontSize: '0.75rem' }}>Duração Estimada</div>
-                  <div style={{ color: 'var(--text-primary)', fontSize: '1rem', fontWeight: 'bold' }}>
-                    {servicoParaEditar.duracao_minutos} min
-                  </div>
-                </div>
-              </div>
+          {/* Mini KPI Grid */}
+          <div className={drawerStyles.bentoMiniGrid}>
+            <div className={drawerStyles.bentoMiniCard}>
+              <p>Investimento</p>
+              <h2 style={{ color: 'var(--color-success)' }}>
+                R$ {Number(servicoParaEditar.preco).toFixed(2).replace('.', ',')}
+              </h2>
+            </div>
+            <div className={drawerStyles.bentoMiniCard}>
+              <p>Tempo Médio</p>
+              <h2>{servicoParaEditar.duracao_minutos} min</h2>
             </div>
           </div>
+
+          {/* Descrição se houver */}
+          {servicoParaEditar.descricao && (
+            <div className={drawerStyles.bentoSection}>
+              <h4 className={drawerStyles.bentoSectionTitle}>Descrição do Serviço</h4>
+              <p style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.875rem', lineHeight: '1.6' }}>
+                {servicoParaEditar.descricao}
+              </p>
+            </div>
+          )}
         </div>
       ) : (
         <form onSubmit={handleSubmit} className={drawerStyles.drawerForm}>
-        <Input
-          label="Nome do Serviço"
-          type="text"
-          icon={<Tag size={18} />}
-          placeholder="Ex: Corte Degradê"
-          required
-          maxLength={255}
-          value={formData.nome}
-          onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-          autoFocus
-        />
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.5rem' }}>
+            <div style={{ 
+              width: '100px', 
+              height: '100px', 
+              borderRadius: '20px', 
+              background: 'var(--bg-tertiary)',
+              border: '2px dashed var(--border-light)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden'
+            }}>
+              {formData.imagem_url ? (
+                <img src={formData.imagem_url} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <Plus size={32} color="var(--text-tertiary)" style={{ opacity: 0.5 }} />
+              )}
+            </div>
+          </div>
 
-        <div className={drawerStyles.drawerGrid}>
           <Input
-            label="Preço (R$)"
-            mask="currency"
-            icon={<DollarSign size={18} />}
-            placeholder="0,00"
-            required
-            value={formData.preco}
-            onChange={(e) => setFormData({ ...formData, preco: e.target.value })}
+            label="URL da Imagem (Opcional)"
+            type="text"
+            icon={<Plus size={18} />}
+            placeholder="https://exemplo.com/foto.jpg"
+            value={formData.imagem_url}
+            onChange={(e) => setFormData({ ...formData, imagem_url: e.target.value })}
           />
+
           <Input
-            label="Duração (min)"
-            type="number"
-            icon={<Clock size={18} />}
-            min="0"
-            placeholder="30"
+            label="Nome do Serviço"
+            type="text"
+            icon={<Tag size={18} />}
+            placeholder="Ex: Corte Degradê"
             required
-            value={formData.duracao_minutos}
-            onChange={(e) => setFormData({ ...formData, duracao_minutos: e.target.value })}
+            maxLength={255}
+            value={formData.nome}
+            onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
           />
-        </div>
-      </form>
+
+          <div className={drawerStyles.drawerGrid}>
+            <Input
+              label="Preço (R$)"
+              mask="currency"
+              icon={<DollarSign size={18} />}
+              placeholder="0,00"
+              required
+              value={formData.preco}
+              onChange={(e) => setFormData({ ...formData, preco: e.target.value })}
+            />
+            <Input
+              label="Duração (min)"
+              type="number"
+              icon={<Clock size={18} />}
+              min="0"
+              placeholder="30"
+              required
+              value={formData.duracao_minutos}
+              onChange={(e) => setFormData({ ...formData, duracao_minutos: e.target.value })}
+            />
+          </div>
+        </form>
       )}
     </Drawer>
   );

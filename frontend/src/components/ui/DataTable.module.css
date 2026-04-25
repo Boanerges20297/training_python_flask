@@ -11,10 +11,7 @@
 }
 
 .headerRow {
-  margin-bottom: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  margin-bottom: 1.5rem;
 }
 
 .headerTop {
@@ -22,35 +19,36 @@
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .titleGroup {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
+  gap: 1rem;
 }
 
 .iconWrapper {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .title {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--text-primary);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
 
 .subtitle {
-  margin: 0.25rem 0 0 0;
-  font-size: 0.875rem;
+  margin: 0.15rem 0 0 0;
+  font-size: 0.8rem;
   color: var(--text-tertiary);
 }
 
@@ -58,94 +56,203 @@
   display: flex;
   gap: 1rem;
   align-items: center;
+  flex: 1;
+  justify-content: flex-end;
+  min-width: 300px;
 }
 
 /* --- Search Bar --- */
-.searchRow {
-  width: 100%;
-}
-
 .searchBox {
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(8px);
+  background: var(--bg-tertiary);
   border: 1px solid var(--border-light);
-  border-radius: 1rem;
-  padding: 0.75rem 1.25rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 12px;
+  padding: 0.6rem 1rem;
+  transition: all 0.2s ease;
   width: 100%;
-  max-width: 400px;
+  max-width: 320px;
 }
 
 .searchBox:focus-within {
   border-color: var(--color-blue);
-  background: rgba(255, 255, 255, 0.06);
-  max-width: 100%;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  background: var(--bg-secondary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .searchIcon {
   color: var(--text-tertiary);
-  margin-right: 0.75rem;
+  margin-right: 0.5rem;
+  flex-shrink: 0;
 }
 
 .searchInput {
   background: transparent;
   border: none;
   color: var(--text-primary);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   outline: none;
   width: 100%;
-}
-
-.searchInput::placeholder {
-  color: var(--text-tertiary);
 }
 
 /* --- Table Styles --- */
 .tableWrapper {
   width: 100%;
   overflow-x: auto;
-  background: var(--bg-card-glass);
-  backdrop-filter: blur(12px);
+  background: var(--bg-secondary);
   border: 1px solid var(--border-light);
-  border-radius: 1.5rem;
-  box-shadow: var(--shadow-md);
+  border-radius: 1.25rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
 }
 
 .table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  text-align: left;
 }
 
 .table th {
-  padding: 1.25rem 1.5rem;
-  font-size: 0.75rem;
+  padding: 1rem 1.5rem;
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
   color: var(--text-tertiary);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.05em;
   border-bottom: 1px solid var(--border-light);
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.01);
 }
 
 .table td {
-  padding: 1.25rem 1.5rem;
-  font-size: 0.95rem;
+  padding: 1rem 1.5rem;
+  font-size: 0.9rem;
   color: var(--text-primary);
   border-bottom: 1px solid var(--border-light);
-  transition: background-color 0.2s;
+  transition: all 0.2s;
 }
 
 .table tbody tr:hover td {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.rowSelected td {
+  background: rgba(59, 130, 246, 0.05) !important;
 }
 
 .table tbody tr:last-child td {
   border-bottom: none;
+}
+
+/* --- Checkbox Custom --- */
+.checkboxCell {
+  width: 50px;
+  padding-right: 0 !important;
+  text-align: center !important;
+}
+
+.checkboxContainer {
+  display: block;
+  position: relative;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  user-select: none;
+  margin: 0 auto;
+}
+
+.checkboxContainer input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.checkmark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 20px;
+  width: 20px;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.checkboxContainer:hover input ~ .checkmark {
+  border-color: var(--color-blue);
+}
+
+.checkboxContainer input:checked ~ .checkmark {
+  background-color: var(--color-blue);
+  border-color: var(--color-blue);
+}
+
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.checkboxContainer input:checked ~ .checkmark:after {
+  display: block;
+}
+
+/* --- Empty State --- */
+.emptyState {
+  padding: 5rem 2rem !important;
+  text-align: center !important;
+}
+
+.emptyStateContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.emptyIconWrapper {
+  color: var(--text-tertiary);
+  opacity: 0.3;
+  margin-bottom: 0.5rem;
+}
+
+.emptyStateContent h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--text-primary);
+}
+
+.emptyStateContent p {
+  margin: 0;
+  color: var(--text-tertiary);
+  font-size: 0.9rem;
+}
+
+/* --- Loading State --- */
+.loadingWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6rem 2rem;
+  gap: 1.5rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: 1.25rem;
+}
+
+.loadingWrapper p {
+  color: var(--text-tertiary);
+  font-weight: 500;
+  font-size: 0.9rem;
 }
 
 /* --- Paginação --- */
@@ -153,17 +260,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 1.5rem;
-  padding: 1.25rem 2rem;
-  background: var(--bg-card-glass);
-  backdrop-filter: blur(8px);
-  border-radius: 1.25rem;
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-sm);
+  margin-top: 1rem;
+  padding: 0.75rem 0.5rem;
 }
 
 .paginationInfo {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--text-tertiary);
 }
 
@@ -173,28 +275,27 @@
 
 .paginationControls {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .paginationBtn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 0.75rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   border: 1px solid var(--border-light);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-secondary);
   color: var(--text-primary);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .paginationBtn:hover:not(:disabled) {
-  background: var(--color-blue-light);
   border-color: var(--color-blue);
   color: var(--color-blue);
-  transform: translateY(-2px);
+  background: var(--bg-tertiary);
 }
 
 .paginationBtn:disabled {
@@ -202,69 +303,15 @@
   cursor: not-allowed;
 }
 
-/* --- Mobile Responsive (Bento Cards) --- */
+/* --- Mobile Responsive --- */
 @media (max-width: 768px) {
-  .headerTop {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
   .actionsGroup {
-    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    min-width: 100%;
   }
 
-  .actionsGroup button {
-    width: 100%;
-  }
-
-  .tableWrapper {
-    background: transparent;
-    border: none;
-    box-shadow: none;
-  }
-
-  .table, .table tbody, .table tr, .table td {
-    display: block;
-    width: 100%;
-  }
-
-  .table thead {
-    display: none;
-  }
-
-  .table tbody tr {
-    margin-bottom: 1.25rem;
-    background: var(--bg-card-glass);
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--border-light);
-    border-radius: 1.5rem;
-    overflow: hidden;
-    box-shadow: var(--shadow-md);
-    padding: 1rem;
-  }
-
-  .table td {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem 0.5rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  }
-
-  .table td:last-child {
-    border-bottom: none;
-    padding-top: 1rem;
-    margin-top: 0.5rem;
-    border-top: 1px solid var(--border-light);
-  }
-
-  .table td::before {
-    content: attr(data-label);
-    font-weight: 700;
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    color: var(--text-tertiary);
-    letter-spacing: 0.05em;
+  .searchBox {
+    max-width: 100%;
   }
 }
-

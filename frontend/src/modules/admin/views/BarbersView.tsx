@@ -143,6 +143,8 @@ export default function BarbersView() {
     }
   ];
 
+  const [selectedBarbers, setSelectedBarbers] = useState<Barbeiro[]>([]);
+
   return (
     <>
       <DataTable
@@ -158,6 +160,9 @@ export default function BarbersView() {
         }}
         themeColor="#f59e0b"
         buttonTheme="amber"
+        selectable={true}
+        selectedItems={selectedBarbers}
+        onSelectionChange={setSelectedBarbers}
         emptyStateIcon={Scissors}
         emptyStateText="Nenhum barbeiro cadastrado no time."
         pagination={{

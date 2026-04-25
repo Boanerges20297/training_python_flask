@@ -111,6 +111,8 @@ export default function ClientsView() {
     }
   ];
 
+  const [selectedClients, setSelectedClients] = useState<Cliente[]>([]);
+
   return (
     <>
       <DataTable 
@@ -125,6 +127,9 @@ export default function ClientsView() {
         emptyStateText="Nenhum cliente encontrado no sistema."
         themeColor="#3b82f6"
         buttonTheme="blue"
+        selectable={true}
+        selectedItems={selectedClients}
+        onSelectionChange={setSelectedClients}
         pagination={{
           currentPage: page,
           totalPages: totalPages,

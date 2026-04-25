@@ -75,6 +75,40 @@ export default function ServicesView() {
   // # Gabriel (Dev 1) - Colunas da Tabela de Serviços
   const columns: Column<Servico>[] = [
     {
+      header: '',
+      render: (servico: Servico) => (
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          {servico.imagem_url ? (
+            <img 
+              src={servico.imagem_url} 
+              alt={servico.nome}
+              style={{ 
+                width: '40px', 
+                height: '40px', 
+                borderRadius: '10px', 
+                objectFit: 'cover',
+                border: '1px solid var(--border-light)'
+              }}
+            />
+          ) : (
+            <div style={{ 
+              width: '40px', 
+              height: '40px', 
+              borderRadius: '10px', 
+              background: 'var(--bg-tertiary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--text-tertiary)'
+            }}>
+              <Briefcase size={20} />
+            </div>
+          )}
+        </div>
+      ),
+      style: { width: '60px' }
+    },
+    {
       header: 'Serviço',
       render: (servico: Servico) => <span className="text-capitalize" style={{ fontWeight: 600 }}>{servico.nome}</span>
     },
@@ -122,6 +156,8 @@ export default function ServicesView() {
     }
   ];
 
+  const [selectedServices, setSelectedServices] = useState<Servico[]>([]);
+
   return (
     <>
       <DataTable
@@ -134,6 +170,9 @@ export default function ServicesView() {
         onAddClick={handleNewService}
         themeColor="#10b981"
         buttonTheme="green"
+        selectable={true}
+        selectedItems={selectedServices}
+        onSelectionChange={setSelectedServices}
         emptyStateIcon={Briefcase}
         emptyStateText="Nenhum serviço encontrado no sistema."
         pagination={{

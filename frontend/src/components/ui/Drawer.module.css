@@ -1,7 +1,5 @@
 /* ===================================================================
-   Drawer.module.css — Premium Floating Side Panel
-   Matches the Bento aesthetic: rounded, layered, with the Modal's
-   close-button spin animation.
+   Drawer.module.css — Painel lateral flutuante
    =================================================================== */
 
 .overlay {
@@ -77,28 +75,26 @@
   color: var(--text-tertiary);
 }
 
-/* Close Button — mirrors Modal's spin-to-red animation */
 .closeButton {
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-light);
-  color: var(--text-tertiary);
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  flex-shrink: 0;
 }
 
 .closeButton:hover {
-  background: rgba(239, 68, 68, 0.15);
+  background: rgba(239, 68, 68, 0.2);
   color: #ef4444;
   border-color: #ef4444;
   transform: rotate(90deg) scale(1.1);
-  box-shadow: 0 0 16px rgba(239, 68, 68, 0.25);
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
 }
 
 /* ── Conteúdo Scrolável ── */

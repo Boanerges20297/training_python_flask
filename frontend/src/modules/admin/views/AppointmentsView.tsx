@@ -5,7 +5,7 @@ import { getServicos } from '../../../api/services';
 import { getBarbeiros } from '../../../api/barbers';
 import type { Agendamento, Cliente, Servico, Barbeiro } from '../../../types';
 import { Calendar, Clock, User, Scissors, AlertTriangle, ShoppingBag } from 'lucide-react';
-import AppointmentModal from '../../../components/ui/modals/AppointmentModal/AppointmentModal';
+import AppointmentDrawer from '../components/AppointmentDrawer';
 import { useToast } from '../../../components/ui/Toast';
 import ActionButtons from '../../../components/ui/ActionButtons';
 import DataTable from '../../../components/ui/DataTable';
@@ -233,6 +233,8 @@ export default function AppointmentsView() {
     }
   ];
 
+  const [selectedAppointments, setSelectedAppointments] = useState<Agendamento[]>([]);
+
   return (
     <>
       <DataTable
@@ -249,6 +251,9 @@ export default function AppointmentsView() {
         themeColor="#a78bfa"
         buttonTheme="purple"
         buttonSize="md"
+        selectable={true}
+        selectedItems={selectedAppointments}
+        onSelectionChange={setSelectedAppointments}
         emptyStateIcon={Calendar}
         emptyStateText="Nenhum agendamento para hoje."
         pagination={{
@@ -290,7 +295,7 @@ export default function AppointmentsView() {
         themeColor={activePopover?.barberInativo ? '#ef4444' : '#a78bfa'}
       />
 
-      <AppointmentModal
+      <AppointmentDrawer
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);

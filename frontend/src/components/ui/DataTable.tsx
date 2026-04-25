@@ -36,12 +36,13 @@ export interface DataTableProps<T> {
   searchPlaceholder?: string;
   onSearch?: (query: string) => void;
   searchFilter?: (item: T, query: string) => boolean;
+  // TAB-01: Seleção
+  selectable?: boolean;
+  selectedItems?: T[];
+  onSelectionChange?: (items: T[]) => void;
+  itemKey?: keyof T | ((item: T) => string | number);
 }
 
-/*
- * # Gabriel (Dev 1)
- * Componente universal de tabela para as Views administrativas.
- */
 function DataTable<T>({
   title,
   icon: Icon,
@@ -61,7 +62,11 @@ function DataTable<T>({
   enableSearch,
   searchPlaceholder = 'Pesquisar...',
   onSearch,
-  searchFilter
+  searchFilter,
+  selectable,
+  selectedItems = [],
+  onSelectionChange,
+  itemKey = 'id' as keyof T
 }: DataTableProps<T>) {
   const [internalQuery, setInternalQuery] = React.useState('');
 
@@ -77,9 +82,37 @@ function DataTable<T>({
     return JSON.stringify(item).toLowerCase().includes(internalQuery.toLowerCase());
   });
 
+  const getItemId = (item: T) => {
+    if (typeof itemKey === 'function') return itemKey(item);
+    return item[itemKey] as unknown as string | number;
+  };
+
+  const isSelected = (item: T) => {
+    return selectedItems.some(i => getItemId(i) === getItemId(item));
+  };
+
+  const toggleSelectAll = () => {
+    if (!onSelectionChange) return;
+    if (selectedItems.length === filteredData.length && filteredData.length > 0) {
+      onSelectionChange([]);
+    } else {
+      onSelectionChange(filteredData);
+    }
+  };
+
+  const toggleSelectItem = (item: T) => {
+    if (!onSelectionChange) return;
+    const isCurrentlySelected = isSelected(item);
+    if (isCurrentlySelected) {
+      onSelectionChange(selectedItems.filter(i => getItemId(i) !== getItemId(item)));
+    } else {
+      onSelectionChange([...selectedItems, item]);
+    }
+  };
+
   return (
-    <section className={`${styles.container}`} id={id}>
-      {/* Cabeçalho da Tabela - Moderno e Bento */}
+    <section className={styles.container} id={id}>
+      {/* TAB-03: Posicionamento Padronizado */}
       <div className={styles.headerRow}>
         <div className={styles.headerTop}>
           <div className={styles.titleGroup}>
@@ -91,7 +124,21 @@ function DataTable<T>({
               <p className={styles.subtitle}>Gerenciamento de dados em tempo real</p>
             </div>
           </div>
+          
           <div className={styles.actionsGroup}>
+            {enableSearch && (
+              <div className={styles.searchBox}>
+                <Search size={18} className={styles.searchIcon} />
+                <input 
+                  type="search" 
+                  placeholder={searchPlaceholder} 
+                  value={internalQuery}
+                  onChange={handleSearchChange}
+                  className={styles.searchInput}
+                />
+              </div>
+            )}
+            
             {addButtonText && onAddClick && (
               <Button 
                 onClick={onAddClick} 
@@ -105,34 +152,30 @@ function DataTable<T>({
             )}
           </div>
         </div>
-
-        {enableSearch && (
-          <div className={styles.searchRow}>
-            <div className={styles.searchBox}>
-              <Search size={18} className={styles.searchIcon} />
-              <input 
-                type="search" 
-                placeholder={searchPlaceholder} 
-                value={internalQuery}
-                onChange={handleSearchChange}
-                className={styles.searchInput}
-              />
-            </div>
-          </div>
-        )}
       </div>
 
-
-      {/* Corpo / Tabela */}
       {loading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
-          <Loader2 className="animate-spin" size={32} color={themeColor} />
+        <div className={styles.loadingWrapper}>
+          <Loader2 className="animate-spin" size={40} color={themeColor} />
+          <p>Sincronizando dados...</p>
         </div>
       ) : (
         <div className={styles.tableWrapper}>
           <table className={styles.table}>
             <thead>
               <tr>
+                {selectable && (
+                  <th className={styles.checkboxCell}>
+                    <label className={styles.checkboxContainer}>
+                      <input 
+                        type="checkbox" 
+                        checked={filteredData.length > 0 && selectedItems.length === filteredData.length}
+                        onChange={toggleSelectAll}
+                      />
+                      <span className={styles.checkmark}></span>
+                    </label>
+                  </th>
+                )}
                 {columns.map((col, idx) => (
                   <th 
                     key={idx} 
@@ -149,7 +192,19 @@ function DataTable<T>({
             <tbody>
               {filteredData.length > 0 ? (
                 filteredData.map((item, rowIdx) => (
-                  <tr key={rowIdx}>
+                  <tr key={rowIdx} className={isSelected(item) ? styles.rowSelected : ''}>
+                    {selectable && (
+                      <td className={styles.checkboxCell}>
+                        <label className={styles.checkboxContainer}>
+                          <input 
+                            type="checkbox" 
+                            checked={isSelected(item)}
+                            onChange={() => toggleSelectItem(item)}
+                          />
+                          <span className={styles.checkmark}></span>
+                        </label>
+                      </td>
+                    )}
                     {columns.map((col, colIdx) => (
                       <td 
                         key={colIdx} 
@@ -166,11 +221,14 @@ function DataTable<T>({
                 ))
               ) : (
                 <tr>
-                  <td colSpan={columns.length} className={styles.emptyState}>
-                    <div className={styles.emptyIconWrapper}>
-                      <EmptyIcon size={48} />
+                  <td colSpan={columns.length + (selectable ? 1 : 0)} className={styles.emptyState}>
+                    <div className={styles.emptyStateContent}>
+                      <div className={styles.emptyIconWrapper}>
+                        <EmptyIcon size={64} />
+                      </div>
+                      <h3>Nenhum resultado</h3>
+                      <p>{emptyStateText}</p>
                     </div>
-                    {emptyStateText}
                   </td>
                 </tr>
               )}
@@ -179,28 +237,25 @@ function DataTable<T>({
         </div>
       )}
 
-      {/* Rodapé de Paginação */}
       {pagination && pagination.totalPages > 1 && (
         <div className={styles.pagination}>
           <div className={styles.paginationInfo}>
-            Página <strong>{pagination.currentPage}</strong> de {pagination.totalPages}
+            Mostrando página <strong>{pagination.currentPage}</strong> de {pagination.totalPages}
           </div>
           <div className={styles.paginationControls}>
             <button
               className={styles.paginationBtn}
               onClick={() => pagination.onPageChange(pagination.currentPage - 1)}
               disabled={pagination.currentPage <= 1}
-              title="Página Anterior"
             >
-              <ChevronLeft size={18} />
+              <ChevronLeft size={20} />
             </button>
             <button
               className={styles.paginationBtn}
               onClick={() => pagination.onPageChange(pagination.currentPage + 1)}
               disabled={pagination.currentPage >= pagination.totalPages}
-              title="Próxima Página"
             >
-              <ChevronRight size={18} />
+              <ChevronRight size={20} />
             </button>
           </div>
         </div>

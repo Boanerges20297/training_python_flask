@@ -10,6 +10,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement | HTMLSe
   as?: 'input' | 'select' | 'textarea';
   mask?: InputMaskType;
   icon?: React.ReactNode;
+  rightElement?: React.ReactNode;
   label?: string;
   error?: string;
   rows?: number;
@@ -58,7 +59,7 @@ export const cleanPhone = (value: string): string => {
 };
 
 const Input = forwardRef<any, InputProps>(
-  ({ as = 'input', mask = 'none', icon, label, error, onChange, className, type, value, children, ...props }, ref) => {
+  ({ as = 'input', mask = 'none', icon, rightElement, label, error, onChange, className, type, value, children, ...props }, ref) => {
     
     // Lógica de máscara de telefone e moeda no onChange
     const handleChange = (e: React.ChangeEvent<any>) => {
@@ -127,6 +128,7 @@ const Input = forwardRef<any, InputProps>(
     const groupClasses = [
       styles.inputGroup,
       icon ? styles.hasIcon : '',
+      props.rightElement ? styles.hasRightElement : '',
       as === 'textarea' ? styles.isTextarea : '',
     ].filter(Boolean).join(' ');
 
@@ -136,6 +138,7 @@ const Input = forwardRef<any, InputProps>(
         <div className={groupClasses}>
           {icon && <span className={`${styles.inputIcon} ${as === 'textarea' ? styles.iconAtTop : ''}`}>{icon}</span>}
           {renderElement()}
+          {props.rightElement && <div className={styles.rightElement}>{props.rightElement}</div>}
         </div>
         {error && <span className={styles.errorText}>{error}</span>}
       </div>
