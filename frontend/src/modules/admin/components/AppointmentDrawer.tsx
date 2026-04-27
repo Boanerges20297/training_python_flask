@@ -284,7 +284,10 @@ const AppointmentDrawer: React.FC<AppointmentDrawerProps> = ({
                         <Scissors size={14} />
                       </div>
                       <div>
-                        <div style={{ fontWeight: 700, fontSize: '0.875rem' }}>{s.nome}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span style={{ fontWeight: 700, fontSize: '0.875rem' }}>{s.nome}</span>
+                          <span style={{ fontSize: '0.65rem', fontWeight: 800, background: 'var(--bg-tertiary)', color: 'var(--text-tertiary)', padding: '0.1rem 0.4rem', borderRadius: '0.4rem' }}>#{s.id}</span>
+                        </div>
                         <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>{s.duracao_minutos} min</div>
                       </div>
                     </div>

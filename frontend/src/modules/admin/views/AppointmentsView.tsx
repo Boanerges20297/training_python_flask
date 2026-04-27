@@ -223,11 +223,10 @@ export default function AppointmentsView() {
               color: '#3b82f6',
               padding: '0.4rem 0.8rem',
               borderRadius: '0.6rem',
-              minWidth: '140px'
+              minWidth: '120px'
             }}>
               <User size={14} style={{ flexShrink: 0 }} />
-              <span style={{ fontWeight: 500, flex: 1 }}>{nome || 'Carregando...'}</span>
-              <span style={{ opacity: 0.6, fontSize: '0.75rem' }}>#{agend.cliente_id}</span>
+              <span style={{ fontWeight: 600, flex: 1 }}>{nome || 'Carregando...'}</span>
             </div>
           </div>
         );
@@ -254,12 +253,11 @@ export default function AppointmentsView() {
               color: color,
               padding: '0.4rem 0.8rem',
               borderRadius: '0.6rem',
-              minWidth: '140px',
+              minWidth: '120px',
               border: border
             }}>
               <Scissors size={14} style={{ flexShrink: 0 }} />
-              <span style={{ fontWeight: 500, flex: 1 }}>{nome || 'Carregando...'}</span>
-              <span style={{ opacity: 0.6, fontSize: '0.75rem' }}>#{agend.barbeiro_id}</span>
+              <span style={{ fontWeight: 600, flex: 1 }}>{nome || 'Carregando...'}</span>
               {isInativo && <AlertTriangle size={14} style={{ marginLeft: '2px', flexShrink: 0 }} />}
             </div>
           </div>

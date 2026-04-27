@@ -483,7 +483,7 @@ export default function FinanceiroView() {
             <table className={themeStyles.ledgerTable}>
               <thead>
                 <tr>
-                  <th>Cliente Beneficiário</th>
+                  <th>Cliente </th>
                   <th>Saldo Devedor Acumulado</th>
                   <th style={{ textAlign: 'right' }}>Ações de Liquidação</th>
                 </tr>

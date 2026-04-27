@@ -3,12 +3,36 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import Sidebar, {type SidebarTab } from './Sidebar';
 import Header from './Header';
 import { useAuth } from '../../auth/useAuth';
+import Swal from 'sweetalert2';
 
 export default function AppLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(window.innerWidth < 1024);
+
+  const handleLogout = () => {
+    Swal.fire({
+      title: 'Encerrar Sessão',
+      text: 'Tem certeza que deseja sair da sua conta?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sim, Sair',
+      cancelButtonText: 'Permanecer Conectado',
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: 'var(--bg-tertiary)',
+      background: 'transparent',
+      customClass: {
+        popup: 'swal-glass-popup',
+        title: 'swal-glass-title',
+        htmlContainer: 'swal-glass-html'
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        logout();
+      }
+    });
+  };
 
   // Auto-colapso da sidebar
   useEffect(() => {
@@ -106,7 +130,7 @@ export default function AppLayout() {
         isCollapsed={isSidebarCollapsed}
         onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         user={user}
-        onLogout={() => logout()}
+        onLogout={handleLogout}
       />
 
       <main className="main-content">

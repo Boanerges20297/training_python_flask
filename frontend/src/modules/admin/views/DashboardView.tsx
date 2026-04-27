@@ -352,7 +352,7 @@ const DashboardView = () => {
       </motion.div>
 
       {/* 3. Agenda do Dia (Esquerda - Ocupa 2 Alturas) */}
-      <motion.div variants={cardVariants} className={`${styles.chartCard} ${styles.span8} ${styles.hFull} ${styles.rowSpan2}`} style={{ display: 'flex', flexDirection: 'column'}}>
+      <motion.div variants={cardVariants} className={`${styles.chartCard} ${styles.span8} ${styles.h7} ${styles.rowSpan2}`} style={{ display: 'flex', flexDirection: 'column'}}>
         <div className={styles.cardHeader}>
           <div>
             <h3 className={styles.cardTitle}>Agenda do Dia</h3>
@@ -401,9 +401,9 @@ const DashboardView = () => {
                       <div style={{ flex: 1, overflow: 'hidden' }}>
                         <h4 style={{ fontSize: '1.1rem', fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cliente?.nome || 'Cliente'}</h4>
                         <p style={{ fontSize: '0.8rem', color: 'var(--color-purple)', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {item.servicos_ids?.length > 1 
+                          {item.servicos_ids && item.servicos_ids.length > 1 
                             ? `${allServicos.find(s => s.id === item.servicos_ids[0])?.nome} +${item.servicos_ids.length - 1}`
-                            : (allServicos.find(s => s.id === item.servicos_ids[0])?.nome || `Agendamento #${item.id}`)
+                            : (allServicos.find(s => s.id === item.servicos_ids?.[0])?.nome || `Agendamento #${item.id}`)
                           }
                         </p>
                       </div>

@@ -85,6 +85,20 @@ class Database {
   constructor() {
     const saved = localStorage.getItem(STORAGE_KEY);
     this.data = saved ? JSON.parse(saved) : initialData;
+    
+    // Migração: Garante que todos os agendamentos tenham servicos_ids (legado servico_id)
+    if (this.data.agendamentos) {
+      let migrated = false;
+      this.data.agendamentos = this.data.agendamentos.map(a => {
+        if (!a.servicos_ids && (a as any).servico_id) {
+          migrated = true;
+          return { ...a, servicos_ids: [(a as any).servico_id] };
+        }
+        return { ...a, servicos_ids: a.servicos_ids || [] };
+      });
+      if (migrated) this.save();
+    }
+
     if (!saved) this.save();
   }
 
