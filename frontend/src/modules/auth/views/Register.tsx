@@ -1,6 +1,6 @@
 // Register — Cadastro com Password Strength Meter e CSS Modules
 import React, { useState } from 'react';
-import { User, Lock, Mail, Phone, UserPlus, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { User, Lock, Mail, Phone, Eye, EyeOff } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import { useAuth } from '../../../auth/useAuth';

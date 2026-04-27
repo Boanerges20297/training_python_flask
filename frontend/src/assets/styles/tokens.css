@@ -6,14 +6,14 @@
 
 :root {
   /* ── Fundos ── */
-  --bg-primary: #f8fafc;
+  --bg-primary: #f1f3f6; /* Tom cinza-gelo para mais contraste */
   --bg-secondary: #ffffff;
-  --bg-tertiary: #f1f5f9;
+  --bg-tertiary: #e5e7eb;
 
   /* ── Texto ── */
-  --text-primary: #0f172a;
+  --text-primary: #1e293b;
   --text-secondary: #475569;
-  --text-tertiary: #64748b;
+  --text-tertiary: #94a3b8;
   --text-inverse: #ffffff;
 
   /* ── Bordas ── */
@@ -50,16 +50,29 @@
   --color-warning: #f59e0b;
   --color-info: #3b82f6;
 
-  /* ── Sombras ── */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  /* ── Sombras (Sutilmente mais suaves e profundas) ── */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.02);
+  --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.04), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+  --shadow-lg: 0 20px 40px -12px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 30px 60px -15px rgba(0, 0, 0, 0.12);
+  --card-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.05), 0 10px 20px -10px rgba(0, 0, 0, 0.03);
+
 
   /* ── Glassmorphism ── */
   --glass-bg: rgba(255, 255, 255, 0.7);
   --glass-border: rgba(255, 255, 255, 0.5);
   --glass-blur: blur(12px);
+  --glass-bg-deep: rgba(255, 255, 255, 0.6);
+  --glass-blur-deep: blur(20px) saturate(180%);
+
+  /* ── Tabelas ── */
+  --table-cell-bg: #e2e8f0;
+  --table-header-bg: #cbd5e1;
+
+  /* ── Bento (Drawer) ── */
+  --bento-card-bg: #f1f5f9;
+  --bento-card-border: #e2e8f0;
+  --bento-card-hover: #e2e8f0;
 
   /* ── Focus Ring ── */
   --focus-ring: 0 0 0 3px rgba(59, 130, 246, 0.35);
@@ -146,6 +159,18 @@
   --glass-bg: rgba(30, 41, 59, 0.6);
   --glass-border: rgba(255, 255, 255, 0.08);
   --glass-blur: blur(16px);
+  --glass-bg-deep: rgba(15, 23, 42, 0.8);
+  --glass-blur-deep: blur(24px) saturate(180%);
+  --glass-border-deep: rgba(255, 255, 255, 0.12);
+
+  /* ── Tabelas ── */
+  --table-cell-bg: #0b0f1a;
+  --table-header-bg: #050810;
+
+  /* ── Bento (Drawer) ── */
+  --bento-card-bg: rgba(255, 255, 255, 0.03);
+  --bento-card-border: rgba(255, 255, 255, 0.06);
+  --bento-card-hover: rgba(255, 255, 255, 0.08);
 
   /* ── Focus Ring ── */
   --focus-ring: 0 0 0 3px rgba(59, 130, 246, 0.4);

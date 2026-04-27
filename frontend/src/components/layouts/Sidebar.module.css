@@ -1,14 +1,19 @@
 .sidebar {
   width: 280px;
-  background: var(--bg-primary);
-  border-right: 1px solid var(--border-light);
+  background: var(--glass-bg-deep);
+  backdrop-filter: var(--glass-blur-deep);
+  -webkit-backdrop-filter: var(--glass-blur-deep);
+  border-right: 1px solid var(--glass-border-deep);
+  border-radius: 0 1rem 1rem 0;
+  margin: 0;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   padding: 1.5rem 1.25rem;
   z-index: 100;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.02);
+  box-shadow: 10px 10px 30px rgba(0, 0, 0, 0.2);
 }
 
 
@@ -38,7 +43,7 @@
   background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); 
   background-size: 200% 200%;
   animation: meshGradient 10s ease infinite;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 1.25rem;
   box-shadow: 0 8px 16px -4px rgba(247, 85, 247, 0.4);
   overflow: hidden;
@@ -68,6 +73,10 @@
 .brandCard[data-active-tab="agendamentos"] { 
   background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
   box-shadow: 0 8px 16px -4px rgba(168, 85, 247, 0.4);
+}
+.brandCard[data-active-tab="financeiro"] { 
+  background: linear-gradient(135deg, #064e3b 0%, #022c22 100%); 
+  box-shadow: 0 8px 16px -4px rgba(6, 78, 59, 0.4);
 }
 
 .brandAvatar {
@@ -211,6 +220,13 @@
   border-color: rgba(99, 102, 241, 0.2);
 }
 .navItem[data-tab="agendamentos"].active .iconBox { color: #a855f7; }
+
+/* Financeiro */
+.navItem[data-tab="financeiro"].active {
+  background: rgba(6, 78, 59, 0.1);
+  border-color: rgba(6, 78, 59, 0.2);
+}
+.navItem[data-tab="financeiro"].active .iconBox { color: #059669; }
 
 .collapsed .navItem {
   justify-content: center;

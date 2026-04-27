@@ -74,6 +74,15 @@
   --btn-shadow-hover: rgba(245, 158, 11, 0.5);
 }
 
+.themeRed {
+  --btn-color-strong: var(--color-danger-hover);
+  --btn-color-base: var(--color-danger);
+  --btn-color-light: #f87171;
+  --btn-color-transparent: var(--color-danger-light);
+  --btn-shadow: rgba(239, 68, 68, 0.3);
+  --btn-shadow-hover: rgba(239, 68, 68, 0.5);
+}
+
 .themeSlate {
   --btn-color-strong: #475569;
   --btn-color-base: #64748b;

@@ -1,6 +1,7 @@
 import React from 'react';
-import { Loader2, Plus, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { Loader2, Plus, ChevronLeft, ChevronRight, Search, Trash2 } from 'lucide-react';
 import Button from './Button';
+import Swal from 'sweetalert2';
 import type { LucideIcon } from 'lucide-react';
 import styles from './DataTable.module.css';
 
@@ -36,11 +37,14 @@ export interface DataTableProps<T> {
   searchPlaceholder?: string;
   onSearch?: (query: string) => void;
   searchFilter?: (item: T, query: string) => boolean;
+  extraActions?: React.ReactNode;
   // TAB-01: Seleção
   selectable?: boolean;
   selectedItems?: T[];
   onSelectionChange?: (items: T[]) => void;
   itemKey?: keyof T | ((item: T) => string | number);
+  onBulkDelete?: (items: T[]) => Promise<void> | void;
+  renderItemName?: (item: T) => string;
 }
 
 function DataTable<T>({
@@ -63,12 +67,16 @@ function DataTable<T>({
   searchPlaceholder = 'Pesquisar...',
   onSearch,
   searchFilter,
+  extraActions,
   selectable,
   selectedItems = [],
   onSelectionChange,
-  itemKey = 'id' as keyof T
+  itemKey = 'id' as keyof T,
+  onBulkDelete,
+  renderItemName = (item: any) => item.nome || item.id || 'Item'
 }: DataTableProps<T>) {
   const [internalQuery, setInternalQuery] = React.useState('');
+  const [isBulkDeleting, setIsBulkDeleting] = React.useState(false);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -110,6 +118,59 @@ function DataTable<T>({
     }
   };
 
+  const handleBulkConfirm = async () => {
+    if (!onBulkDelete) return;
+    setIsBulkDeleting(true);
+    try {
+      await onBulkDelete(selectedItems);
+      if (onSelectionChange) onSelectionChange([]);
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
+
+  const handleBulkClick = () => {
+    const visibleItems = selectedItems.slice(0, 5);
+    const remainingCount = selectedItems.length - visibleItems.length;
+    
+    const itemsHtml = `
+      <div style="text-align: left; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 0.75rem; margin: 1rem 0; border: 1px solid var(--border-color);">
+        ${visibleItems.map(item => `
+          <div style="display: flex; alignItems: center; gap: 0.5rem; margin-bottom: 0.5rem; font-size: 0.875rem;">
+            <span style="width: 6px; height: 6px; border-radius: 50%; background: #ef4444; display: inline-block;"></span>
+            ${renderItemName(item)}
+          </div>
+        `).join('')}
+        ${remainingCount > 0 ? `<div style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.5rem; padding-left: 1rem;">+ ${remainingCount} outros selecionados...</div>` : ''}
+      </div>
+    `;
+
+    Swal.fire({
+      title: 'Confirmar Exclusão',
+      html: `
+        <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">Deseja realmente excluir <strong>${selectedItems.length}</strong> registros?</p>
+        ${itemsHtml}
+        <p style="color: #ef4444; font-size: 0.85rem; font-weight: 700; margin-top: 1rem;">Esta ação é irreversível!</p>
+      `,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sim, Excluir!',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: 'var(--bg-tertiary)',
+      background: 'transparent',
+      customClass: {
+        popup: 'swal-glass-popup',
+        title: 'swal-glass-title',
+        htmlContainer: 'swal-glass-html'
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        handleBulkConfirm();
+      }
+    });
+  };
+
   return (
     <section className={styles.container} id={id}>
       {/* TAB-03: Posicionamento Padronizado */}
@@ -137,6 +198,21 @@ function DataTable<T>({
                   className={styles.searchInput}
                 />
               </div>
+            )}
+            
+            {extraActions}
+
+            {selectable && selectedItems.length > 0 && onBulkDelete && (
+              <Button
+                theme="red"
+                variant="danger"
+                size="sm"
+                icon={<Trash2 size={16} />}
+                onClick={handleBulkClick}
+                isLoading={isBulkDeleting}
+              >
+                Excluir {selectedItems.length}
+              </Button>
             )}
             
             {addButtonText && onAddClick && (

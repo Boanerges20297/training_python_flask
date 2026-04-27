@@ -5,6 +5,12 @@ export interface Cliente {
   telefone: string;
   senha?: string;
   observacoes?: string;
+  imagem_url?: string;
+  data_cadastro?: string;
+  data_atualizacao?: string;
+  status?: 'ativo' | 'ausente' | 'devedor';
+  divida_total?: number;
+  ultima_visita?: string;
 }
 
 export interface Servico {
@@ -14,29 +20,38 @@ export interface Servico {
   preco: number;
   duracao_minutos: number;
   imagem_url?: string;
+  data_criacao?: string;
+  data_atualizacao?: string;
 }
 
 export interface Agendamento {
   id: number;
   cliente_id: number;
   barbeiro_id: number;
-  servico_id: number;
+  servicos_ids: number[];
   data_agendamento: string;
   data_criacao?: string;
-  observacoes: string;
+  data_atualizacao?: string;
+  observacoes?: string;
   status?: string; // "pendente" | "confirmado" | "concluido" | "cancelado"
+  preco?: number;
+  pago?: boolean;
 }
 
 export interface Barbeiro {
   id?: number;
   nome: string;
-  especialidade: string;
   email: string;
   telefone: string;
   senha?: string;
+  especialidades: string[];
   ativo: boolean;
   justificativa?: string;
   servicos_ids?: number[];
+  imagem_url?: string;
+  data_cadastro?: string;
+  data_atualizacao?: string;
+  comissao_percentual?: number;
 }
 
 // Tipos de autenticação
@@ -102,6 +117,7 @@ export interface BarbeiroDesempenho {
   agendamentos_concluidos: number;
   agendamentos_cancelados: number;
   receita_total: number;
+  comissao_gerada: number;
   tempo_total_minutos: number;
   servicos_realizados: ServicoRealizado[];
   taxa_conclusao: number;
@@ -111,6 +127,9 @@ export interface DashboardData {
   periodo_inicio: string;
   periodo_fim: string;
   receita_total: number;
+  receita_liquidada: number;
+  receita_pendente: number;
+  total_dividas: number;
   agendamentos_total: number;
   agendamentos_concluidos: number;
   agendamentos_cancelados: number;

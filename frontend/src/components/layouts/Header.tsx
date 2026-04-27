@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, Bell, XCircle, Settings, CheckCircle2, ChevronRight, Users, Scissors, Briefcase, Calendar, Home, History } from 'lucide-react';
+import { LayoutDashboard, Bell, XCircle, Settings, CheckCircle2, ChevronRight, Users, Scissors, Briefcase, Calendar, Home, History, TrendingUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { type SidebarTab } from './Sidebar';
 import ThemeToggle from '../ui/ThemeToggle';
@@ -19,7 +19,8 @@ const tabIcons: Record<string, any> = {
   inicio: Home,
   agendamentos_cliente: Calendar,
   agenda: Calendar,
-  historico: History
+  historico: History,
+  financeiro: TrendingUp
 };
 
 export default function Header({ activeTabName, activeTab }: HeaderProps) {

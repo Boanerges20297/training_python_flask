@@ -43,217 +43,18 @@ body {
   transition: all var(--transition-slow);
 }
 
-/* ── SIDEBAR (será migrado para Sidebar.module.css na Wave 3) ── */
-.sidebar {
-  width: 260px;
-  background: var(--bg-secondary);
-  border-right: 1px solid var(--border-color);
-  display: flex;
-  flex-direction: column;
-  padding: var(--space-lg);
-  z-index: 50;
-  transition: all var(--transition-slow);
-}
-
-.sidebar.collapsed {
-  width: 80px;
-  padding: var(--space-lg) var(--space-sm);
-  align-items: center;
-}
-
-.sidebar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-sm);
-  font-size: var(--font-size-xl);
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: var(--space-2xl);
-  width: 100%;
-}
-
-.sidebar.collapsed .sidebar-header {
-  justify-content: center;
-  flex-direction: column;
-}
-
-.toggle-sidebar {
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-color);
-  color: var(--text-secondary);
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.toggle-sidebar:hover {
-  background: var(--color-client-light);
-  color: var(--color-client);
-  border-color: var(--color-client-border);
-}
-
-.sidebar.collapsed .toggle-sidebar {
-  margin-top: var(--space-md);
-}
-
-.sidebar-nav {
-  flex: 1;
-}
-
-.nav-item {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: 0.75rem 1rem;
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-lg);
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  margin-bottom: var(--space-xs);
-}
-
-.nav-item:hover {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-}
-
-.nav-item.active {
-  background: var(--color-client-light);
-  color: var(--color-client);
-}
-
-.sidebar.collapsed .nav-item {
-  justify-content: center;
-  padding: 0.75rem;
-}
-
-/* ── SIDEBAR FOOTER ── */
-.sidebar-footer {
-  margin-top: auto;
-  padding-top: var(--space-lg);
-  border-top: 1px solid var(--border-color);
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  margin-bottom: var(--space-md);
-}
-
-.user-avatar {
-  background: var(--bg-tertiary);
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-full);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-secondary);
-}
-
-.user-text {
-  flex: 1;
-}
-
-.user-name {
-  margin: 0;
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.user-role {
-  margin: 0;
-  font-size: var(--font-size-xs);
-  color: var(--text-tertiary);
-}
-
-.logout-btn {
-  width: 100%;
-  padding: var(--space-sm);
-  background: transparent;
-  border: 1px solid var(--color-danger-border);
-  color: var(--color-danger);
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.logout-btn:hover {
-  background: var(--color-danger-light);
-}
-
 /* ── MAIN CONTENT ── */
 .main-content {
   flex: 1;
-  background: var(--bg-primary);
+  background: transparent;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-}
-
-.content-header {
-  height: 70px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 var(--space-xl);
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  border-bottom: 1px solid var(--border-color);
-  z-index: 10;
-}
-
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  color: var(--text-tertiary);
-  font-size: var(--font-size-sm);
-}
-
-.breadcrumb .current {
-  color: var(--color-client);
-  font-weight: 600;
-}
-
-.status-badge {
-  background: var(--color-service-light);
-  color: var(--color-service);
-  padding: 0.25rem 0.75rem;
-  border-radius: var(--radius-full);
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  border: 1px solid var(--color-service-border);
-}
-
-.status-badge.inactive {
-  background: var(--bg-tertiary);
-  color: var(--text-secondary);
-  border-color: var(--border-color);
+  position: relative;
 }
 
 .content-body {
-  padding: var(--space-xl);
+  padding: 100px var(--space-xl) var(--space-xl) var(--space-xl);
   flex: 1;
   overflow-y: auto;
 }
@@ -297,4 +98,73 @@ body {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+/* ── SWEETALERT GLASSMORPHISM ── */
+body .swal2-container.swal2-center > .swal2-popup.swal-glass-popup {
+  background: var(--glass-bg-deep);
+  backdrop-filter: var(--glass-blur-deep);
+  border: 1px solid var(--glass-border-deep);
+  border-radius: 2.5rem;
+  box-shadow: var(--shadow-xl);
+}
+
+body .swal2-title.swal-glass-title {
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-weight: 800;
+  padding-top: 1.5rem;
+}
+
+body .swal2-html-container.swal-glass-html {
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+}
+
+body .swal2-actions .swal2-confirm.swal-glass-confirm {
+  background: var(--color-client);
+  border: none !important;
+  border-radius: 1.25rem !important;
+  font-weight: 700 !important;
+  padding: 0.85rem 2.5rem !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  color: white !important;
+  outline: none !important;
+}
+
+body .swal2-actions .swal2-confirm.swal-glass-confirm:hover {
+  transform: translateY(-2px);
+  background: var(--color-client-hover);
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.3) !important;
+}
+
+body .swal2-actions .swal2-cancel.swal-glass-cancel {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 1.25rem !important;
+  color: var(--text-tertiary) !important;
+  font-weight: 600 !important;
+  padding: 0.85rem 2rem !important;
+  transition: all 0.2s ease !important;
+}
+
+body .swal2-actions .swal2-cancel.swal-glass-cancel:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--text-secondary) !important;
+}
+
+/* Fix para o bug do ícone de sucesso no SweetAlert */
+.swal2-icon.swal2-success .swal2-success-ring {
+  border: .25em solid rgba(16, 185, 129, 0.2);
+}
+.swal2-icon.swal2-success [class^=swal2-success-line] {
+  background-color: #10b981;
+}
+.swal2-icon.swal2-success .swal2-success-fix,
+.swal2-icon.swal2-success .swal2-success-circular-line-left,
+.swal2-icon.swal2-success .swal2-success-circular-line-right {
+  background-color: transparent !important; /* Aqui o !important é necessário para anular o estilo inline da lib */
 }

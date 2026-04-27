@@ -11,6 +11,7 @@ const ClientsView = lazy(() => import('../modules/admin/views/ClientsView'));
 const ServicesView = lazy(() => import('../modules/admin/views/ServicesView'));
 const AppointmentsView = lazy(() => import('../modules/admin/views/AppointmentsView'));
 const BarbersView = lazy(() => import('../modules/admin/views/BarbersView'));
+const FinanceiroView = lazy(() => import('../modules/admin/views/FinanceiroView'));
 const ClientDashboard = lazy(() => import('../modules/client/views/ClientDashboard'));
 const BarberDashboard = lazy(() => import('../modules/barber/views/BarberDashboard'));
 
@@ -47,6 +48,7 @@ export default function AppRoutes() {
               <Route path="admin/servicos" element={<Suspense fallback={<SuspenseFallback />}><ServicesView /></Suspense>} />
               <Route path="admin/agendamentos" element={<Suspense fallback={<SuspenseFallback />}><AppointmentsView /></Suspense>} />
               <Route path="admin/barbeiros" element={<Suspense fallback={<SuspenseFallback />}><BarbersView /></Suspense>} />
+              <Route path="admin/financeiro" element={<Suspense fallback={<SuspenseFallback />}><FinanceiroView /></Suspense>} />
            </Route>
 
            {/* Client Domain */}

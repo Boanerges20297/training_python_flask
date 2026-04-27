@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { createAgendamento, updateAgendamento } from '../../../api/appointments';
 import type { Cliente, Servico, Agendamento, Barbeiro } from '../../../types';
-import { User, ShoppingBag, Calendar, FileText, Plus, Edit2, Scissors, Clock } from 'lucide-react';
+import { User, ShoppingBag, Calendar, FileText, Plus, Edit2, Scissors, Clock, AlertTriangle, Info, History } from 'lucide-react';
 import { Drawer } from '../../../components/ui/Drawer';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
 import { useToast } from '../../../components/ui/Toast';
 import drawerStyles from '../../../components/ui/Drawer.module.css';
+import { getSpecialtyLabel } from '../constants/specialties';
+
+import TimeSlotPicker from '../../../components/ui/TimeSlotPicker';
 
 interface AppointmentDrawerProps {
   isOpen: boolean;
@@ -15,6 +18,7 @@ interface AppointmentDrawerProps {
   clientes: Cliente[];
   servicos: Servico[];
   barbeiros: Barbeiro[];
+  allAgendamentos: Agendamento[];
   agendamentoParaEditar?: Agendamento | null;
 }
 
@@ -25,46 +29,65 @@ const AppointmentDrawer: React.FC<AppointmentDrawerProps> = ({
   clientes,
   servicos,
   barbeiros,
+  allAgendamentos,
   agendamentoParaEditar
 }) => {
   const { showToast } = useToast();
   const [formData, setFormData] = useState({
     cliente_id: '',
-    servico_id: '',
+    servicos_ids: [] as number[],
     barbeiro_id: '',
-    data_agendamento: '',
+    selectedDate: '',
+    selectedSlot: '',
+    customTime: '',
     observacoes: ''
   });
+  const [useCustomTime, setUseCustomTime] = useState(false);
   const [mode, setMode] = useState<'view' | 'edit'>('view');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       if (agendamentoParaEditar) {
-        const dataFormatada = agendamentoParaEditar.data_agendamento
-          ? agendamentoParaEditar.data_agendamento.slice(0, 16)
-          : '';
+        const fullDate = agendamentoParaEditar.data_agendamento || '';
+        const datePart = fullDate.split('T')[0] || '';
+        const timePart = fullDate.split('T')[1]?.slice(0, 5) || '';
+        
         setFormData({
           cliente_id: String(agendamentoParaEditar.cliente_id),
-          servico_id: String(agendamentoParaEditar.servico_id),
+          servicos_ids: agendamentoParaEditar.servicos_ids || [],
           barbeiro_id: String(agendamentoParaEditar.barbeiro_id),
-          data_agendamento: dataFormatada,
+          selectedDate: datePart,
+          selectedSlot: timePart,
+          customTime: timePart,
           observacoes: agendamentoParaEditar.observacoes || ''
         });
+        setUseCustomTime(false);
         setMode('view');
       } else {
-        setFormData({ cliente_id: '', servico_id: '', barbeiro_id: '', data_agendamento: '', observacoes: '' });
+        setFormData({ 
+          cliente_id: '', 
+          servicos_ids: [], 
+          barbeiro_id: '', 
+          selectedDate: new Date().toISOString().split('T')[0], 
+          selectedSlot: '', 
+          customTime: '',
+          observacoes: '' 
+        });
+        setUseCustomTime(false);
         setMode('edit');
       }
     }
   }, [isOpen, agendamentoParaEditar]);
 
-  const today = new Date().toISOString().slice(0, 16);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!agendamentoParaEditar && formData.data_agendamento < today) {
+    const timeToUse = useCustomTime ? formData.customTime : formData.selectedSlot;
+    const finalData = `${formData.selectedDate}T${timeToUse}:00`;
+
+    if (!agendamentoParaEditar && new Date(finalData) < new Date()) {
       showToast("Não é possível agendar horários no passado.", 'error');
       return;
     }
@@ -72,22 +95,19 @@ const AppointmentDrawer: React.FC<AppointmentDrawerProps> = ({
     setIsSubmitting(true);
 
     try {
-      const selectedDate = new Date(formData.data_agendamento);
-      const hour = selectedDate.getHours();
-
-      if (hour < 8 || hour >= 20) {
-        throw "A barbearia funciona apenas das 08h às 20h.";
-      }
+      const selectedServices = servicos.filter(s => formData.servicos_ids.includes(s.id));
+      const totalPreco = selectedServices.reduce((sum, s) => sum + s.preco, 0);
 
       const payload = {
         cliente_id: parseInt(formData.cliente_id),
-        servico_id: parseInt(formData.servico_id),
+        servicos_ids: formData.servicos_ids,
         barbeiro_id: parseInt(formData.barbeiro_id),
-        data_agendamento: formData.data_agendamento,
+        data_agendamento: finalData,
         observacoes: formData.observacoes,
+        preco: totalPreco
       };
 
-      if (!payload.cliente_id || !payload.servico_id || !payload.barbeiro_id || !payload.data_agendamento) {
+      if (!payload.cliente_id || payload.servicos_ids.length === 0 || !payload.barbeiro_id || !timeToUse) {
         throw "Preencha todos os campos obrigatórios.";
       }
 
@@ -110,10 +130,10 @@ const AppointmentDrawer: React.FC<AppointmentDrawerProps> = ({
     }
   };
 
-  // Helpers para o View Mode
+  // Auxiliares para o View Mode
   const selectedClient = clientes.find(c => String(c.id) === formData.cliente_id);
-  const selectedService = servicos.find(s => String(s.id) === formData.servico_id);
-  const selectedBarber = barbeiros.find(b => String(b.id) === formData.barbeiro_id);
+  const selectedServices = servicos.filter(s => formData.servicos_ids.includes(s.id));
+  const selectedBarber = barbeiros.find(b => b.id && String(b.id) === formData.barbeiro_id);
 
   return (
     <Drawer
@@ -121,9 +141,9 @@ const AppointmentDrawer: React.FC<AppointmentDrawerProps> = ({
       onClose={onClose}
       title={mode === 'view' ? 'Detalhes do Agendamento' : (agendamentoParaEditar ? "Editar Horário" : "Novo Agendamento")}
       subtitle={mode === 'view' ? 'Resumo da reserva' : (agendamentoParaEditar ? 'Atualize os dados da reserva.' : 'Preencha os campos para reservar um horário.')}
-      icon={<Calendar size={20} color="var(--color-purple)" />}
-      iconBg="var(--color-purple-light)"
-      iconBorder="var(--color-purple-border)"
+      icon={<Calendar size={20} color="var(--color-appointment)" />}
+      iconBg="var(--color-appointment-light)"
+      iconBorder="var(--color-appointment-border)"
       footer={
         mode === 'view' ? (
           <>
@@ -144,6 +164,7 @@ const AppointmentDrawer: React.FC<AppointmentDrawerProps> = ({
               theme="purple"
               onClick={handleSubmit}
               isLoading={isSubmitting}
+              disabled={mode === 'edit' && !!selectedClient && (selectedClient.divida_total || 0) > 0}
               icon={agendamentoParaEditar ? <Edit2 size={18} /> : <Plus size={18} />}
             >
               {agendamentoParaEditar ? 'Salvar Alterações' : 'Confirmar Reserva'}
@@ -156,56 +177,210 @@ const AppointmentDrawer: React.FC<AppointmentDrawerProps> = ({
       }
     >
       {mode === 'view' && agendamentoParaEditar ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          {/* Cliente Hero */}
-          <div className={drawerStyles.bentoProfile}>
-            <div className={drawerStyles.bentoAvatar} style={{ background: 'var(--color-client-light)', color: 'var(--color-client)' }}>
-              {selectedClient?.nome.charAt(0).toUpperCase() || '?'}
+        <div className={drawerStyles.bentoGrid}>
+          {/* 1. Card Hero: Cliente (Largura Total) */}
+          <div className={`${drawerStyles.bentoCard} ${drawerStyles.bentoHeaderGroup} ${drawerStyles.span2}`}>
+            <div className={drawerStyles.photoCard} style={{ padding: '0.5rem' }}>
+              {selectedClient?.imagem_url ? (
+                <img 
+                  src={selectedClient.imagem_url} 
+                  alt={selectedClient.nome} 
+                  className={drawerStyles.heroAvatar}
+                  style={{ width: '80px', height: '80px', borderRadius: '1.5rem' }}
+                />
+              ) : (
+                <div className={drawerStyles.heroAvatar} style={{ 
+                  width: '80px', height: '80px', borderRadius: '1.5rem',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: 'var(--color-client-light)', color: 'var(--color-client)',
+                  fontSize: '1.75rem', fontWeight: '800'
+                }}>
+                  {selectedClient?.nome.charAt(0).toUpperCase() || '?'}
+                </div>
+              )}
             </div>
-            <div className={drawerStyles.bentoProfileText}>
-              <h3>{selectedClient?.nome || 'Cliente não encontrado'}</h3>
-              <p>{selectedClient?.email}</p>
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <div className={drawerStyles.badgeCorner}>ID #{agendamentoParaEditar.id}</div>
+              <span className={drawerStyles.subcardLabel}>Cliente</span>
+              <h2 style={{ fontSize: '1.15rem' }}>{selectedClient?.nome || 'N/A'}</h2>
+              <p style={{ margin: 0, color: 'var(--text-tertiary)', fontSize: '0.75rem' }}>{selectedClient?.email}</p>
             </div>
           </div>
 
-          {/* Details Bento Grid */}
-          <div className={drawerStyles.bentoMiniGrid}>
-            <div className={drawerStyles.bentoMiniCard}>
-              <p>Data e Hora</p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-purple)', fontWeight: 700 }}>
-                <Clock size={16} />
-                {formData.data_agendamento.replace('T', ' ')}
+          {/* 2. Layout Masonry: Data/Hora e Status (Lado a Lado) */}
+          <div className={drawerStyles.bentoMasonry}>
+            {/* Card de Horário */}
+            <div className={drawerStyles.bentoCard} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '0.5rem' }}>
+              <span className={drawerStyles.subcardLabel}>Horário</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-purple)', fontWeight: 800, fontSize: '1.1rem' }}>
+                <Clock size={18} />
+                {new Date(agendamentoParaEditar.data_agendamento).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+              </div>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+                {new Date(agendamentoParaEditar.data_agendamento).toLocaleDateString('pt-BR')}
+              </span>
+            </div>
+
+            {/* Card de Status */}
+            <div className={drawerStyles.bentoCard} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '0.5rem' }}>
+              <span className={drawerStyles.subcardLabel}>Status</span>
+              <div style={{ 
+                display: 'inline-flex', padding: '0.35rem 0.75rem', 
+                borderRadius: '1rem', fontSize: '0.65rem', fontWeight: 800, 
+                background: agendamentoParaEditar.status === 'concluido' ? 'rgba(74, 222, 128, 0.1)' : 'rgba(168, 85, 247, 0.1)', 
+                color: agendamentoParaEditar.status === 'concluido' ? '#4ade80' : '#a855f7',
+                border: `1px solid ${agendamentoParaEditar.status === 'concluido' ? 'rgba(74, 222, 128, 0.2)' : 'rgba(168, 85, 247, 0.2)'}`,
+                textTransform: 'uppercase', width: 'fit-content'
+              }}>
+                {agendamentoParaEditar.status || 'Pendente'}
               </div>
             </div>
-            <div className={drawerStyles.bentoMiniCard}>
-              <p>Serviço</p>
-              <h2 style={{ fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {selectedService?.nome || 'N/A'}
-              </h2>
-            </div>
           </div>
 
-          {/* Profissional Section */}
-          <div className={drawerStyles.bentoSection}>
-            <h4 className={drawerStyles.bentoSectionTitle}>Profissional Responsável</h4>
-            <div className={drawerStyles.bentoRow}>
-              <Scissors size={16} color="var(--color-amber)" />
-              <span style={{ fontWeight: 600 }}>{selectedBarber?.nome || 'Barbeiro não selecionado'}</span>
-            </div>
-          </div>
+          {/* 3. Alertas e Notas (Dinâmicos) */}
+          {(selectedBarber && !selectedBarber.ativo || agendamentoParaEditar.observacoes) && (
+            <div className={drawerStyles.bentoGrid}>
+              {selectedBarber && !selectedBarber.ativo && (
+                <div className={drawerStyles.cardAlert}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                    <AlertTriangle size={18} color="#f87171" />
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f87171', textTransform: 'uppercase' }}>
+                      Aviso de Inatividade
+                    </span>
+                  </div>
+                  <p style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.85rem' }}>
+                    O profissional <strong>{selectedBarber.nome}</strong> está inativo ou afastado no momento.
+                  </p>
+                </div>
+              )}
 
-          {/* Observações Section */}
-          {formData.observacoes && (
-            <div className={drawerStyles.bentoSection}>
-              <h4 className={drawerStyles.bentoSectionTitle}>Observações</h4>
-              <p style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.875rem', lineHeight: '1.6' }}>
-                {formData.observacoes}
-              </p>
+              {agendamentoParaEditar.observacoes && (
+                <div className={drawerStyles.bentoCard}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                    <Info size={18} color="var(--text-tertiary)" />
+                    <span className={drawerStyles.subcardLabel}>Observações</span>
+                  </div>
+                  <p style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.85rem', lineHeight: '1.6' }}>
+                    {agendamentoParaEditar.observacoes}
+                  </p>
+                </div>
+              )}
             </div>
           )}
+
+          {/* 4. Cards de Detalhes */}
+          <div className={drawerStyles.bentoGrid}>
+            {/* Card de Serviços (Lista Premium) */}
+            <div className={drawerStyles.bentoCard} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <ShoppingBag size={18} color="var(--color-service)" />
+                <span className={drawerStyles.subcardLabel}>Serviços Selecionados</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {selectedServices.map(s => (
+                  <div key={s.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem', background: 'var(--bg-primary)', borderRadius: '1rem', border: '1px solid var(--border-color)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '0.75rem', background: 'var(--color-service-light)', color: 'var(--color-service)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem' }}>
+                        <Scissors size={14} />
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: '0.875rem' }}>{s.nome}</div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>{s.duracao_minutos} min</div>
+                      </div>
+                    </div>
+                    <div style={{ fontWeight: 800, fontSize: '0.875rem', color: 'var(--text-primary)' }}>
+                      R$ {Number(s.preco).toFixed(2).replace('.', ',')}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginTop: '0.5rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-tertiary)' }}>Total</span>
+                <span style={{ fontSize: '1.15rem', fontWeight: 900, color: '#4ade80' }}>
+                  R$ {selectedServices.reduce((sum, s) => sum + s.preco, 0).toFixed(2).replace('.', ',')}
+                </span>
+              </div>
+            </div>
+
+            {/* Card de Barbeiro (Hierarquia Refatorada) */}
+            <div className={drawerStyles.bentoCard} style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                {selectedBarber?.imagem_url ? (
+                  <img src={selectedBarber.imagem_url} className={drawerStyles.heroAvatar} style={{ width: '58px', height: '58px', borderRadius: '1rem' }} />
+                ) : (
+                  <div style={{ padding: '0.75rem', borderRadius: '1rem', background: 'var(--color-barber-light)', color: 'var(--color-barber)', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                    <Scissors size={25} />
+                  </div>
+                )}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span className={drawerStyles.subcardLabel}>Profissional</span>
+                    <span className={drawerStyles.pillID}>#{selectedBarber?.id}</span>
+                  </div>
+                  <div style={{ fontWeight: 700, fontSize: '1rem' }}>
+                    {selectedBarber?.nome || 'Não selecionado'}
+                  </div>
+                  <div style={{ 
+                    fontSize: '0.7rem', color: 'var(--text-tertiary)', 
+                    display: 'flex', flexWrap: 'wrap', gap: '0.25rem' 
+                  }}>
+                    {selectedBarber?.especialidades?.map(e => (
+                      <span key={e} style={{ background: 'var(--bg-primary)', padding: '0.1rem 0.4rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)' }}>
+                        {getSpecialtyLabel(e)}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+            </div>
+          </div>
+
+          {/* 5. System Info (Auditoria) */}
+          <div className={drawerStyles.bentoGrid} style={{ marginTop: '0.5rem' }}>
+            <div className={drawerStyles.bentoCard} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <History size={16} color="var(--text-tertiary)" />
+                <span className={drawerStyles.subcardLabel}>Informações do Sistema</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+                <span style={{ color: 'var(--text-tertiary)' }}>Criado em:</span>
+                <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
+                  {agendamentoParaEditar.data_criacao 
+                    ? new Date(agendamentoParaEditar.data_criacao).toLocaleString('pt-BR') 
+                    : 'Não disponível'}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+                <span style={{ color: 'var(--text-tertiary)' }}>Última atualização:</span>
+                <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
+                  {agendamentoParaEditar.data_atualizacao 
+                    ? new Date(agendamentoParaEditar.data_atualizacao).toLocaleString('pt-BR') 
+                    : 'Nenhuma alteração registrada'}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className={drawerStyles.drawerForm}>
+          {/* # Gabriel (Finanças) - Banner de Bloqueio para Inadimplentes*/}
+          {selectedClient && (selectedClient.divida_total || 0) > 0 && (
+            <div className={drawerStyles.bentoCard} style={{ background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.15)', marginBottom: '1.5rem', animation: 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <AlertTriangle size={24} />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                    <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#f87171', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Bloqueio de Inadimplência</span>
+                    <span style={{ fontSize: '0.95rem', fontWeight: 900, color: '#ef4444' }}>R$ {selectedClient.divida_total?.toLocaleString()}</span>
+                  </div>
+                  <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.8rem', lineHeight: '1.4' }}>
+                    Este cliente possui débitos pendentes. Novos agendamentos estão temporariamente bloqueados.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="form-group">
             <Input
               label="Cliente"
@@ -221,17 +396,31 @@ const AppointmentDrawer: React.FC<AppointmentDrawerProps> = ({
           </div>
 
           <div className="form-group">
-            <Input
-              label="Serviço"
-              as="select"
-              icon={<ShoppingBag size={18} />}
-              required
-              value={formData.servico_id}
-              onChange={(e) => setFormData({ ...formData, servico_id: e.target.value })}
-            >
-              <option value="">Selecione um serviço...</option>
-              {servicos.map(s => <option key={s.id} value={s.id}>{s.nome} - R$ {Number(s.preco).toFixed(2)}</option>)}
-            </Input>
+            <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.75rem', display: 'block' }}>
+              Serviços
+            </label>
+            <div className={drawerStyles.checkboxGrid} style={{ maxHeight: '250px', overflowY: 'auto' }}>
+              {servicos.map(s => (
+                <label key={s.id} className={drawerStyles.customCheckbox}>
+                  <input 
+                    type="checkbox" 
+                    checked={formData.servicos_ids.includes(s.id)} 
+                    onChange={(e) => {
+                      const ids = e.target.checked 
+                        ? [...formData.servicos_ids, s.id] 
+                        : formData.servicos_ids.filter(id => id !== s.id);
+                      setFormData({ ...formData, servicos_ids: ids });
+                    }}
+                  />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 700 }}>{s.nome}</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
+                      R$ {Number(s.preco).toFixed(2)} • {s.duracao_minutos} min
+                    </div>
+                  </div>
+                </label>
+              ))}
+            </div>
           </div>
 
           <div className="form-group">
@@ -245,22 +434,63 @@ const AppointmentDrawer: React.FC<AppointmentDrawerProps> = ({
             >
               <option value="">Selecione um profissional...</option>
               {barbeiros
-                .filter(b => b.ativo && (!formData.servico_id || b.servicos_ids?.includes(parseInt(formData.servico_id))))
+                .filter(b => b.ativo && (formData.servicos_ids.length === 0 || formData.servicos_ids.every(id => b.servicos_ids?.includes(id))))
                 .map(b => <option key={b.id} value={b.id}>{b.nome}</option>)}
             </Input>
           </div>
 
           <div className="form-group">
             <Input
-              label="Data e Horário"
-              type="datetime-local"
+              label="Data do Agendamento"
+              type="date"
               icon={<Calendar size={18} />}
               required
-              min={agendamentoParaEditar ? undefined : today}
-              max="2099-12-31T23:59"
-              value={formData.data_agendamento}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, data_agendamento: e.target.value })}
+              min={new Date().toISOString().split('T')[0]}
+              value={formData.selectedDate}
+              onChange={(e) => setFormData({ ...formData, selectedDate: e.target.value })}
             />
+          </div>
+
+          <div className="form-group" style={{ marginTop: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                Horário
+              </label>
+              <button 
+                type="button" 
+                onClick={() => setUseCustomTime(!useCustomTime)}
+                style={{ 
+                  fontSize: '0.75rem', 
+                  color: 'var(--color-purple)', 
+                  background: 'none', 
+                  border: 'none', 
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                {useCustomTime ? 'Usar slots sugeridos' : 'Definir horário manual'}
+              </button>
+            </div>
+
+            {useCustomTime ? (
+              <Input
+                type="time"
+                icon={<Clock size={18} />}
+                required
+                value={formData.customTime}
+                onChange={(e) => setFormData({ ...formData, customTime: e.target.value })}
+              />
+            ) : (
+              <TimeSlotPicker
+                date={formData.selectedDate}
+                barbeiroId={parseInt(formData.barbeiro_id)}
+                servicoDuracao={servicos.filter(s => formData.servicos_ids.includes(s.id)).reduce((sum, s) => sum + s.duracao_minutos, 0) || 30}
+                agendamentos={allAgendamentos}
+                selectedSlot={formData.selectedSlot}
+                onSlotSelect={(slot) => setFormData({ ...formData, selectedSlot: slot })}
+                theme="purple"
+              />
+            )}
           </div>
 
           <div className="form-group">

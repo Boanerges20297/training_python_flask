@@ -79,67 +79,81 @@ export const handlers = [
   }),
 
   // --- DASHBOARD ---
-  http.get(`${API_BASE}/dashboard`, async ({ request }) => {
+  http.get(`${API_BASE}/dashboard/geral`, async ({ request }) => {
     await delay(600);
     const url = new URL(request.url);
     const dias = Number(url.searchParams.get('dias') || 30);
     
-    // Simulando escala de dados por "dias"
-    const fator = dias / 30;
+    const agendamentos = db.getAll('agendamentos');
+    const barbeiros = db.getAll('barbeiros');
+    const clientes = db.getAll('clientes');
+    
+    // Filtro básico de dias (simplificado para o mock)
+    const agora = new Date();
+    const dataLimite = new Date();
+    dataLimite.setDate(agora.getDate() - dias);
+
+    const agendsFiltrados = agendamentos.filter(a => new Date(a.data_agendamento) >= dataLimite);
+
+    const total_dividas = clientes.reduce((acc, c) => acc + (c.divida_total || 0), 0);
+
+    const agendamentos_concluidos = agendsFiltrados.filter(a => a.status === 'concluido').length;
+    const agendamentos_cancelados = agendsFiltrados.filter(a => a.status === 'cancelado').length;
+    const agendamentos_pendentes = agendsFiltrados.filter(a => a.status === 'pendente').length;
+
+    const desempenhoBarbeiros = barbeiros.map(b => {
+      const agendsB = agendsFiltrados.filter(a => a.barbeiro_id === b.id);
+      const concluidos = agendsB.filter(a => a.status === 'concluido');
+      const receita = concluidos.reduce((acc, a) => acc + (a.preco || 0), 0);
+      const comissao = (receita * (b.comissao_percentual || 50)) / 100;
+      
+      return {
+        barbeiro_id: b.id,
+        barbeiro_nome: b.nome.split(' ')[0],
+        total_agendamentos: agendsB.length,
+        agendamentos_concluidos: concluidos.length,
+        agendamentos_cancelados: agendsB.filter(a => a.status === 'cancelado').length,
+        receita_total: receita,
+        comissao_gerada: comissao,
+        taxa_conclusao: agendsB.length > 0 ? Math.round((concluidos.length / agendsB.length) * 100) : 0,
+        servicos_realizados: [
+          { nome: "Serviços Gerais", quantidade: concluidos.length, receita: receita }
+        ]
+      };
+    });
+
+    const receita_diaria = Array.from({length: dias}).map((_, i) => {
+      const d = new Date();
+      d.setDate(agora.getDate() - (dias - 1 - i));
+      return {
+        data: d.toISOString().split('T')[0],
+        receita: Math.floor(Math.random() * 800) + 200,
+        agendamentos_concluidos: Math.floor(Math.random() * 15) + 3
+      };
+    });
+
+    const receita_total_calc = receita_diaria.reduce((acc, d) => acc + d.receita, 0);
 
     return HttpResponse.json({
-      periodo_inicio: "2026-03-16T00:00:00Z",
-      periodo_fim: "2026-04-15T23:59:59Z",
-      receita_total: 3420.5 * fator,
-      agendamentos_total: Math.round(98 * fator),
-      agendamentos_concluidos: Math.round(76 * fator),
-      agendamentos_cancelados: Math.round(12 * fator),
-      agendamentos_pendentes: Math.round(10 * fator),
-      ticket_medio: 45.01,
-      top_5_horarios: [
-        { hora: 9, total_agendamentos: Math.round(14 * fator) },
-        { hora: 10, total_agendamentos: Math.round(11 * fator) },
-        { hora: 14, total_agendamentos: Math.round(8 * fator) },
-        { hora: 16, total_agendamentos: Math.round(7 * fator) },
-        { hora: 18, total_agendamentos: Math.round(5 * fator) }
-      ],
-      receita_diaria: [
-        { data: "2026-04-10", receita: 150.0 * fator, agendamentos_concluidos: 3, agendamentos_pendentes: 0 },
-        { data: "2026-04-11", receita: 200.0 * fator, agendamentos_concluidos: 4, agendamentos_pendentes: 1 },
-        { data: "2026-04-12", receita: 280.0 * fator, agendamentos_concluidos: 6, agendamentos_pendentes: 1 },
-        { data: "2026-04-13", receita: 400.0 * fator, agendamentos_concluidos: 8, agendamentos_pendentes: 2 },
-        { data: "2026-04-14", receita: 320.0 * fator, agendamentos_concluidos: 7, agendamentos_pendentes: 0 },
-        { data: "2026-04-15", receita: 180.0 * fator, agendamentos_concluidos: 4, agendamentos_pendentes: 3 }
-      ],
-      barbeiros_desempenho: [
-        {
-          barbeiro_id: 1,
-          barbeiro_nome: "Pedro",
-          total_agendamentos: Math.round(30 * fator),
-          agendamentos_concluidos: Math.round(25 * fator),
-          agendamentos_cancelados: Math.round(2 * fator),
-          receita_total: 1200.0 * fator,
-          tempo_total_minutos: 900 * fator,
-          servicos_realizados: [
-            { nome: "Corte", quantidade: 15, preco_unitario: 40.0, receita: 600.0 },
-            { nome: "Barba", quantidade: 10, preco_unitario: 30.0, receita: 300.0 }
-          ],
-          taxa_conclusao: 83.3
-        },
-        {
-          barbeiro_id: 2,
-          barbeiro_nome: "Carlos",
-          total_agendamentos: Math.round(24 * fator),
-          agendamentos_concluidos: Math.round(19 * fator),
-          agendamentos_cancelados: Math.round(3 * fator),
-          receita_total: 980.0 * fator,
-          tempo_total_minutos: 760 * fator,
-          servicos_realizados: [
-            { nome: "Corte", quantidade: 10, preco_unitario: 40.0, receita: 400.0 }
-          ],
-          taxa_conclusao: 79.17
-        }
-      ]
+      data: {
+        periodo_inicio: dataLimite.toISOString(),
+        periodo_fim: agora.toISOString(),
+        receita_total: receita_total_calc,
+        receita_liquidada: receita_total_calc * 0.8,
+        receita_pendente: receita_total_calc * 0.2,
+        total_dividas,
+        agendamentos_total: agendsFiltrados.length,
+        agendamentos_concluidos,
+        agendamentos_cancelados,
+        agendamentos_pendentes,
+        ticket_medio: agendamentos_concluidos > 0 ? receita_total_calc / agendamentos_concluidos : 0,
+        top_5_horarios: [8, 10, 12, 14, 16, 18, 20].map(h => ({
+          hora: h,
+          total_agendamentos: Math.floor(Math.random() * 20) + 5
+        })).sort((a, b) => a.hora - b.hora),
+        receita_diaria,
+        barbeiros_desempenho: desempenhoBarbeiros
+      }
     }, { status: 200 });
   }),
 
@@ -173,7 +187,7 @@ export const handlers = [
 
 
   // --- CLIENTES ---
-  http.get(`${API_BASE}/clientes/`, async ({ request }) => {
+  http.get(`${API_BASE}/clientes`, async ({ request }) => {
     await delay(200);
     const url = new URL(request.url);
     const page = Number(url.searchParams.get('page') || 1);
@@ -182,7 +196,7 @@ export const handlers = [
     return HttpResponse.json({ dados: db.getPaginated('clientes', page, per_page) });
   }),
 
-  http.post(`${API_BASE}/clientes/`, async ({ request }) => {
+  http.post(`${API_BASE}/clientes`, async ({ request }) => {
     const data = await request.json();
     const newCliente = db.add('clientes', data);
     return HttpResponse.json({ dados: { cliente: newCliente } }, { status: 201 });
@@ -202,7 +216,7 @@ export const handlers = [
   }),
 
   // --- BARBEIROS ---
-  http.get(`${API_BASE}/barbeiros/`, async ({ request }) => {
+  http.get(`${API_BASE}/barbeiros`, async ({ request }) => {
     await delay(200);
     const url = new URL(request.url);
     const page = Number(url.searchParams.get('page') || 1);
@@ -211,7 +225,7 @@ export const handlers = [
     return HttpResponse.json({ dados: db.getPaginated('barbeiros', page, per_page) });
   }),
 
-  http.post(`${API_BASE}/barbeiros/`, async ({ request }) => {
+  http.post(`${API_BASE}/barbeiros`, async ({ request }) => {
     const data = await request.json();
     const newBarbeiro = db.add('barbeiros', data);
     return HttpResponse.json({ dados: { barbeiro: newBarbeiro } }, { status: 201 });
@@ -260,7 +274,7 @@ export const handlers = [
   }),
 
   // --- AGENDAMENTOS ---
-  http.get(`${API_BASE}/agendamento/`, async ({ request }) => {
+  http.get(`${API_BASE}/agendamento`, async ({ request }) => {
     await delay(300);
     const url = new URL(request.url);
     const page = Number(url.searchParams.get('page') || 1);
@@ -269,7 +283,7 @@ export const handlers = [
     return HttpResponse.json({ dados: db.getPaginated('agendamentos', page, per_page) });
   }),
 
-  http.post(`${API_BASE}/agendamento/`, async ({ request }) => {
+  http.post(`${API_BASE}/agendamento`, async ({ request }) => {
     const data = await request.json();
     const newAgend = db.add('agendamentos', data);
     return HttpResponse.json({ dados: { agendamento: newAgend } }, { status: 201 });

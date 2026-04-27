@@ -6,8 +6,15 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .headerRow {
@@ -99,10 +106,10 @@
 .tableWrapper {
   width: 100%;
   overflow-x: auto;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-light);
+  background: var(--table-cell-bg);
+  border: none;
   border-radius: 1.25rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  box-shadow: var(--shadow-sm);
 }
 
 .table {
@@ -112,21 +119,20 @@
 }
 
 .table th {
-  padding: 1rem 1.5rem;
+  padding: 1.25rem 1.5rem;
   font-size: 0.7rem;
-  font-weight: 700;
+  font-weight: 800;
   text-transform: uppercase;
   color: var(--text-tertiary);
-  letter-spacing: 0.05em;
-  border-bottom: 1px solid var(--border-light);
-  background: rgba(255, 255, 255, 0.01);
+  letter-spacing: 0.1em;
+  background: var(--table-header-bg);
 }
 
 .table td {
-  padding: 1rem 1.5rem;
+  padding: 1.25rem 1.5rem;
   font-size: 0.9rem;
   color: var(--text-primary);
-  border-bottom: 1px solid var(--border-light);
+  background: transparent;
   transition: all 0.2s;
 }
 
@@ -165,6 +171,7 @@
   cursor: pointer;
   height: 0;
   width: 0;
+  outline: none;
 }
 
 .checkmark {
@@ -173,19 +180,20 @@
   left: 0;
   height: 20px;
   width: 20px;
-  background-color: var(--bg-tertiary);
+  background-color: var(--bg-secondary);
   border: 1px solid var(--border-light);
   border-radius: 6px;
   transition: all 0.2s;
 }
 
-.checkboxContainer:hover input ~ .checkmark {
+.checkboxContainer:hover input~.checkmark {
   border-color: var(--color-blue);
 }
 
-.checkboxContainer input:checked ~ .checkmark {
+.checkboxContainer input:checked~.checkmark {
   background-color: var(--color-blue);
   border-color: var(--color-blue);
+  outline: none;
 }
 
 .checkmark:after {
@@ -201,7 +209,7 @@
   transform: rotate(45deg);
 }
 
-.checkboxContainer input:checked ~ .checkmark:after {
+.checkboxContainer input:checked~.checkmark:after {
   display: block;
 }
 

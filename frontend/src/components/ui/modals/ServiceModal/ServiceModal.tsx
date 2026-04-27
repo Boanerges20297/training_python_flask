@@ -137,7 +137,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, onSuccess,
               <option value="">Selecione um barbeiro...</option>
               {barbeiros.map((b) => (
                 <option key={b.id} value={b.id}>
-                  {b.nome} ({b.especialidade})
+                  {b.nome} ({b.especialidades?.[0] || 'Geral'})
                 </option>
               ))}
             </Input>

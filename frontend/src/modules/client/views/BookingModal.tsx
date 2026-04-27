@@ -5,7 +5,7 @@ import { Scissors, ShoppingBag, Calendar, FileText, Plus, ArrowRight, ArrowLeft 
 import Modal from '../../../components/ui/Modal';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
-import TimeSlotPicker from './TimeSlotPicker';
+import TimeSlotPicker from '../../../components/ui/TimeSlotPicker';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -158,7 +158,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
                     .filter((b) => !servicoSelecionado || b.servicos_ids?.includes(servicoSelecionado.id))
                     .map((b) => (
                     <option key={b.id} value={b.id}>
-                      {b.nome} — {b.especialidade || 'Geral'}
+                      {b.nome} — {b.especialidades?.[0] || 'Geral'}
                     </option>
                   ))}
                 </Input>
@@ -223,6 +223,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
                   agendamentos={allAgendamentos}
                   selectedSlot={formData.horario}
                   onSlotSelect={(slot) => setFormData({ ...formData, horario: slot })}
+                  theme="blue"
                 />
               </div>
 

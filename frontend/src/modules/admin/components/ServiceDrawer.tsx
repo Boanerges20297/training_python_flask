@@ -2,12 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { createServico, updateServico } from '../../../api/services';
 import type { Servico } from '../../../types';
-import { Tag, DollarSign, Clock, Plus, Edit2, Briefcase } from 'lucide-react';
+import { Tag, DollarSign, Clock, Plus, Edit2, Briefcase, History } from 'lucide-react';
 import { Drawer } from '../../../components/ui/Drawer';
 import Input, { cleanCurrency } from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
 import { useToast } from '../../../components/ui/Toast';
 import drawerStyles from '../../../components/ui/Drawer.module.css';
+import ImageUpload from '../../../components/ui/ImageUpload';
 
 interface ServiceDrawerProps {
   isOpen: boolean;
@@ -27,7 +28,7 @@ const ServiceDrawer: React.FC<ServiceDrawerProps> = ({ isOpen, onClose, onSucces
       if (servicoParaEditar) {
         setFormData({
           nome: servicoParaEditar.nome,
-          preco: servicoParaEditar.preco.toString(),
+          preco: (servicoParaEditar.preco * 100).toString(),
           duracao_minutos: servicoParaEditar.duracao_minutos.toString(),
           imagem_url: servicoParaEditar.imagem_url || ''
         });
@@ -116,87 +117,86 @@ const ServiceDrawer: React.FC<ServiceDrawerProps> = ({ isOpen, onClose, onSucces
       }
     >
       {mode === 'view' && servicoParaEditar ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {/* Profile Hero com Imagem */}
-          <div className={drawerStyles.bentoProfile}>
-            <div 
-              className={drawerStyles.bentoAvatar} 
-              style={{ 
-                background: 'var(--color-service-light)', 
-                color: 'var(--color-service)',
-                borderRadius: '16px',
-                overflow: 'hidden'
-              }}
-            >
-              {servicoParaEditar.imagem_url ? (
-                <img 
-                  src={servicoParaEditar.imagem_url} 
-                  alt={servicoParaEditar.nome} 
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-              ) : (
-                <Briefcase size={28} />
-              )}
-            </div>
-            <div className={drawerStyles.bentoProfileText}>
-              <h3>{servicoParaEditar.nome}</h3>
-              <p>Serviço ID: #{servicoParaEditar.id}</p>
-            </div>
+        <div className={drawerStyles.bentoGrid}>
+          {/* Card da Foto (Retangular Amplo) */}
+          <div className={`${drawerStyles.bentoCard} ${drawerStyles.photoCardWide}`}>
+            {servicoParaEditar.imagem_url ? (
+              <img 
+                src={servicoParaEditar.imagem_url} 
+                alt={servicoParaEditar.nome} 
+                className={drawerStyles.heroAvatarWide}
+              />
+            ) : (
+              <div className={drawerStyles.heroAvatarWide} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255, 255, 255, 0.02)' }}>
+                <Briefcase size={64} color="var(--color-service)" opacity={0.3} />
+              </div>
+            )}
           </div>
 
-          {/* Mini KPI Grid */}
-          <div className={drawerStyles.bentoMiniGrid}>
-            <div className={drawerStyles.bentoMiniCard}>
-              <p>Investimento</p>
-              <h2 style={{ color: 'var(--color-success)' }}>
+          {/* Card do Nome com ID Flutuante */}
+          <div className={`${drawerStyles.bentoCard} ${drawerStyles.nameCard}`}>
+             <div className={drawerStyles.badgeCorner}>ID #{servicoParaEditar.id}</div>
+             <span className={drawerStyles.subcardLabel}>Serviço</span>
+             <h2>{servicoParaEditar.nome}</h2>
+          </div>
+
+          {/* Info Grid (Preço e Tempo em cards separados) */}
+          <div className={drawerStyles.bentoContactGroup}>
+            <div className={drawerStyles.bentoSubcard}>
+              <span className={drawerStyles.subcardLabel}>Preço</span>
+              <span className={drawerStyles.subcardValue} style={{ color: 'var(--color-success)', fontWeight: '800', fontSize: '1.25rem' }}>
                 R$ {Number(servicoParaEditar.preco).toFixed(2).replace('.', ',')}
-              </h2>
+              </span>
             </div>
-            <div className={drawerStyles.bentoMiniCard}>
-              <p>Tempo Médio</p>
-              <h2>{servicoParaEditar.duracao_minutos} min</h2>
+            <div className={drawerStyles.bentoSubcard}>
+              <span className={drawerStyles.subcardLabel}>Tempo Estimado</span>
+              <span className={drawerStyles.subcardValue} style={{ fontWeight: '600', fontSize: '1.1rem' }}>
+                {servicoParaEditar.duracao_minutos} min
+              </span>
             </div>
           </div>
 
           {/* Descrição se houver */}
           {servicoParaEditar.descricao && (
-            <div className={drawerStyles.bentoSection}>
-              <h4 className={drawerStyles.bentoSectionTitle}>Descrição do Serviço</h4>
-              <p style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.875rem', lineHeight: '1.6' }}>
+            <div className={drawerStyles.bentoCard}>
+              <span className={drawerStyles.subcardLabel} style={{ marginBottom: '0.75rem', display: 'block' }}>Sobre o Serviço</span>
+              <p style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.9rem', lineHeight: '1.6' }}>
                 {servicoParaEditar.descricao}
               </p>
             </div>
           )}
+
+          {/* Seção de Auditoria */}
+          <div className={drawerStyles.bentoCard} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: '1.25rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <History size={16} color="var(--text-tertiary)" />
+              <span className={drawerStyles.subcardLabel}>Informações do Sistema</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+              <span style={{ color: 'var(--text-tertiary)' }}>Cadastrado em:</span>
+              <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
+                {servicoParaEditar.data_criacao 
+                  ? new Date(servicoParaEditar.data_criacao).toLocaleString('pt-BR') 
+                  : 'Não disponível'}
+              </span>
+            </div>
+            {servicoParaEditar.data_atualizacao && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+                <span style={{ color: 'var(--text-tertiary)' }}>Última atualização:</span>
+                <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
+                  {new Date(servicoParaEditar.data_atualizacao).toLocaleString('pt-BR')}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className={drawerStyles.drawerForm}>
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.5rem' }}>
-            <div style={{ 
-              width: '100px', 
-              height: '100px', 
-              borderRadius: '20px', 
-              background: 'var(--bg-tertiary)',
-              border: '2px dashed var(--border-light)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              overflow: 'hidden'
-            }}>
-              {formData.imagem_url ? (
-                <img src={formData.imagem_url} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : (
-                <Plus size={32} color="var(--text-tertiary)" style={{ opacity: 0.5 }} />
-              )}
-            </div>
-          </div>
-
-          <Input
-            label="URL da Imagem (Opcional)"
-            type="text"
-            icon={<Plus size={18} />}
-            placeholder="https://exemplo.com/foto.jpg"
+          <ImageUpload 
+            label="Foto do Serviço"
             value={formData.imagem_url}
-            onChange={(e) => setFormData({ ...formData, imagem_url: e.target.value })}
+            onChange={(base64) => setFormData({ ...formData, imagem_url: base64 })}
+            helperText="Recomendado: Imagem quadrada, máx 2MB."
           />
 
           <Input

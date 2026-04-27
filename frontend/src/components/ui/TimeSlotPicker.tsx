@@ -1,6 +1,7 @@
 import React from 'react';
-import type { Agendamento } from '../../../types';
+import type { Agendamento } from '../../types';
 import { Check, X } from 'lucide-react';
+import styles from './TimeSlotPicker.module.css';
 
 interface TimeSlotPickerProps {
   date: string; // YYYY-MM-DD
@@ -9,18 +10,15 @@ interface TimeSlotPickerProps {
   agendamentos: Agendamento[];
   selectedSlot: string;
   onSlotSelect: (slot: string) => void;
+  theme?: 'blue' | 'purple' | 'green' | 'amber';
 }
 
-// Gera slots de 30min entre 08:00 e 19:30
 const generateSlots = (): string[] => {
   const slots: string[] = [];
   for (let h = 8; h < 20; h++) {
     slots.push(`${String(h).padStart(2, '0')}:00`);
-    if (h < 19 || (h === 19 && true)) {
-      slots.push(`${String(h).padStart(2, '0')}:30`);
-    }
+    slots.push(`${String(h).padStart(2, '0')}:30`);
   }
-  // Remove 19:30+ pois o último serviço precisa terminar até 20h
   return slots.filter(s => s <= '19:30');
 };
 
@@ -31,33 +29,26 @@ const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
   agendamentos,
   selectedSlot,
   onSlotSelect,
+  theme = 'blue'
 }) => {
   const slots = generateSlots();
 
-  // Verifica se um slot está ocupado para o barbeiro naquela data
   const isSlotOcupado = (slot: string): boolean => {
     if (!date || !barbeiroId) return false;
-
     const slotStart = new Date(`${date}T${slot}:00`);
     const slotEnd = new Date(slotStart.getTime() + servicoDuracao * 60000);
 
     return agendamentos.some((a) => {
       if (a.barbeiro_id !== barbeiroId) return false;
       if (a.status === 'cancelado') return false;
-
       const agendDate = a.data_agendamento.split('T')[0];
       if (agendDate !== date) return false;
-
       const agendStart = new Date(a.data_agendamento);
-      // Assume duração padrão de 30min se não soubermos a real
       const agendEnd = new Date(agendStart.getTime() + 30 * 60000);
-
-      // Há sobreposição?
       return slotStart < agendEnd && slotEnd > agendStart;
     });
   };
 
-  // Verifica se o slot já passou (para o dia de hoje)
   const isSlotPassado = (slot: string): boolean => {
     const now = new Date();
     const slotDate = new Date(`${date}T${slot}:00`);
@@ -65,16 +56,12 @@ const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
   };
 
   if (!date) {
-    return (
-      <div className="timeslot-empty">
-        <p>Selecione uma data para ver os horários disponíveis.</p>
-      </div>
-    );
+    return <div className={styles.empty}><p>Selecione uma data para ver os horários.</p></div>;
   }
 
   return (
-    <div className="timeslot-picker">
-      <div className="timeslot-grid">
+    <div className={`${styles.container} ${styles[theme]}`}>
+      <div className={styles.grid}>
         {slots.map((slot) => {
           const ocupado = isSlotOcupado(slot);
           const passado = isSlotPassado(slot);
@@ -85,21 +72,23 @@ const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
             <button
               key={slot}
               type="button"
-              className={`timeslot-card ${selected ? 'selected' : ''} ${disabled ? 'disabled' : ''} ${ocupado ? 'ocupado' : ''}`}
+              className={`${styles.slot} ${selected ? styles.selected : ''} ${disabled ? styles.disabled : ''} ${ocupado ? styles.ocupado : ''}`}
               disabled={disabled}
-              onClick={() => !disabled && onSlotSelect(slot)}
+              onClick={() => {
+                if (disabled) return;
+                onSlotSelect(selected ? '' : slot);
+              }}
             >
-              <span className="timeslot-time">{slot}</span>
-              {selected && <Check size={14} className="timeslot-check" />}
-              {ocupado && <X size={12} className="timeslot-x" />}
+              <span className={styles.time}>{slot}</span>
+              {selected && <Check size={14} className={styles.check} />}
+              {ocupado && <X size={12} className={styles.x} />}
             </button>
           );
         })}
       </div>
-      <div className="timeslot-legend">
-        <span className="legend-item"><span className="legend-dot free" /> Disponível</span>
-        <span className="legend-item"><span className="legend-dot ocupado" /> Ocupado</span>
-        <span className="legend-item"><span className="legend-dot selected" /> Selecionado</span>
+      <div className={styles.legend}>
+        <span className={styles.legendItem}><span className={`${styles.dot} ${styles.dotFree}`} /> Livre</span>
+        <span className={styles.legendItem}><span className={`${styles.dot} ${styles.dotOcupado}`} /> Ocupado</span>
       </div>
     </div>
   );

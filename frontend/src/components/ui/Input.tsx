@@ -128,7 +128,7 @@ const Input = forwardRef<any, InputProps>(
     const groupClasses = [
       styles.inputGroup,
       icon ? styles.hasIcon : '',
-      props.rightElement ? styles.hasRightElement : '',
+      rightElement ? styles.hasRightElement : '',
       as === 'textarea' ? styles.isTextarea : '',
     ].filter(Boolean).join(' ');
 
@@ -138,7 +138,7 @@ const Input = forwardRef<any, InputProps>(
         <div className={groupClasses}>
           {icon && <span className={`${styles.inputIcon} ${as === 'textarea' ? styles.iconAtTop : ''}`}>{icon}</span>}
           {renderElement()}
-          {props.rightElement && <div className={styles.rightElement}>{props.rightElement}</div>}
+          {rightElement && <div className={styles.rightElement}>{rightElement}</div>}
         </div>
         {error && <span className={styles.errorText}>{error}</span>}
       </div>

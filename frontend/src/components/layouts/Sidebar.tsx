@@ -1,8 +1,8 @@
 // Sidebar — Migrado para CSS Modules com Design Tokens
-import { Database, LogOut, User, Users, Scissors, Briefcase, Calendar, ChevronLeft, Home, History, LayoutDashboard } from 'lucide-react';
+import { Database, LogOut, User, Users, Scissors, Briefcase, Calendar, ChevronLeft, Home, History, LayoutDashboard, TrendingUp } from 'lucide-react';
 import styles from './Sidebar.module.css';
 
-type AdminTab = 'dashboard' | 'clientes' | 'servicos' | 'agendamentos' | 'barbeiros';
+type AdminTab = 'dashboard' | 'clientes' | 'servicos' | 'agendamentos' | 'barbeiros' | 'financeiro';
 type ClientTab = 'inicio' | 'agendamentos_cliente';
 type BarberTab = 'agenda' | 'historico';
 
@@ -58,6 +58,10 @@ export default function Sidebar({ activeTab, onTabChange, isCollapsed, onToggle,
             <button className={navClass('dashboard')} onClick={() => onTabChange('dashboard')} data-tab="dashboard">
               <div className={styles.iconBox}><LayoutDashboard size={20} /></div>
               {!isCollapsed && <span>Dashboard</span>}
+            </button>
+            <button className={navClass('financeiro')} onClick={() => onTabChange('financeiro')} data-tab="financeiro">
+              <div className={styles.iconBox}><TrendingUp size={20} /></div>
+              {!isCollapsed && <span>Financeiro</span>}
             </button>
             <button className={navClass('clientes')} onClick={() => onTabChange('clientes')} data-tab="clientes">
               <div className={styles.iconBox}><Users size={20} /></div>

@@ -1,6 +1,7 @@
-import React from 'react';
-import { AlertTriangle, X } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { AlertTriangle, AlertCircle, X } from 'lucide-react';
 import './ConfirmDialog.css';
+import Button from './Button';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -10,47 +11,64 @@ interface ConfirmDialogProps {
   cancelText?: string;
   onConfirm: () => void;
   onCancel: () => void;
-  type?: 'danger' | 'warning' | 'info';
+  type?: 'danger' | 'warning';
+  isLoading?: boolean;
 }
 
-// # Gabriel (Dev 1)
-// Um diálogo de confirmação que aparece no topo da tela (estilo pop-up de alerta).
-const ConfirmDialog: React.FC<ConfirmDialogProps> = ({ 
-  isOpen, 
-  title, 
-  message, 
-  confirmText = "Confirmar", 
-  cancelText = "Cancelar", 
-  onConfirm, 
+const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
+  isOpen,
+  title,
+  message,
+  confirmText = 'Confirmar',
+  cancelText = 'Cancelar',
+  onConfirm,
   onCancel,
-  type = 'warning'
+  type = 'warning',
+  isLoading = false
 }) => {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleEsc = (e: KeyboardEvent) => e.key === 'Escape' && onCancel();
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleEsc);
+    return () => {
+      document.body.style.overflow = 'unset';
+      window.removeEventListener('keydown', handleEsc);
+    };
+  }, [isOpen, onCancel]);
+
   if (!isOpen) return null;
 
   return (
     <div className="confirm-overlay" onClick={onCancel}>
-      <div className={`confirm-dialog-top ${type}`} onClick={(e) => e.stopPropagation()}>
-        <div className="confirm-icon">
-          <AlertTriangle size={24} />
+      <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
+        <button className="confirm-close-btn" onClick={onCancel} aria-label="Fechar">
+          <X size={20} />
+        </button>
+
+        <div className={`confirm-icon-wrapper ${type}`}>
+          {type === 'danger' ? <AlertCircle size={40} /> : <AlertTriangle size={40} />}
         </div>
         
-        <div className="confirm-content">
-          <h4>{title}</h4>
-          <p>{message}</p>
-        </div>
-
+        <h3 className="confirm-title">{title}</h3>
+        <p className="confirm-message">{message}</p>
+        
         <div className="confirm-actions">
-          <button className="confirm-btn-cancel" onClick={onCancel}>
+          <Button 
+            variant="ghost" 
+            onClick={onCancel}
+            disabled={isLoading}
+          >
             {cancelText}
-          </button>
-          <button className={`confirm-btn-action ${type}`} onClick={onConfirm}>
+          </Button>
+          <Button 
+            theme={type === 'danger' ? 'danger' : 'purple'} 
+            onClick={onConfirm}
+            isLoading={isLoading}
+          >
             {confirmText}
-          </button>
+          </Button>
         </div>
-
-        <button className="confirm-close-x" onClick={onCancel}>
-          <X size={16} />
-        </button>
       </div>
     </div>
   );

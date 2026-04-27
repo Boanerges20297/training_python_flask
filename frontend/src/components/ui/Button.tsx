@@ -7,7 +7,7 @@ import styles from './Button.module.css';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'normal' | 'danger' | 'ghost';
-  theme?: 'blue' | 'green' | 'purple' | 'amber' | 'slate';
+  theme?: 'blue' | 'green' | 'purple' | 'amber' | 'slate' | 'red';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
   icon?: React.ReactNode;
@@ -28,6 +28,7 @@ const themeMap: Record<string, string> = {
   purple: styles.themePurple,
   green: styles.themeGreen,
   amber: styles.themeAmber,
+  red: styles.themeRed,
   slate: styles.themeSlate,
 };
 

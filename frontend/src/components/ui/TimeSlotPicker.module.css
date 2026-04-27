@@ -1,0 +1,87 @@
+.container {
+  margin-top: 0.5rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+.slot {
+  padding: 0.6rem 0.5rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.slot:hover:not(.disabled) {
+  border-color: var(--theme-color);
+  background: var(--theme-bg-light);
+}
+
+.selected {
+  background: var(--theme-color) !important;
+  border-color: var(--theme-color) !important;
+  color: white !important;
+  font-weight: 700;
+  box-shadow: 0 4px 12px var(--theme-shadow);
+}
+
+.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  background: var(--bg-primary);
+}
+
+.ocupado .time {
+  text-decoration: line-through;
+}
+
+.check { color: white; }
+.x { color: var(--text-tertiary); }
+
+.empty {
+  color: var(--text-tertiary);
+  font-size: 0.875rem;
+  padding: 1rem 0;
+  text-align: center;
+}
+
+.legend {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.dotFree { background: var(--bg-tertiary); }
+.dotOcupado { background:  var(--bg-primary); border: 1px solid var(--border-color); }
+
+/* Themes */
+.blue { --theme-color: #3b82f6; --theme-bg-light: rgba(59, 130, 246, 0.1); --theme-shadow: rgba(59, 130, 246, 0.3); }
+.purple { --theme-color: #a78bfa; --theme-bg-light: rgba(167, 139, 250, 0.1); --theme-shadow: rgba(167, 139, 250, 0.3); }
+.green { --theme-color: #10b981; --theme-bg-light: rgba(16, 185, 129, 0.1); --theme-shadow: rgba(16, 185, 129, 0.3); }
+.amber { --theme-color: #f59e0b; --theme-bg-light: rgba(245, 158, 11, 0.1); --theme-shadow: rgba(245, 158, 11, 0.3); }

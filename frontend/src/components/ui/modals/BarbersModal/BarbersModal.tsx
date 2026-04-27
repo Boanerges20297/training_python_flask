@@ -17,7 +17,7 @@ interface BarbersModalProps {
 }
 
 const BarbersModal: React.FC<BarbersModalProps> = ({ isOpen, onClose, onSuccess, barbeiroParaEditar }) => {
-  const [formData, setFormData] = useState({ nome: '', especialidade: '', email: '', telefone: '', senha: '', ativo: true });
+  const [formData, setFormData] = useState({ nome: '', especialidades: [] as string[], email: '', telefone: '', senha: '', ativo: true });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -27,14 +27,14 @@ const BarbersModal: React.FC<BarbersModalProps> = ({ isOpen, onClose, onSuccess,
       if (barbeiroParaEditar) {
         setFormData({
           nome: barbeiroParaEditar.nome,
-          especialidade: barbeiroParaEditar.especialidade,
+          especialidades: barbeiroParaEditar.especialidades || [],
           email: barbeiroParaEditar.email,
           telefone: barbeiroParaEditar.telefone,
           senha: '', // Senha não é editada aqui
           ativo: barbeiroParaEditar.ativo
         });
       } else {
-        setFormData({ nome: '', especialidade: '', email: '', telefone: '', senha: '', ativo: true });
+        setFormData({ nome: '', especialidades: [], email: '', telefone: '', senha: '', ativo: true });
       }
       setSuccess(false);
       setError(null);
@@ -138,8 +138,8 @@ const BarbersModal: React.FC<BarbersModalProps> = ({ isOpen, onClose, onSuccess,
               placeholder="Ex: Cortes Clássicos, Barba..."
               required
               maxLength={255}
-              value={formData.especialidade}
-              onChange={(e) => setFormData({ ...formData, especialidade: e.target.value })}
+              value={formData.especialidades[0] || ''}
+              onChange={(e) => setFormData({ ...formData, especialidades: [e.target.value] })}
             />
           </div>
 

@@ -1,14 +1,18 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { getServicos, deleteServico } from '../../../api/services';
 import type { Servico } from '../../../types';
-import { Briefcase, DollarSign, Clock } from 'lucide-react';
+import { Briefcase, DollarSign, Clock, Filter } from 'lucide-react';
 import ServiceDrawer from '../components/ServiceDrawer';
 import { useToast } from '../../../components/ui/Toast';
+import Swal from 'sweetalert2';
 import ActionButtons from '../../../components/ui/ActionButtons';
 import DataTable from '../../../components/ui/DataTable';
 import type { Column } from '../../../components/ui/DataTable';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import Popover from '../../../components/ui/Popover';
+import { formatRelativeDate } from '../../../utils/date';
+import type { FilterData } from '../../../types/filters';
+import Button from '../../../components/ui/Button';
 
 export default function ServicesView() {
   const [servicos, setServicos] = useState<Servico[]>([]);
@@ -17,8 +21,9 @@ export default function ServicesView() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [servicoParaEditar, setServicoParaEditar] = useState<Servico | null>(null);
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState<number | null>(null);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [filters, setFilters] = useState<FilterData>({});
   const [activePopover, setActivePopover] = useState<{
     anchor: HTMLElement;
     content: ReactNode;
@@ -42,6 +47,12 @@ export default function ServicesView() {
   useEffect(() => {
     fetchServicos(page);
   }, [page]);
+
+  const filteredServicos = servicos.filter(s => {
+    if (filters.servicoId && String(s.id) !== filters.servicoId) return false;
+    // Status para serviços pode ser implementado se houver campo 'ativo' no tipo Servico
+    return true;
+  });
 
   const handleNewService = () => {
     setServicoParaEditar(null);
@@ -72,6 +83,52 @@ export default function ServicesView() {
     }
   };
 
+  const handleBulkDelete = async (items: Servico[]) => {
+    try {
+      await Promise.all(items.map(item => deleteServico(item.id!)));
+      showToast(`${items.length} serviços removidos.`, 'success');
+      fetchServicos();
+    } catch (e) {
+      showToast('Erro ao remover alguns serviços.', 'error');
+    }
+  };
+
+  const handleFilterClick = () => {
+    Swal.fire({
+      title: 'Filtrar Serviços',
+      html: `
+        <div style="display: flex; flex-direction: column; gap: 1.25rem; text-align: left; padding: 0.5rem;">
+          <div>
+            <label style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 0.5rem;">Pesquisar por ID</label>
+            <input type="number" id="filter-id" class="swal2-input" style="margin: 0; width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 0.75rem; height: 3rem;" placeholder="Ex: 5" value="${filters.servicoId || ''}">
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 0.5rem;">Status</label>
+            <input type="text" id="filter-status" class="swal2-input" style="margin: 0; width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 0.75rem; height: 3rem;" placeholder="Ex: ativo ou inativo" value="${filters.status || ''}">
+          </div>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: 'Aplicar Filtro',
+      cancelButtonText: 'Limpar',
+      confirmButtonColor: 'var(--color-primary)',
+      background: 'transparent',
+      customClass: { popup: 'swal-glass-popup', title: 'swal-glass-title', htmlContainer: 'swal-glass-html' },
+      preConfirm: () => {
+        return {
+          servicoId: (document.getElementById('filter-id') as HTMLInputElement).value,
+          status: (document.getElementById('filter-status') as HTMLInputElement).value,
+        };
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setFilters(result.value);
+      } else if (result.dismiss === Swal.DismissReason.cancel) {
+        setFilters({});
+      }
+    });
+  };
+
   // # Gabriel (Dev 1) - Colunas da Tabela de Serviços
   const columns: Column<Servico>[] = [
     {
@@ -83,8 +140,8 @@ export default function ServicesView() {
               src={servico.imagem_url} 
               alt={servico.nome}
               style={{ 
-                width: '40px', 
-                height: '40px', 
+                width: '86px', 
+                height: '50px', 
                 borderRadius: '10px', 
                 objectFit: 'cover',
                 border: '1px solid var(--border-light)'
@@ -92,8 +149,8 @@ export default function ServicesView() {
             />
           ) : (
             <div style={{ 
-              width: '40px', 
-              height: '40px', 
+              width: '86px', 
+              height: '50px', 
               borderRadius: '10px', 
               background: 'var(--bg-tertiary)',
               display: 'flex',
@@ -142,11 +199,20 @@ export default function ServicesView() {
       align: 'center'
     },
     {
+      header: 'ÚLTIMA MODIF.',
+      render: (serv) => (
+        <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', fontWeight: 500 }}>
+          {formatRelativeDate(serv.data_atualizacao || serv.data_criacao)}
+        </span>
+      ),
+      align: 'center'
+    },
+    {
       header: 'Ações',
       render: (servico: Servico) => {
         return (
           <ActionButtons
-            onView={() => handleEditClick(servico)}
+            onEdit={() => handleEditClick(servico)}
             onDelete={() => handleDeleteClick(servico.id!)}
             theme="green"
           />
@@ -164,8 +230,18 @@ export default function ServicesView() {
         title="Serviços Disponíveis"
         icon={Briefcase}
         loading={loading}
-        data={servicos}
+        data={filteredServicos}
         columns={columns}
+        extraActions={
+          <Button 
+            variant="secondary" 
+            size="sm"
+            icon={<Filter size={16} />}
+            onClick={handleFilterClick}
+          >
+            Filtros
+          </Button>
+        }
         addButtonText="Novo Serviço"
         onAddClick={handleNewService}
         themeColor="#10b981"
@@ -173,6 +249,8 @@ export default function ServicesView() {
         selectable={true}
         selectedItems={selectedServices}
         onSelectionChange={setSelectedServices}
+        onBulkDelete={handleBulkDelete}
+        renderItemName={(item) => item.nome}
         emptyStateIcon={Briefcase}
         emptyStateText="Nenhum serviço encontrado no sistema."
         pagination={{

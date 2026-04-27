@@ -10,7 +10,7 @@
   z-index: 100;
 }
 
-/* ── Panel Shell ── */
+/* ── Estrutura do Painel ── */
 .drawer {
   position: fixed;
   top: 0.75rem;
@@ -139,167 +139,155 @@
   gap: 1rem;
 }
 
-/* ── View-Mode Bento Cards ── */
+/* ── NOVO SISTEMA BENTO ── */
 
-.bentoProfile {
+.bentoGrid {
   display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.5rem;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-light);
-  border-radius: 1.5rem;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
 }
 
-.bentoAvatar {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.35rem;
-  font-weight: 800;
-  flex-shrink: 0;
-}
-
-.bentoProfileText h3 {
-  margin: 0;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.bentoProfileText p {
-  margin: 0.125rem 0 0 0;
-  font-size: 0.8rem;
-  color: var(--text-tertiary);
-}
-
-/* Bento Section */
-.bentoSection {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-light);
-  border-radius: 1.5rem;
-  padding: 1.5rem;
-}
-
-.bentoSectionTitle {
-  margin: 0 0 1rem 0;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-tertiary);
-}
-
-.bentoRow {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.625rem 0;
-}
-
-.bentoRow + .bentoRow {
-  border-top: 1px solid var(--border-light);
-}
-
-.bentoRow span {
-  color: var(--text-primary);
-  font-size: 0.875rem;
-}
-
-.bentoMiniGrid {
+.bentoMasonry {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
+  gap: 1rem;
+  width: 100%;
 }
 
-.bentoMiniCard {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-light);
+.span2 {
+  grid-column: span 2;
+}
+
+.bentoCard {
+  background: var(--bento-card-bg);
+  border: 1px solid var(--bento-card-border);
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  position: relative;
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.bentoCard:hover {
+  border-color: var(--bento-card-hover);
+  background: var(--bento-card-hover);
+  transform: translateY(-2px);
+}
+
+/* Card de Foto (Único) */
+.photoCard {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5rem;
+}
+
+.photoCardWide {
+  padding: 0.75rem;
+  height: 220px;
+  overflow: hidden;
+}
+
+.heroAvatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 2.25rem;
+  object-fit: cover;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+}
+
+.heroAvatarWide {
+  width: 100%;
+  height: 100%;
   border-radius: 1.25rem;
-  padding: 1.25rem;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.08);
 }
 
-.bentoMiniCard p {
-  font-size: 0.75rem;
-  color: var(--text-tertiary);
-  margin: 0 0 0.5rem 0;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+/* Layout Lado a Lado para o Topo */
+.bentoHeaderGroup {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 1.5rem;
+  width: 100%;
 }
 
-.bentoMiniCard h2 {
+/* Card de Nome/Título (Único) */
+.nameCard {
+  text-align: center;
+}
+
+.nameCard h2 {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 800;
   color: var(--text-primary);
+  letter-spacing: -0.02em;
 }
 
-.bentoFullCard {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-light);
-  border-radius: 1.5rem;
-  padding: 1.5rem;
-}
-
-.bentoFullCard h3 {
-  margin: 0 0 1rem 0;
-  font-size: 0.85rem;
+.badgeCorner {
+  position: absolute;
+  top: 1rem;
+  right: 1.25rem;
+  background: rgba(255, 255, 255, 0.152);
+  padding: 0.35rem 0.75rem;
+  border-radius: 2rem;
+  font-size: 0.7rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text-tertiary);
+  backdrop-filter: blur(4px);
+  border: 1px solid var(--border-color);
 }
 
-.bentoListItem {
-  display: flex;
-  justify-content: space-between;
+.pillID {
+  background: var(--bg-primary);
+  color: var(--text-tertiary);
+  padding: 0.15rem 0.6rem;
+  border-radius: 2rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border: 1px solid var(--border-color);
+  display: inline-flex;
   align-items: center;
-  padding: 0.875rem 1rem;
-  background: var(--bg-tertiary);
-  border-radius: 0.875rem;
-  margin-bottom: 0.5rem;
-  transition: background 0.15s ease;
+  justify-content: center;
 }
 
-.bentoListItem:last-child {
-  margin-bottom: 0;
-}
-
-.bentoListItem:hover {
-  background: var(--bg-card-hover);
-}
-
-.statusToggle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1rem;
-  border: 1px solid var(--border-light);
-  border-radius: 0.875rem;
-  background: var(--bg-tertiary);
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-size: 0.875rem;
-  font-family: var(--font-sans);
-  transition: all 0.2s ease;
+.bentoContactGroup {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
   width: 100%;
 }
 
-.statusToggle:hover {
-  border-color: var(--border-medium);
+.bentoSubcard {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: background 0.2s ease;
 }
 
-.statusToggle.active {
-  color: var(--color-success);
-  border-color: rgba(34, 197, 94, 0.3);
-  background: rgba(34, 197, 94, 0.08);
+.bentoSubcard:hover {
+  background: rgba(255, 255, 255, 0.05);
 }
 
-.statusToggle.inactive {
-  color: var(--color-danger);
-  border-color: rgba(239, 68, 68, 0.3);
-  background: rgba(239, 68, 68, 0.08);
+.subcardLabel {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-tertiary);
+  font-weight: 600;
+}
+
+.subcardValue {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  word-break: break-all;
 }
 
 /* ── Mobile ── */
@@ -312,7 +300,156 @@
     max-width: 100vw;
     border-radius: 0;
   }
-  .bentoMiniGrid {
+  .bentoContactGroup {
     grid-template-columns: 1fr;
   }
+}
+
+/* Card de Alerta / Informação */
+.cardAlert {
+  background: rgba(248, 113, 113, 0.03);
+  border: 1px solid rgba(248, 113, 113, 0.15);
+  border-radius: 1.25rem;
+  padding: 1.25rem;
+  position: relative;
+  overflow: hidden;
+  animation: pulseLight 2s infinite ease-in-out;
+}
+
+@keyframes pulseLight {
+  0%, 100% { box-shadow: 0 0 0px rgba(248, 113, 113, 0); }
+  50% { box-shadow: 0 0 15px rgba(248, 113, 113, 0.15); }
+}
+
+/* ── CONTROLES PREMIUM ── */
+
+.statusToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.statusToggle.active {
+  color: #4ade80;
+  border-color: rgba(74, 222, 128, 0.2);
+  background: rgba(74, 222, 128, 0.05);
+}
+
+.statusToggle.inactive {
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.2);
+  background: rgba(248, 113, 113, 0.05);
+}
+
+.checkboxGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 1.25rem;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.customCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.customCheckbox:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.customCheckbox input {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.customCheckbox input:checked {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.customCheckbox input:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 10px;
+}
+
+/* ── GLASS TABS ── */
+.glassTabs {
+  display: flex;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.4rem;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 2rem;
+  position: relative;
+  gap: 0.25rem;
+}
+
+.tabButton {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 0.75rem;
+  border-radius: 0.85rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 1;
+}
+
+.tabButton:hover {
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.tabButtonActive {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(4px);
+}
+
+.tabBadge {
+  background: #ef4444;
+  color: white;
+  font-size: 0.65rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 1rem;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import Sidebar, {type SidebarTab } from './Sidebar';
 import Header from './Header';
@@ -8,12 +8,27 @@ export default function AppLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(window.innerWidth < 1024);
+
+  // Auto-colapso da sidebar
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setIsSidebarCollapsed(true);
+      } else {
+        setIsSidebarCollapsed(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Derive active tab from route path
   const getActiveTab = (): SidebarTab => {
     const path = location.pathname;
     if (path.includes('dashboard')) return 'dashboard';
+    if (path.includes('financeiro')) return 'financeiro';
     if (path.includes('clientes')) return 'clientes';
     if (path.includes('servicos')) return 'servicos';
     if (path.includes('agendamentos')) return 'agendamentos';
@@ -33,7 +48,8 @@ export default function AppLayout() {
       clientes: 'Clientes',
       servicos: 'Serviços',
       agendamentos: 'Agendamentos',
-      barbeiros: 'Barbeiros'
+      barbeiros: 'Barbeiros',
+      financeiro: 'Financeiro'
     };
     
     if (path.includes('admin')) {
@@ -63,7 +79,8 @@ export default function AppLayout() {
         clientes: '/admin/clientes',
         servicos: '/admin/servicos',
         agendamentos: '/admin/agendamentos',
-        barbeiros: '/admin/barbeiros'
+        barbeiros: '/admin/barbeiros',
+        financeiro: '/admin/financeiro'
       };
       if (routes[tab]) navigate(routes[tab]);
     } else if (user?.role === 'barbeiro') {

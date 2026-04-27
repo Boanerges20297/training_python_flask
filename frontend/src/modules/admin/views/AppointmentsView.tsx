@@ -10,8 +10,12 @@ import { useToast } from '../../../components/ui/Toast';
 import ActionButtons from '../../../components/ui/ActionButtons';
 import DataTable from '../../../components/ui/DataTable';
 import type { Column } from '../../../components/ui/DataTable';
+import { formatRelativeDate } from '../../../utils/date';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
-import Popover from '../../../components/ui/Popover';
+import type { FilterData } from '../../../types/filters';
+import { Filter } from 'lucide-react';
+import Button from '../../../components/ui/Button';
+import Swal from 'sweetalert2';
 
 export default function AppointmentsView() {
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
@@ -25,14 +29,8 @@ export default function AppointmentsView() {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [appointmentToDelete, setAppointmentToDelete] = useState<number | null>(null);
   const [agendamentoParaEditar, setAgendamentoParaEditar] = useState<Agendamento | null>(null);
+  const [filters, setFilters] = useState<FilterData>({});
 
-  // Estado para controlar o Popover de Observações
-  const [activePopover, setActivePopover] = useState<{
-    id: number;
-    anchor: HTMLElement;
-    obs: string;
-    barberInativo?: boolean;
-  } | null>(null);
 
   const { showToast } = useToast();
 
@@ -89,6 +87,34 @@ export default function AppointmentsView() {
     fetchData(page);
   }, [page]);
 
+  const filteredAgendamentos = useMemo(() => {
+    return agendamentos.filter(agend => {
+      // Filtro de Data
+      if (filters.dataInicio) {
+        const start = new Date(filters.dataInicio);
+        if (new Date(agend.data_agendamento) < start) return false;
+      }
+      if (filters.dataFim) {
+        const end = new Date(filters.dataFim);
+        end.setHours(23, 59, 59, 999);
+        if (new Date(agend.data_agendamento) > end) return false;
+      }
+      // Filtro de Profissional
+      if (filters.profissionalId && agend.barbeiro_id !== parseInt(filters.profissionalId)) {
+        return false;
+      }
+      // Filtro de Serviço
+      if (filters.servicoId && !agend.servicos_ids?.includes(parseInt(filters.servicoId))) {
+        return false;
+      }
+      // Filtro de Status
+      if (filters.status && agend.status && !agend.status.toLowerCase().includes(filters.status.toLowerCase())) {
+        return false;
+      }
+      return true;
+    });
+  }, [agendamentos, filters]);
+
   const handleDeleteClick = (id: number) => {
     setAppointmentToDelete(id);
     setIsConfirmOpen(true);
@@ -98,7 +124,7 @@ export default function AppointmentsView() {
     if (appointmentToDelete !== null) {
       const success = await deleteAgendamento(appointmentToDelete);
       if (success) {
-        showToast('Agendamento excluído com sucesso.', 'success');
+        showToast('Agendamento removido com sucesso.', 'success');
         fetchData();
       } else {
         showToast('Erro ao excluir agendamento.', 'error');
@@ -106,6 +132,69 @@ export default function AppointmentsView() {
       setIsConfirmOpen(false);
       setAppointmentToDelete(null);
     }
+  };
+
+  const handleBulkDelete = async (items: Agendamento[]) => {
+    try {
+      await Promise.all(items.map(item => deleteAgendamento(item.id!)));
+      showToast(`${items.length} agendamentos removidos.`, 'success');
+      fetchData();
+    } catch (e) {
+      showToast('Erro ao remover alguns agendamentos.', 'error');
+    }
+  };
+
+  const handleFilterClick = () => {
+    Swal.fire({
+      title: 'Filtrar Agenda',
+      html: `
+        <div style="display: flex; flex-direction: column; gap: 1.25rem; text-align: left; padding: 0.5rem;">
+          <div>
+            <label style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 0.5rem;">ID do Profissional</label>
+            <input type="number" id="filter-profissional" class="swal2-input" style="margin: 0; width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 0.75rem; height: 3rem;" placeholder="Ex: 10" value="${filters.profissionalId || ''}">
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 0.5rem;">ID do Serviço</label>
+            <input type="number" id="filter-servico" class="swal2-input" style="margin: 0; width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 0.75rem; height: 3rem;" placeholder="Ex: 5" value="${filters.servicoId || ''}">
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 0.5rem;">Status</label>
+            <input type="text" id="filter-status" class="swal2-input" style="margin: 0; width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 0.75rem; height: 3rem;" placeholder="Ex: pendente, concluído..." value="${filters.status || ''}">
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+              <label style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 0.5rem;">De</label>
+              <input type="date" id="filter-inicio" class="swal2-input" style="margin: 0; width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 0.75rem; height: 3rem;" value="${filters.dataInicio || ''}">
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 0.5rem;">Até</label>
+              <input type="date" id="filter-fim" class="swal2-input" style="margin: 0; width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 0.75rem; height: 3rem;" value="${filters.dataFim || ''}">
+            </div>
+          </div>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: 'Aplicar Filtros',
+      cancelButtonText: 'Limpar Tudo',
+      confirmButtonColor: 'var(--color-primary)',
+      background: 'transparent',
+      customClass: { popup: 'swal-glass-popup', title: 'swal-glass-title', htmlContainer: 'swal-glass-html' },
+      preConfirm: () => {
+        return {
+          profissionalId: (document.getElementById('filter-profissional') as HTMLInputElement).value,
+          servicoId: (document.getElementById('filter-servico') as HTMLInputElement).value,
+          status: (document.getElementById('filter-status') as HTMLInputElement).value,
+          dataInicio: (document.getElementById('filter-inicio') as HTMLInputElement).value,
+          dataFim: (document.getElementById('filter-fim') as HTMLInputElement).value,
+        };
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setFilters(result.value);
+      } else if (result.dismiss === Swal.DismissReason.cancel) {
+        setFilters({});
+      }
+    });
   };
 
   // # Gabriel (Dev 1) - Colunas da Agenda
@@ -181,7 +270,8 @@ export default function AppointmentsView() {
     {
       header: 'Serviço',
       render: (agend: Agendamento) => {
-        const nome = serviceMap[agend.servico_id];
+        const sIds = agend.servicos_ids || [];
+        const nomes = sIds.map(id => serviceMap[id] || `S#${id}`).join(' + ');
         return (
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <div className="badge text-capitalize" style={{
@@ -192,11 +282,26 @@ export default function AppointmentsView() {
               color: '#10b981',
               padding: '0.4rem 0.8rem',
               borderRadius: '0.6rem',
-              minWidth: '130px'
+              minWidth: '130px',
+              maxWidth: '180px'
             }}>
               <ShoppingBag size={14} style={{ flexShrink: 0 }} />
-              <span style={{ fontWeight: 500, flex: 1 }}>{nome || 'Carregando...'}</span>
-              <span style={{ opacity: 0.6, fontSize: '0.75rem' }}>#{agend.servico_id}</span>
+              <span style={{ 
+                fontWeight: 600, flex: 1, 
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                fontSize: '0.85rem'
+              }} title={nomes}>
+                {nomes || 'Nenhum'}
+              </span>
+              {sIds.length > 1 && (
+                <span style={{ 
+                  background: 'var(--color-service)', color: 'white', 
+                  fontSize: '0.6rem', padding: '0.1rem 0.3rem', borderRadius: '0.5rem',
+                  fontWeight: 900, flexShrink: 0
+                }}>
+                  +{sIds.length - 1}
+                </span>
+              )}
             </div>
           </div>
         );
@@ -209,17 +314,29 @@ export default function AppointmentsView() {
       align: 'center',
     },
     {
+      header: 'Última Modif.',
+      render: (agend: Agendamento) => (
+        <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', fontWeight: 500 }}>
+          {formatRelativeDate(agend.data_atualizacao || agend.data_criacao)}
+        </span>
+      ),
+      align: 'center'
+    },
+    {
+      header: 'Pagamento',
+      render: (agend: Agendamento) => (
+        <span className={`badge ${agend.pago ? 'badge-success' : 'badge-warning'}`} style={{ fontSize: '0.7rem' }}>
+          {agend.pago ? 'Pago' : 'Pendente'}
+        </span>
+      ),
+      align: 'center'
+    },
+    {
       header: 'Ações',
       render: (agend: Agendamento) => {
-        const isInativo = barberStatusMap[agend.barbeiro_id] === false;
+    
         return (
           <ActionButtons
-            onInfo={(e) => setActivePopover({
-              id: agend.id!,
-              anchor: e.currentTarget as HTMLElement,
-              obs: agend.observacoes || '',
-              barberInativo: isInativo
-            })}
             onEdit={() => {
               setAgendamentoParaEditar(agend);
               setIsModalOpen(true);
@@ -241,8 +358,40 @@ export default function AppointmentsView() {
         title="Agenda do Dia"
         icon={Calendar}
         loading={loading}
-        data={agendamentos}
+        data={filteredAgendamentos}
         columns={columns}
+        extraActions={
+          <Button 
+            variant="ghost" 
+            theme="purple" 
+            size="sm"
+            icon={<Filter size={16} />}
+            onClick={handleFilterClick}
+            style={{ 
+              background: Object.keys(filters).some(k => (filters as any)[k]) ? 'rgba(167, 139, 250, 0.15)' : 'transparent',
+              border: Object.keys(filters).some(k => (filters as any)[k]) ? '1px solid rgba(167, 139, 250, 0.3)' : '1px solid transparent'
+            }}
+          >
+            Filtros
+            {Object.keys(filters).filter(k => (filters as any)[k]).length > 0 && (
+              <span style={{ 
+                marginLeft: '0.5rem', 
+                background: 'var(--color-appointment)', 
+                color: 'white', 
+                borderRadius: '50%', 
+                width: '18px', 
+                height: '18px', 
+                fontSize: '0.65rem', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                fontWeight: 800
+              }}>
+                {Object.keys(filters).filter(k => (filters as any)[k]).length}
+              </span>
+            )}
+          </Button>
+        }
         addButtonText="Novo Agendamento"
         onAddClick={() => {
           setAgendamentoParaEditar(null);
@@ -254,6 +403,8 @@ export default function AppointmentsView() {
         selectable={true}
         selectedItems={selectedAppointments}
         onSelectionChange={setSelectedAppointments}
+        onBulkDelete={handleBulkDelete}
+        renderItemName={(item) => `${clientMap[item.cliente_id]} - ${new Date(item.data_agendamento).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`}
         emptyStateIcon={Calendar}
         emptyStateText="Nenhum agendamento para hoje."
         pagination={{
@@ -276,24 +427,6 @@ export default function AppointmentsView() {
         }}
       />
 
-      <Popover
-        isOpen={!!activePopover}
-        onClose={() => setActivePopover(null)}
-        title="Observações"
-        content={
-          activePopover?.barberInativo ? (
-            <>
-              <b>Conflito:</b> O profissional deste agendamento está inativo.
-              <br />
-              <b>Descrição:</b> {activePopover?.obs || 'Sem observações registradas.'}
-            </>
-          ) : (
-            activePopover?.obs || 'Sem observações registradas.'
-          )
-        }
-        anchorEl={activePopover?.anchor || null}
-        themeColor={activePopover?.barberInativo ? '#ef4444' : '#a78bfa'}
-      />
 
       <AppointmentDrawer
         isOpen={isModalOpen}
@@ -305,6 +438,7 @@ export default function AppointmentsView() {
         clientes={clientes}
         servicos={servicos}
         barbeiros={barbeiros}
+        allAgendamentos={agendamentos}
         agendamentoParaEditar={agendamentoParaEditar}
       />
 

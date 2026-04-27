@@ -1,0 +1,136 @@
+.ledgerTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 0.75rem; 
+  margin-top: -0.75rem;
+}
+
+.ledgerTable th {
+  padding: 1rem 1.25rem;
+  font-weight: 800;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-tertiary);
+  text-align: left;
+  border: none;
+  background: var(--table-header-bg);
+}
+
+.ledgerTable th:first-child {
+  border-top-left-radius: 1rem;
+  border-bottom-left-radius: 1rem;
+}
+
+.ledgerTable th:last-child {
+  border-top-right-radius: 1rem;
+  border-bottom-right-radius: 1rem;
+}
+
+.ledgerTable td {
+  padding: 1.25rem;
+  background: var(--table-cell-bg);
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.ledgerTable td:first-child {
+  border-top-left-radius: 1.25rem;
+  border-bottom-left-radius: 1.25rem;
+}
+
+.ledgerTable td:last-child {
+  border-top-right-radius: 1.25rem;
+  border-bottom-right-radius: 1.25rem;
+}
+
+.ledgerRow {
+  cursor: pointer;
+  position: relative;
+}
+
+.ledgerRow:hover td {
+  background: var(--bg-tertiary);
+  border-color: var(--color-service-light);
+  transform: translateY(-2px);
+}
+
+.ledgerRow:hover td:first-child {
+  border-left-color: var(--color-service);
+}
+
+.currency {
+  font-family: var(--font-mono);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-size: 1.1rem;
+}
+
+/* Premium KPI Card Enhancements */
+.premiumKpi {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.premiumKpi::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+  opacity: 0.15;
+  pointer-events: none;
+}
+
+.valueLarge {
+  font-family: var(--font-mono);
+  font-size: 2.75rem;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  margin: 0.5rem 0;
+  background: linear-gradient(135deg, var(--text-primary) 30%, var(--accent-color) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.labelCompact {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--text-tertiary);
+}
+
+/* Gradients for different KPI types */
+.kpiGreen { --accent-glow: #10b981; --accent-color: #059669; }
+.kpiBlue { --accent-glow: #3b82f6; --accent-color: #2563eb; }
+.kpiRed { --accent-glow: #ef4444; --accent-color: #dc2626; }
+
+.healthIndicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+.healthBar {
+  height: 4px;
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.healthProgress {
+  height: 100%;
+  background: var(--accent-color);
+  border-radius: 2px;
+  transition: width 1s ease-out;
+}

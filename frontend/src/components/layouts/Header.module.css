@@ -1,19 +1,23 @@
 .header {
-  height: 64px;
-  background: var(--bg-secondary);
-  backdrop-filter: blur(24px);
-  border: 1px solid var(--border-light);
-  border-radius: 1.25rem;
+  height: 60px;
+  width: 96%;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 1.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 1.5rem;
-  position: sticky;
-  top: 1rem;
-  margin: 1rem 1.5rem 1.5rem 1.5rem;
+  position: absolute;
+  top: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 90;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease;
+  flex-shrink: 0;
 }
 
 
@@ -30,13 +34,22 @@
 .current {
   color: var(--text-primary);
   font-weight: 700;
+  line-height: 1; /* Ajuda no alinhamento vertical */
+}
+
+.breadcrumbIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  line-height: 0;
 }
 
 /* Ações do Header */
 .headerActions {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 
 .statusBadge {
@@ -63,11 +76,54 @@
   box-shadow: 0 0 8px #22c55e;
 }
 
-/* Notificações Premium */
 .notificationContainer {
   position: relative;
   display: flex;
   align-items: center;
+}
+
+.bentoGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.bentoCard {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  position: relative;
+  transition: transform 0.3s var(--transition-spring), border-color 0.2s ease;
+}
+
+.bentoCard:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.badgeCorner {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.35rem 0.75rem;
+  border-radius: 2rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.bentoSubcard {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 1rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .notificationBell {

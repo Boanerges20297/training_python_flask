@@ -4,8 +4,8 @@ import { Calendar, XCircle } from 'lucide-react';
 import DataTable from '../../../components/ui/DataTable';
 import type { Column } from '../../../components/ui/DataTable';
 import Button from '../../../components/ui/Button';
-import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import { updateAgendamento } from '../../../api/appointments';
+import Swal from 'sweetalert2';
 
 interface ClientAgendamentosProps {
   agendamentos: Agendamento[];
@@ -16,8 +16,6 @@ interface ClientAgendamentosProps {
 }
 
 const ClientAgendamentos: React.FC<ClientAgendamentosProps> = ({ agendamentos, servicoMap, barbeiroMap, loading, onRefresh }) => {
-  const [cancelTarget, setCancelTarget] = useState<Agendamento | null>(null);
-  const [showConfirm, setShowConfirm] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const formatDate = (dateStr: string) => {
@@ -33,29 +31,42 @@ const ClientAgendamentos: React.FC<ClientAgendamentosProps> = ({ agendamentos, s
       setTimeout(() => setErrorMsg(null), 4000);
       return;
     }
-    setCancelTarget(agendamento);
-    setShowConfirm(true);
-  };
 
-  const handleConfirmCancel = async () => {
-    if (!cancelTarget) return;
-    try {
-      await updateAgendamento(cancelTarget.id, { status: 'cancelado' });
-      onRefresh();
-      
-      // # Gabriel (Dev 1) - Dispara notificação global
-      const event = new CustomEvent('barbabyte:notificacao', {
-        detail: {
-          title: 'Agendamento Cancelado',
-          message: `Um agendamento do serviço #${cancelTarget.servico_id} foi cancelado pelo cliente #${cancelTarget.cliente_id}.`,
-          time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-          type: 'cancel'
+    Swal.fire({
+      title: 'Cancelar Agendamento',
+      text: 'Tem certeza que deseja cancelar? Esta ação não pode ser desfeita.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sim, Cancelar',
+      cancelButtonText: 'Manter',
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: 'var(--bg-tertiary)',
+      background: 'transparent',
+      customClass: {
+        popup: 'swal-glass-popup',
+        title: 'swal-glass-title',
+        htmlContainer: 'swal-glass-html'
+      }
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await updateAgendamento(agendamento.id, { status: 'cancelado' });
+          onRefresh();
+          
+          const event = new CustomEvent('barbabyte:notificacao', {
+            detail: {
+              title: 'Agendamento Cancelado',
+              message: `Um agendamento do serviço #${agendamento.servico_id} foi cancelado pelo cliente #${agendamento.cliente_id}.`,
+              time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+              type: 'cancel'
+            }
+          });
+          window.dispatchEvent(event);
+        } catch (err) {
+          console.error(err);
         }
-      });
-      window.dispatchEvent(event);
-      
-    } catch (err) { console.error(err); }
-    finally { setShowConfirm(false); setCancelTarget(null); }
+      }
+    });
   };
 
   const columns: Column<Agendamento>[] = [
@@ -97,7 +108,6 @@ const ClientAgendamentos: React.FC<ClientAgendamentosProps> = ({ agendamentos, s
           );
         }}
       />
-      <ConfirmDialog isOpen={showConfirm} title="Cancelar Agendamento" message="Tem certeza que deseja cancelar? Esta ação não pode ser desfeita." confirmText="Sim, Cancelar" cancelText="Manter" type="danger" onConfirm={handleConfirmCancel} onCancel={() => setShowConfirm(false)} />
     </>
   );
 };
