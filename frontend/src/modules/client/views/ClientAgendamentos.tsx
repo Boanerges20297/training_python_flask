@@ -39,13 +39,13 @@ const ClientAgendamentos: React.FC<ClientAgendamentosProps> = ({ agendamentos, s
       showCancelButton: true,
       confirmButtonText: 'Sim, Cancelar',
       cancelButtonText: 'Manter',
-      confirmButtonColor: '#ef4444',
-      cancelButtonColor: 'var(--bg-tertiary)',
-      background: 'transparent',
+      buttonsStyling: false,
       customClass: {
         popup: 'swal-glass-popup',
         title: 'swal-glass-title',
-        htmlContainer: 'swal-glass-html'
+        htmlContainer: 'swal-glass-html',
+        confirmButton: 'btn btn-md btn-danger',
+        cancelButton: 'btn btn-md btn-secondary'
       }
     }).then(async (result) => {
       if (result.isConfirmed) {

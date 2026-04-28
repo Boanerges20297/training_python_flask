@@ -72,13 +72,113 @@ body {
   text-transform: capitalize;
 }
 
+/* Badge padrão para IDs e dados técnicos */
 .badge {
-  padding: 0.2rem 0.6rem;
-  background: var(--color-client-light);
-  color: var(--color-client);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-xs);
+  padding: 0.25rem 0.5rem;
+  background: var(--bg-tertiary);
+  color: var(--text-tertiary);
+  border-radius: 0.5rem;
+  font-size: 0.65rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-color);
+  line-height: 1;
+  width: fit-content;
+  white-space: nowrap;
+}
+
+/* Posicionamento absoluto no canto superior direito de cards bento */
+.badge-corner {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+
+/* Variantes temáticas para badges */
+.badge-blue { background: rgba(59, 130, 246, 0.1); color: #3b82f6; border-color: rgba(59, 130, 246, 0.2); }
+.badge-amber { background: rgba(245, 158, 11, 0.1); color: #f59e0b; border-color: rgba(245, 158, 11, 0.2); }
+.badge-green { background: rgba(16, 185, 129, 0.1); color: #10b981; border-color: rgba(16, 185, 129, 0.2); }
+.badge-purple { background: rgba(167, 139, 250, 0.1); color: #a78bfa; border-color: rgba(167, 139, 250, 0.2); }
+.badge-danger { background: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: rgba(239, 68, 68, 0.2); }
+
+/* Pill para categorias, especialidades (Menor e mais escuro) */
+.pill {
+  padding: 0.2rem 0.5rem;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  width: fit-content;
+  white-space: nowrap;
+}
+
+/* ── BOTÕES GLOBAIS (Ref: Button.css) ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 14px;
   font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  outline: none;
+  font-family: inherit;
+  text-decoration: none;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-md {
+  padding: 0.8rem 1.5rem;
+  font-size: 0.95rem;
+}
+
+.btn-primary {
+  color: white;
+  background: linear-gradient(135deg, var(--btn-color-base, #8b5cf6) 0%, var(--btn-color-strong, #6d28d9) 100%);
+  box-shadow: 0 4px 12px rgba(109, 40, 217, 0.3);
+}
+
+.btn-primary.theme-purple {
+  --btn-color-base: #8b5cf6;
+  --btn-color-strong: #6d28d9;
+}
+
+.btn-primary.theme-green {
+  --btn-color-base: #10b981;
+  --btn-color-strong: #059669;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-tertiary);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
 }
 
 /* ── Utilitários de animação ── */
@@ -99,6 +199,7 @@ body {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
 /* ── SWEETALERT GLASSMORPHISM ── */
 body .swal2-container.swal2-center > .swal2-popup.swal-glass-popup {
   background: var(--glass-bg-deep);
@@ -106,54 +207,32 @@ body .swal2-container.swal2-center > .swal2-popup.swal-glass-popup {
   border: 1px solid var(--glass-border-deep);
   border-radius: 2.5rem;
   box-shadow: var(--shadow-xl);
+  padding: 2.5rem;
 }
 
 body .swal2-title.swal-glass-title {
   color: var(--text-primary);
   font-family: var(--font-sans);
   font-weight: 800;
-  padding-top: 1.5rem;
+  padding: 0;
+  margin-bottom: 1rem;
 }
 
 body .swal2-html-container.swal-glass-html {
   color: var(--text-secondary);
   font-family: var(--font-sans);
   font-size: 1rem;
+  margin: 0 0 2rem 0;
 }
 
-body .swal2-actions .swal2-confirm.swal-glass-confirm {
-  background: var(--color-client);
-  border: none !important;
-  border-radius: 1.25rem !important;
-  font-weight: 700 !important;
-  padding: 0.85rem 2.5rem !important;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2) !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  text-transform: none !important;
-  letter-spacing: normal !important;
-  color: white !important;
-  outline: none !important;
+/* Reset de ações do Swal para usar nossos botões */
+body .swal2-actions {
+  gap: 1rem;
+  width: 100%;
 }
 
-body .swal2-actions .swal2-confirm.swal-glass-confirm:hover {
-  transform: translateY(-2px);
-  background: var(--color-client-hover);
-  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.3) !important;
-}
-
-body .swal2-actions .swal2-cancel.swal-glass-cancel {
-  background: rgba(255, 255, 255, 0.05) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 1.25rem !important;
-  color: var(--text-tertiary) !important;
-  font-weight: 600 !important;
-  padding: 0.85rem 2rem !important;
-  transition: all 0.2s ease !important;
-}
-
-body .swal2-actions .swal2-cancel.swal-glass-cancel:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
-  color: var(--text-secondary) !important;
+body .swal2-actions button {
+  margin: 0 !important;
 }
 
 /* Fix para o bug do ícone de sucesso no SweetAlert */
@@ -166,5 +245,79 @@ body .swal2-actions .swal2-cancel.swal-glass-cancel:hover {
 .swal2-icon.swal2-success .swal2-success-fix,
 .swal2-icon.swal2-success .swal2-success-circular-line-left,
 .swal2-icon.swal2-success .swal2-success-circular-line-right {
-  background-color: transparent !important; /* Aqui o !important é necessário para anular o estilo inline da lib */
+  background-color: transparent !important;
 }
+
+/* -- SWEETALERT PREMIUM INPUTS (BENTO STYLE) -- */
+.swal-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 1.25rem;
+  text-align: left;
+  width: 100%;
+  padding: 0.5rem 0;
+}
+
+.swal-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.swal-col-3 { grid-column: span 3; }
+.swal-col-4 { grid-column: span 4; }
+.swal-col-5 { grid-column: span 5; }
+.swal-col-6 { grid-column: span 6; }
+.swal-col-7 { grid-column: span 7; }
+.swal-col-8 { grid-column: span 8; }
+.swal-col-9 { grid-column: span 9; }
+.swal-col-12 { grid-column: span 12; }
+
+.swal-input-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-left: 0.25rem;
+}
+
+.swal-input-premium {
+  width: 100%;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: 1rem;
+  height: 3.2rem;
+  padding: 0 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  outline: none;
+  font-family: inherit;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.swal-input-premium:focus {
+  border-color: var(--color-purple);
+  background: var(--bg-secondary);
+  box-shadow: 0 0 0 4px rgba(167, 139, 250, 0.1);
+  transform: translateY(-1px);
+}
+
+.swal-input-premium::placeholder {
+  color: var(--text-tertiary);
+  opacity: 0.5;
+}
+
+/* Ajuste especfico para selects no Swal */
+select.swal-input-premium {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1.25rem center;
+  padding-right: 3rem;
+}
+

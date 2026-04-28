@@ -16,6 +16,7 @@ import type { FilterData } from '../../../types/filters';
 import { Filter } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import Swal from 'sweetalert2';
+import { notifyCancel } from '../../../utils/notifications';
 
 export default function AppointmentsView() {
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
@@ -59,14 +60,14 @@ export default function AppointmentsView() {
   // BUG: Busca linear (find) dentro do render da tabela causa peso Big O excessivo.
   // REMOVER QUANDO: O Backend implementar JOINs nas rotas de agendamento.
   const clientMap = useMemo(() => {
-    const map: Record<number, string> = {};
-    clientes.forEach(c => { if (c.id) map[c.id] = c.nome; });
+    const map: Record<number, Cliente> = {};
+    clientes.forEach(c => { if (c.id) map[c.id] = c; });
     return map;
   }, [clientes]);
 
   const barberMap = useMemo(() => {
-    const map: Record<number, string> = {};
-    barbeiros.forEach(b => { if (b.id) map[b.id] = b.nome; });
+    const map: Record<number, Barbeiro> = {};
+    barbeiros.forEach(b => { if (b.id) map[b.id] = b; });
     return map;
   }, [barbeiros]);
 
@@ -124,6 +125,14 @@ export default function AppointmentsView() {
     if (appointmentToDelete !== null) {
       const success = await deleteAgendamento(appointmentToDelete);
       if (success) {
+        const appointment = agendamentos.find(a => a.id === appointmentToDelete);
+        if (appointment) {
+          const clientName = clientMap[appointment.cliente_id] || 'Cliente';
+          const serviceName = appointment.servicos_ids && appointment.servicos_ids.length > 0 
+            ? serviceMap[appointment.servicos_ids[0]] 
+            : 'Serviço';
+          notifyCancel(clientName, serviceName);
+        }
         showToast('Agendamento removido com sucesso.', 'success');
         fetchData();
       } else {
@@ -148,37 +157,40 @@ export default function AppointmentsView() {
     Swal.fire({
       title: 'Filtrar Agenda',
       html: `
-        <div style="display: flex; flex-direction: column; gap: 1.25rem; text-align: left; padding: 0.5rem;">
-          <div>
-            <label style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 0.5rem;">ID do Profissional</label>
-            <input type="number" id="filter-profissional" class="swal2-input" style="margin: 0; width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 0.75rem; height: 3rem;" placeholder="Ex: 10" value="${filters.profissionalId || ''}">
+        <div class="swal-grid">
+          <div class="swal-form-group swal-col-4">
+            <label class="swal-input-label">ID Profissional</label>
+            <input type="number" id="filter-profissional" class="swal-input-premium" placeholder="Ex: 10" value="${filters.profissionalId || ''}">
           </div>
-          <div>
-            <label style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 0.5rem;">ID do Serviço</label>
-            <input type="number" id="filter-servico" class="swal2-input" style="margin: 0; width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 0.75rem; height: 3rem;" placeholder="Ex: 5" value="${filters.servicoId || ''}">
+          <div class="swal-form-group swal-col-4">
+            <label class="swal-input-label">ID Serviço</label>
+            <input type="number" id="filter-servico" class="swal-input-premium" placeholder="Ex: 5" value="${filters.servicoId || ''}">
           </div>
-          <div>
-            <label style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 0.5rem;">Status</label>
-            <input type="text" id="filter-status" class="swal2-input" style="margin: 0; width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 0.75rem; height: 3rem;" placeholder="Ex: pendente, concluído..." value="${filters.status || ''}">
+          <div class="swal-form-group swal-col-4">
+            <label class="swal-input-label">Status</label>
+            <input type="text" id="filter-status" class="swal-input-premium" placeholder="Pendente..." value="${filters.status || ''}">
           </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-            <div>
-              <label style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 0.5rem;">De</label>
-              <input type="date" id="filter-inicio" class="swal2-input" style="margin: 0; width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 0.75rem; height: 3rem;" value="${filters.dataInicio || ''}">
-            </div>
-            <div>
-              <label style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 0.5rem;">Até</label>
-              <input type="date" id="filter-fim" class="swal2-input" style="margin: 0; width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 0.75rem; height: 3rem;" value="${filters.dataFim || ''}">
-            </div>
+          <div class="swal-form-group swal-col-6">
+            <label class="swal-input-label">Data Início</label>
+            <input type="date" id="filter-inicio" class="swal-input-premium" value="${filters.dataInicio || ''}">
+          </div>
+          <div class="swal-form-group swal-col-6">
+            <label class="swal-input-label">Data Fim</label>
+            <input type="date" id="filter-fim" class="swal-input-premium" value="${filters.dataFim || ''}">
           </div>
         </div>
       `,
       showCancelButton: true,
       confirmButtonText: 'Aplicar Filtros',
       cancelButtonText: 'Limpar Tudo',
-      confirmButtonColor: 'var(--color-primary)',
-      background: 'transparent',
-      customClass: { popup: 'swal-glass-popup', title: 'swal-glass-title', htmlContainer: 'swal-glass-html' },
+      buttonsStyling: false,
+      customClass: { 
+        popup: 'swal-glass-popup', 
+        title: 'swal-glass-title', 
+        htmlContainer: 'swal-glass-html',
+        confirmButton: 'btn btn-md btn-primary theme-purple',
+        cancelButton: 'btn btn-md btn-secondary'
+      },
       preConfirm: () => {
         return {
           profissionalId: (document.getElementById('filter-profissional') as HTMLInputElement).value,
@@ -212,7 +224,7 @@ export default function AppointmentsView() {
     {
       header: 'Cliente',
       render: (agend: Agendamento) => {
-        const nome = clientMap[agend.cliente_id];
+        const cliente = clientMap[agend.cliente_id];
         return (
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <div className="badge text-capitalize" style={{
@@ -221,12 +233,16 @@ export default function AppointmentsView() {
               gap: '0.6rem',
               background: 'rgba(59, 130, 246, 0.1)',
               color: '#3b82f6',
-              padding: '0.4rem 0.8rem',
+              padding: '0.3rem 0.8rem',
               borderRadius: '0.6rem',
-              minWidth: '120px'
+              minWidth: '130px'
             }}>
-              <User size={14} style={{ flexShrink: 0 }} />
-              <span style={{ fontWeight: 600, flex: 1 }}>{nome || 'Carregando...'}</span>
+              {cliente?.imagem_url ? (
+                <img src={cliente.imagem_url} alt={cliente.nome} style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover' }} />
+              ) : (
+                <User size={14} style={{ flexShrink: 0 }} />
+              )}
+              <span style={{ fontWeight: 600, flex: 1, textAlign: 'left' }}>{cliente?.nome || 'Carregando...'}</span>
             </div>
           </div>
         );
@@ -236,9 +252,8 @@ export default function AppointmentsView() {
     {
       header: 'Profissional',
       render: (agend: Agendamento) => {
-        const nome = barberMap[agend.barbeiro_id];
-        const isInativo = barberStatusMap[agend.barbeiro_id] === false;
-        // REMOVER QUANDO: O Backend implementar JOINs nas rotas de agendamento.
+        const barbeiro = barberMap[agend.barbeiro_id];
+        const isInativo = barbeiro?.ativo === false;
         const color = isInativo ? '#ef4444' : '#f59e0b';
         const bg = isInativo ? 'rgba(239, 68, 68, 0.08)' : 'rgba(245, 158, 11, 0.1)';
         const border = isInativo ? '1px solid rgba(239, 68, 68, 0.25)' : '1px solid transparent';
@@ -251,13 +266,17 @@ export default function AppointmentsView() {
               gap: '0.6rem',
               background: bg,
               color: color,
-              padding: '0.4rem 0.8rem',
+              padding: '0.3rem 0.8rem',
               borderRadius: '0.6rem',
-              minWidth: '120px',
+              minWidth: '130px',
               border: border
             }}>
-              <Scissors size={14} style={{ flexShrink: 0 }} />
-              <span style={{ fontWeight: 600, flex: 1 }}>{nome || 'Carregando...'}</span>
+              {barbeiro?.imagem_url ? (
+                <img src={barbeiro.imagem_url} alt={barbeiro.nome} style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover' }} />
+              ) : (
+                <Scissors size={14} style={{ flexShrink: 0 }} />
+              )}
+              <span style={{ fontWeight: 600, flex: 1, textAlign: 'left' }}>{barbeiro?.nome || 'Carregando...'}</span>
               {isInativo && <AlertTriangle size={14} style={{ marginLeft: '2px', flexShrink: 0 }} />}
             </div>
           </div>
@@ -308,7 +327,7 @@ export default function AppointmentsView() {
     },
     {
       header: 'ID',
-      render: (agend: Agendamento) => <span className="badge" style={{ background: 'rgba(167, 139, 250, 0.1)', color: '#a78bfa' }}>#{agend.id}</span>,
+      render: (agend: Agendamento) => <span className="badge badge-purple">#{agend.id}</span>,
       align: 'center',
     },
     {
@@ -323,7 +342,12 @@ export default function AppointmentsView() {
     {
       header: 'Pagamento',
       render: (agend: Agendamento) => (
-        <span className={`badge ${agend.pago ? 'badge-success' : 'badge-warning'}`} style={{ fontSize: '0.7rem' }}>
+        <span className="pill" style={{ 
+          fontSize: '0.7rem',
+          background: agend.pago ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+          color: agend.pago ? '#10b981' : '#ef4444',
+          border: `1px solid ${agend.pago ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`
+        }}>
           {agend.pago ? 'Pago' : 'Pendente'}
         </span>
       ),
@@ -366,15 +390,15 @@ export default function AppointmentsView() {
             icon={<Filter size={16} />}
             onClick={handleFilterClick}
             style={{ 
-              background: Object.keys(filters).some(k => (filters as any)[k]) ? 'rgba(167, 139, 250, 0.15)' : 'transparent',
-              border: Object.keys(filters).some(k => (filters as any)[k]) ? '1px solid rgba(167, 139, 250, 0.3)' : '1px solid transparent'
+              background: Object.keys(filters).some(k => (filters as any)[k]) ? 'rgba(167, 139, 250, 0.1)' : 'transparent',
+              border: Object.keys(filters).some(k => (filters as any)[k]) ? '1px solid rgba(167, 139, 250, 0.2)' : '1px solid transparent'
             }}
           >
             Filtros
             {Object.keys(filters).filter(k => (filters as any)[k]).length > 0 && (
               <span style={{ 
                 marginLeft: '0.5rem', 
-                background: 'var(--color-appointment)', 
+                background: 'var(--color-purple)', 
                 color: 'white', 
                 borderRadius: '50%', 
                 width: '18px', 
@@ -402,7 +426,7 @@ export default function AppointmentsView() {
         selectedItems={selectedAppointments}
         onSelectionChange={setSelectedAppointments}
         onBulkDelete={handleBulkDelete}
-        renderItemName={(item) => `${clientMap[item.cliente_id]} - ${new Date(item.data_agendamento).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`}
+        renderItemName={(item) => `${clientMap[item.cliente_id]?.nome || 'Cliente'} - ${new Date(item.data_agendamento).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`}
         emptyStateIcon={Calendar}
         emptyStateText="Nenhum agendamento para hoje."
         pagination={{
@@ -413,8 +437,8 @@ export default function AppointmentsView() {
         enableSearch={true}
         searchFilter={(item, query) => {
           const q = query.toLowerCase();
-          const cName = clientMap[item.cliente_id] || '';
-          const bName = barberMap[item.barbeiro_id] || '';
+          const cName = clientMap[item.cliente_id]?.nome || '';
+          const bName = barberMap[item.barbeiro_id]?.nome || '';
           const sName = serviceMap[item.servico_id] || '';
           return (
             cName.toLowerCase().includes(q) ||

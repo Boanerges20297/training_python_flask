@@ -14,6 +14,7 @@ import { useToast } from '../../../components/ui/Toast';
 import ImageUpload from '../../../components/ui/ImageUpload';
 import { SPECIALTIES, getSpecialtyLabel } from '../constants/specialties';
 import drawerStyles from '../../../components/ui/Drawer.module.css';
+import { notify } from '../../../utils/notifications';
 
 interface BarberDrawerProps {
   isOpen: boolean;
@@ -128,6 +129,15 @@ const BarberDrawer: React.FC<BarberDrawerProps> = ({ isOpen, onClose, onSuccess,
         const payload = { ...updateData, telefone: cleanPhone(formData.telefone) };
         const success = await updateBarbeiro(barbeiroParaEditar.id!, payload);
         if (!success) throw new Error("Erro ao atualizar barbeiro.");
+        
+        if (barbeiroParaEditar.ativo && !payload.ativo) {
+          notify({
+            title: 'Profissional Desativado',
+            message: `${payload.nome} foi marcado como inativo. Motivo: ${payload.justificativa || 'Não informado'}`,
+            type: 'warning'
+          });
+        }
+        
         showToast('Perfil atualizado com sucesso!', 'success');
       } else {
         const payload = { ...formData, telefone: cleanPhone(formData.telefone) };
@@ -233,8 +243,8 @@ const BarberDrawer: React.FC<BarberDrawerProps> = ({ isOpen, onClose, onSuccess,
             </div>
 
             {/* Card do Nome com ID */}
-            <div className={`${drawerStyles.bentoCard} ${drawerStyles.nameCard}`} style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <div className={drawerStyles.badgeCorner}>ID #{barbeiroParaEditar.id}</div>
+            <div className={`${drawerStyles.bentoCard} ${drawerStyles.nameCard}`} style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative' }}>
+              <span className="badge badge-amber badge-corner">ID #{barbeiroParaEditar.id}</span>
               <span className={drawerStyles.subcardLabel}>Profissional</span>
               <h2 style={{ fontSize: '1.25rem' }}>{barbeiroParaEditar.nome}</h2>
               <div style={{ 
@@ -244,7 +254,7 @@ const BarberDrawer: React.FC<BarberDrawerProps> = ({ isOpen, onClose, onSuccess,
               }}>
                 {barbeiroParaEditar.especialidades?.length > 0 ? (
                   barbeiroParaEditar.especialidades.map(e => (
-                    <span key={e} style={{ background: 'var(--bg-primary)', padding: '0.2rem 0.6rem', borderRadius: '0.6rem', border: '1px solid var(--border-color)', fontWeight: 600 }}>
+                    <span key={e} className="pill">
                       {getSpecialtyLabel(e)}
                     </span>
                   ))
@@ -326,6 +336,14 @@ const BarberDrawer: React.FC<BarberDrawerProps> = ({ isOpen, onClose, onSuccess,
                   : 'Não disponível'}
               </span>
             </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+              <span style={{ color: 'var(--text-tertiary)' }}>Atualizado em:</span>
+              <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
+                {barbeiroParaEditar.data_atualizacao 
+                  ? new Date(barbeiroParaEditar.data_atualizacao).toLocaleString('pt-BR') 
+                  : 'Nenhuma alteração registrada'}
+              </span>
+            </div>
           </div>
         </motion.div>
         ) : (
@@ -396,8 +414,12 @@ const BarberDrawer: React.FC<BarberDrawerProps> = ({ isOpen, onClose, onSuccess,
                       
                       return (
                         <div key={a.id} style={{ background: 'var(--bg-primary)', padding: '1rem', borderRadius: '1rem', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                          <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--color-service-light)', color: 'var(--color-service)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            <CheckCircle size={18} />
+                          <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--color-service-light)', color: 'var(--color-service)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+                            {cli?.imagem_url ? (
+                              <img src={cli.imagem_url} alt={cli.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                              <CheckCircle size={18} />
+                            )}
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>

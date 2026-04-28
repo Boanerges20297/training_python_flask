@@ -134,8 +134,8 @@ const ServiceDrawer: React.FC<ServiceDrawerProps> = ({ isOpen, onClose, onSucces
           </div>
 
           {/* Card do Nome com ID Flutuante */}
-          <div className={`${drawerStyles.bentoCard} ${drawerStyles.nameCard}`}>
-             <div className={drawerStyles.badgeCorner}>ID #{servicoParaEditar.id}</div>
+          <div className={`${drawerStyles.bentoCard} ${drawerStyles.nameCard}`} style={{ position: 'relative' }}>
+             <span className="badge badge-green badge-corner">ID #{servicoParaEditar.id}</span>
              <span className={drawerStyles.subcardLabel}>Serviço</span>
              <h2>{servicoParaEditar.nome}</h2>
           </div>
@@ -180,14 +180,14 @@ const ServiceDrawer: React.FC<ServiceDrawerProps> = ({ isOpen, onClose, onSucces
                   : 'Não disponível'}
               </span>
             </div>
-            {servicoParaEditar.data_atualizacao && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
-                <span style={{ color: 'var(--text-tertiary)' }}>Última atualização:</span>
-                <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
-                  {new Date(servicoParaEditar.data_atualizacao).toLocaleString('pt-BR')}
-                </span>
-              </div>
-            )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+              <span style={{ color: 'var(--text-tertiary)' }}>Atualizado em:</span>
+              <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
+                {servicoParaEditar.data_atualizacao 
+                  ? new Date(servicoParaEditar.data_atualizacao).toLocaleString('pt-BR') 
+                  : 'Nenhuma alteração registrada'}
+              </span>
+            </div>
           </div>
         </div>
       ) : (

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { createAgendamento, updateAgendamento } from '../../../api/appointments';
 import type { Cliente, Servico, Agendamento, Barbeiro } from '../../../types';
-import { User, ShoppingBag, Calendar, FileText, Plus, Edit2, Scissors, Clock, AlertTriangle, Info, History } from 'lucide-react';
+import { User, ShoppingBag, Calendar, FileText, Plus, Edit2, Scissors, Clock, AlertTriangle, Info, History, DollarSign, Ban } from 'lucide-react';
+import Swal from 'sweetalert2';
 import { Drawer } from '../../../components/ui/Drawer';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
@@ -10,6 +11,7 @@ import drawerStyles from '../../../components/ui/Drawer.module.css';
 import { getSpecialtyLabel } from '../constants/specialties';
 
 import TimeSlotPicker from '../../../components/ui/TimeSlotPicker';
+import { notifyDebt, notifyNewAppointment } from '../../../utils/notifications';
 
 interface AppointmentDrawerProps {
   isOpen: boolean;
@@ -44,6 +46,7 @@ const AppointmentDrawer: React.FC<AppointmentDrawerProps> = ({
   });
   const [useCustomTime, setUseCustomTime] = useState(false);
   const [mode, setMode] = useState<'view' | 'edit'>('view');
+  const [isTogglingPago, setIsTogglingPago] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -80,6 +83,70 @@ const AppointmentDrawer: React.FC<AppointmentDrawerProps> = ({
     }
   }, [isOpen, agendamentoParaEditar]);
 
+  // # Gabriel (Admin) - Toggle Pagamento (Atribuir/Remover Inadimplência)
+  const handleTogglePago = async () => {
+    if (!agendamentoParaEditar) return;
+    const isPago = agendamentoParaEditar.pago;
+    
+    const result = await Swal.fire({
+      title: isPago ? 'Reverter Pagamento?' : 'Confirmar Pagamento?',
+      html: `
+        <div style="text-align: left; font-size: 0.9rem; opacity: 0.85; line-height: 1.6;">
+          <p>${isPago 
+            ? 'Ao reverter, este agendamento será marcado como <strong style="color: #ef4444">não pago</strong> e o valor será adicionado à dívida do cliente.'
+            : 'Ao confirmar, este agendamento será marcado como <strong style="color: #10b981">pago</strong> e o valor será removido da dívida do cliente.'
+          }</p>
+          <div style="background: rgba(255,255,255,0.04); padding: 1rem; border-radius: 1rem; border: 1px solid rgba(255,255,255,0.08); margin-top: 1rem;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+              <span style="color: var(--text-tertiary)">Cliente:</span>
+              <strong style="color: var(--text-primary)">${selectedClient?.nome || 'N/A'}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.5rem; margin-top: 0.5rem;">
+              <span style="color: var(--text-tertiary)">Valor:</span>
+              <strong style="color: ${isPago ? '#ef4444' : '#10b981'}">R$ ${agendamentoParaEditar.preco?.toLocaleString() || '0'}</strong>
+            </div>
+          </div>
+        </div>
+      `,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: isPago ? 'Sim, Reverter' : 'Sim, Confirmar',
+      cancelButtonText: 'Cancelar',
+      buttonsStyling: false,
+      customClass: {
+        popup: 'swal-glass-popup',
+        title: 'swal-glass-title',
+        htmlContainer: 'swal-glass-html',
+        confirmButton: `btn btn-md btn-primary ${isPago ? 'theme-purple' : 'theme-green'}`,
+        cancelButton: 'btn btn-md btn-secondary'
+      }
+    });
+
+    if (result.isConfirmed) {
+      setIsTogglingPago(true);
+      try {
+        const ok = await updateAgendamento(agendamentoParaEditar.id, { pago: !isPago });
+        if (ok) {
+          showToast(
+            isPago ? 'Pagamento revertido. Inadimplência atribuída.' : 'Pagamento confirmado com sucesso!',
+            isPago ? 'warning' : 'success'
+          );
+          
+          if (isPago) {
+            notifyDebt(selectedClient?.nome || 'Cliente', agendamentoParaEditar.preco || 0);
+          }
+          onSuccess();
+          onClose();
+        } else {
+          showToast('Erro ao atualizar status de pagamento.', 'error');
+        }
+      } catch {
+        showToast('Erro ao processar solicitação.', 'error');
+      } finally {
+        setIsTogglingPago(false);
+      }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,14 +178,15 @@ const AppointmentDrawer: React.FC<AppointmentDrawerProps> = ({
         throw "Preencha todos os campos obrigatórios.";
       }
 
-      if (agendamentoParaEditar) {
-        const ok = await updateAgendamento(agendamentoParaEditar.id, payload);
-        if (!ok) throw "Erro ao atualizar agendamento.";
-        showToast('Agendamento atualizado com sucesso!', 'success');
-      } else {
-        await createAgendamento(payload as any);
-        showToast('Horário reservado com sucesso!', 'success');
-      }
+        if (agendamentoParaEditar) {
+          const ok = await updateAgendamento(agendamentoParaEditar.id, payload);
+          if (!ok) throw "Erro ao atualizar agendamento.";
+          showToast('Agendamento atualizado com sucesso!', 'success');
+        } else {
+          await createAgendamento(payload as any);
+          showToast('Horário reservado com sucesso!', 'success');
+          notifyNewAppointment(selectedClient?.nome || 'Novo Cliente', timeToUse);
+        }
 
       onSuccess();
       onClose();
@@ -200,7 +268,7 @@ const AppointmentDrawer: React.FC<AppointmentDrawerProps> = ({
               )}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <div className={drawerStyles.badgeCorner}>ID #{agendamentoParaEditar.id}</div>
+              <span className="badge badge-blue badge-corner">ID #{selectedClient?.id}</span>
               <span className={drawerStyles.subcardLabel}>Cliente</span>
               <h2 style={{ fontSize: '1.15rem' }}>{selectedClient?.nome || 'N/A'}</h2>
               <p style={{ margin: 0, color: 'var(--text-tertiary)', fontSize: '0.75rem' }}>{selectedClient?.email}</p>
@@ -210,7 +278,8 @@ const AppointmentDrawer: React.FC<AppointmentDrawerProps> = ({
           {/* 2. Layout Masonry: Data/Hora e Status (Lado a Lado) */}
           <div className={drawerStyles.bentoMasonry}>
             {/* Card de Horário */}
-            <div className={drawerStyles.bentoCard} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '0.5rem' }}>
+            <div className={drawerStyles.bentoCard} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '0.5rem', position: 'relative' }}>
+              <span className="badge badge-purple badge-corner">ID #{agendamentoParaEditar.id}</span>
               <span className={drawerStyles.subcardLabel}>Horário</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-purple)', fontWeight: 800, fontSize: '1.1rem' }}>
                 <Clock size={18} />
@@ -224,9 +293,9 @@ const AppointmentDrawer: React.FC<AppointmentDrawerProps> = ({
             {/* Card de Status */}
             <div className={drawerStyles.bentoCard} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '0.5rem' }}>
               <span className={drawerStyles.subcardLabel}>Status</span>
-              <div style={{ 
-                display: 'inline-flex', padding: '0.35rem 0.75rem', 
-                borderRadius: '1rem', fontSize: '0.65rem', fontWeight: 800, 
+              <div className="pill" style={{ 
+                padding: '0.35rem 0.75rem', 
+                fontSize: '0.65rem', 
                 background: agendamentoParaEditar.status === 'concluido' ? 'rgba(74, 222, 128, 0.1)' : 'rgba(168, 85, 247, 0.1)', 
                 color: agendamentoParaEditar.status === 'concluido' ? '#4ade80' : '#a855f7',
                 border: `1px solid ${agendamentoParaEditar.status === 'concluido' ? 'rgba(74, 222, 128, 0.2)' : 'rgba(168, 85, 247, 0.2)'}`,
@@ -236,6 +305,55 @@ const AppointmentDrawer: React.FC<AppointmentDrawerProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Card de Pagamento (Toggle Inadimplência) */}
+          {agendamentoParaEditar.status === 'concluido' && (
+            <div 
+              className={drawerStyles.bentoCard} 
+              onClick={handleTogglePago}
+              style={{ 
+                display: 'flex', alignItems: 'center', gap: '1rem', 
+                cursor: isTogglingPago ? 'wait' : 'pointer',
+                opacity: isTogglingPago ? 0.6 : 1,
+                transition: 'all 0.3s ease',
+                background: agendamentoParaEditar.pago 
+                  ? 'rgba(16, 185, 129, 0.04)' 
+                  : 'rgba(239, 68, 68, 0.04)',
+                border: `1px solid ${agendamentoParaEditar.pago 
+                  ? 'rgba(16, 185, 129, 0.15)' 
+                  : 'rgba(239, 68, 68, 0.15)'}`,
+              }}
+            >
+              <div style={{
+                width: '40px', height: '40px', borderRadius: '0.75rem',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: agendamentoParaEditar.pago 
+                  ? 'rgba(16, 185, 129, 0.1)' 
+                  : 'rgba(239, 68, 68, 0.1)',
+                color: agendamentoParaEditar.pago ? '#10b981' : '#ef4444',
+                flexShrink: 0
+              }}>
+                {agendamentoParaEditar.pago ? <DollarSign size={20} /> : <Ban size={20} />}
+              </div>
+              <div style={{ flex: 1 }}>
+                <span className={drawerStyles.subcardLabel}>Pagamento</span>
+                <div style={{ 
+                  fontWeight: 700, fontSize: '0.9rem',
+                  color: agendamentoParaEditar.pago ? '#10b981' : '#ef4444'
+                }}>
+                  {agendamentoParaEditar.pago ? 'Pago' : 'Inadimplente'}
+                </div>
+              </div>
+              <div style={{ 
+                fontSize: '0.65rem', fontWeight: 700, 
+                color: 'var(--text-tertiary)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em'
+              }}>
+                {agendamentoParaEditar.pago ? 'Reverter ›' : 'Liquidar ›'}
+              </div>
+            </div>
+          )}
 
           {/* 3. Alertas e Notas (Dinâmicos) */}
           {(selectedBarber && !selectedBarber.ativo || agendamentoParaEditar.observacoes) && (
@@ -286,7 +404,7 @@ const AppointmentDrawer: React.FC<AppointmentDrawerProps> = ({
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                           <span style={{ fontWeight: 700, fontSize: '0.875rem' }}>{s.nome}</span>
-                          <span style={{ fontSize: '0.65rem', fontWeight: 800, background: 'var(--bg-tertiary)', color: 'var(--text-tertiary)', padding: '0.1rem 0.4rem', borderRadius: '0.4rem' }}>#{s.id}</span>
+                          <span className="badge badge-green">#{s.id}</span>
                         </div>
                         <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>{s.duracao_minutos} min</div>
                       </div>
@@ -317,7 +435,7 @@ const AppointmentDrawer: React.FC<AppointmentDrawerProps> = ({
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span className={drawerStyles.subcardLabel}>Profissional</span>
-                    <span className={drawerStyles.pillID}>#{selectedBarber?.id}</span>
+                    <span className="badge badge-amber">#{selectedBarber?.id}</span>
                   </div>
                   <div style={{ fontWeight: 700, fontSize: '1rem' }}>
                     {selectedBarber?.nome || 'Não selecionado'}
@@ -327,7 +445,7 @@ const AppointmentDrawer: React.FC<AppointmentDrawerProps> = ({
                     display: 'flex', flexWrap: 'wrap', gap: '0.25rem' 
                   }}>
                     {selectedBarber?.especialidades?.map(e => (
-                      <span key={e} style={{ background: 'var(--bg-primary)', padding: '0.1rem 0.4rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)' }}>
+                      <span key={e} className="pill" style={{ fontSize: '0.65rem', padding: '0.1rem 0.5rem' }}>
                         {getSpecialtyLabel(e)}
                       </span>
                     ))}
@@ -343,22 +461,22 @@ const AppointmentDrawer: React.FC<AppointmentDrawerProps> = ({
                 <History size={16} color="var(--text-tertiary)" />
                 <span className={drawerStyles.subcardLabel}>Informações do Sistema</span>
               </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+              <span style={{ color: 'var(--text-tertiary)' }}>Cadastrado em:</span>
+              <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
+                {agendamentoParaEditar.data_criacao 
+                  ? new Date(agendamentoParaEditar.data_criacao).toLocaleString('pt-BR') 
+                  : 'Não disponível'}
+              </span>
+            </div>
+            {agendamentoParaEditar.data_atualizacao && (
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
-                <span style={{ color: 'var(--text-tertiary)' }}>Criado em:</span>
+                <span style={{ color: 'var(--text-tertiary)' }}>Atualizado em:</span>
                 <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
-                  {agendamentoParaEditar.data_criacao 
-                    ? new Date(agendamentoParaEditar.data_criacao).toLocaleString('pt-BR') 
-                    : 'Não disponível'}
+                  {new Date(agendamentoParaEditar.data_atualizacao).toLocaleString('pt-BR')}
                 </span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
-                <span style={{ color: 'var(--text-tertiary)' }}>Última atualização:</span>
-                <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
-                  {agendamentoParaEditar.data_atualizacao 
-                    ? new Date(agendamentoParaEditar.data_atualizacao).toLocaleString('pt-BR') 
-                    : 'Nenhuma alteração registrada'}
-                </span>
-              </div>
+            )}
             </div>
           </div>
         </div>
@@ -394,7 +512,7 @@ const AppointmentDrawer: React.FC<AppointmentDrawerProps> = ({
               onChange={(e) => setFormData({ ...formData, cliente_id: e.target.value })}
             >
               <option value="">Selecione um cliente...</option>
-              {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+              {clientes.map(c => <option key={c.id} value={c.id}>{c.nome} (#{c.id})</option>)}
             </Input>
           </div>
 
@@ -416,7 +534,10 @@ const AppointmentDrawer: React.FC<AppointmentDrawerProps> = ({
                     }}
                   />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 700 }}>{s.nome}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 700 }}>{s.nome}</div>
+                      <span className="badge badge-green">#{s.id}</span>
+                    </div>
                     <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
                       R$ {Number(s.preco).toFixed(2)} • {s.duracao_minutos} min
                     </div>
@@ -438,7 +559,7 @@ const AppointmentDrawer: React.FC<AppointmentDrawerProps> = ({
               <option value="">Selecione um profissional...</option>
               {barbeiros
                 .filter(b => b.ativo && (formData.servicos_ids.length === 0 || formData.servicos_ids.every(id => b.servicos_ids?.includes(id))))
-                .map(b => <option key={b.id} value={b.id}>{b.nome}</option>)}
+                .map(b => <option key={b.id} value={b.id}>{b.nome} (#{b.id})</option>)}
             </Input>
           </div>
 

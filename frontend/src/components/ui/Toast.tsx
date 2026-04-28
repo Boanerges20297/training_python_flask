@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { X, CheckCircle2, AlertTriangle, AlertCircle, Info } from 'lucide-react';
-import styles from './Toast.module.css';
+import './Toast.css';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -34,17 +34,17 @@ const ToastItem: React.FC<{ toast: ToastMessage; onRemove: (id: string) => void 
   }, [toast.id, onRemove]);
 
   return (
-    <div className={`${styles.toast} ${styles[toast.type]} ${isExiting ? styles.animateOut : styles.animateIn}`}>
-      <div className={styles.progressFrame} />
+    <div className={`toast-message toast-${toast.type} ${isExiting ? 'animate-slide-out' : 'animate-slide-in'}`}>
+      <div className="toast-progress-frame" />
       
-      <div className={styles.icon}>
+      <div className="toast-icon">
         {toast.type === 'success' && <CheckCircle2 size={18} />}
         {toast.type === 'error' && <AlertCircle size={18} />}
         {toast.type === 'warning' && <AlertTriangle size={18} />}
         {toast.type === 'info' && <Info size={18} />}
       </div>
-      <p className={styles.text}>{toast.message}</p>
-      <button className={styles.closeButton} onClick={() => onRemove(toast.id)}>
+      <p className="toast-text">{toast.message}</p>
+      <button className="toast-close-btn" onClick={() => onRemove(toast.id)}>
         <X size={16} />
       </button>
     </div>
@@ -66,7 +66,7 @@ export const ToastProvider: React.FC<{children: ReactNode}> = ({ children }) => 
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      <div className={styles.container}>
+      <div className="toast-container">
         {toasts.map(toast => (
           <ToastItem key={toast.id} toast={toast} onRemove={removeToast} />
         ))}

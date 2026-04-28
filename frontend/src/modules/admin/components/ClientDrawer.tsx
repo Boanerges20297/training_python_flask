@@ -14,7 +14,8 @@ import { getAgendamentos, updateAgendamento } from '../../../api/appointments';
 import { getBarbeiros } from '../../../api/barbers';
 import { getServicos } from '../../../api/services';
 import type { Agendamento, Barbeiro, Servico } from '../../../types';
-import { DollarSign, CheckCircle } from 'lucide-react';
+import { DollarSign, CheckCircle, Undo2 } from 'lucide-react';
+import { notifyDebt } from '../../../utils/notifications';
 
 interface ClientDrawerProps {
   isOpen: boolean;
@@ -100,14 +101,12 @@ const ClientDrawer: React.FC<ClientDrawerProps> = ({ isOpen, onClose, onSuccess,
       showCancelButton: true,
       confirmButtonText: 'Sim, Liquidar',
       cancelButtonText: 'Cancelar',
-      background: 'transparent',
-      color: 'var(--text-primary)',
-      confirmButtonColor: '#059669',
+      buttonsStyling: false,
       customClass: { 
         popup: 'swal-glass-popup', 
         title: 'swal-glass-title', 
-        confirmButton: 'swal-glass-confirm',
-        cancelButton: 'swal-glass-cancel'
+        confirmButton: 'btn btn-md btn-primary theme-green',
+        cancelButton: 'btn btn-md btn-secondary'
       }
     });
 
@@ -117,6 +116,58 @@ const ClientDrawer: React.FC<ClientDrawerProps> = ({ isOpen, onClose, onSuccess,
         showToast("Pagamento registrado!", 'success');
         fetchFinancialHistory();
         onSuccess(); 
+      }
+    }
+  };
+
+  // # Gabriel (Admin) - Reverter Pagamento (Atribuir Inadimplência)
+  const handleReverterPagamento = async (agendamentoId: number, preco: number = 0, servicoNome: string = 'Serviço', barbeiroNome: string = 'Barbeiro') => {
+    const Swal = (await import('sweetalert2')).default;
+    
+    const result = await Swal.fire({
+      title: 'Reverter Pagamento?',
+      html: `
+        <div style="text-align: left; font-size: 0.9rem; opacity: 0.85; line-height: 1.6;">
+          <p>O agendamento será marcado como <strong style="color: #ef4444">não pago</strong> e o valor será adicionado à dívida do cliente.</p>
+          <div style="background: rgba(255,255,255,0.04); padding: 1rem; border-radius: 1rem; border: 1px solid rgba(255,255,255,0.08); margin-top: 1rem;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+              <span style="color: var(--text-tertiary)">Serviço:</span>
+              <strong style="color: var(--text-primary)">${servicoNome}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+              <span style="color: var(--text-tertiary)">Profissional:</span>
+              <strong style="color: var(--text-primary)">${barbeiroNome}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 1.1rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.5rem; margin-top: 0.5rem;">
+              <span>Valor a reverter:</span>
+              <strong style="color: #ef4444">R$ ${preco.toLocaleString()}</strong>
+            </div>
+          </div>
+        </div>
+      `,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sim, Reverter',
+      cancelButtonText: 'Cancelar',
+      buttonsStyling: false,
+      customClass: { 
+        popup: 'swal-glass-popup', 
+        title: 'swal-glass-title', 
+        htmlContainer: 'swal-glass-html',
+        confirmButton: 'btn btn-md btn-danger',
+        cancelButton: 'btn btn-md btn-secondary'
+      }
+    });
+
+    if (result.isConfirmed) {
+      const ok = await updateAgendamento(agendamentoId, { pago: false });
+      if (ok) {
+        showToast('Pagamento revertido. Inadimplência atribuída.', 'warning');
+        notifyDebt(clienteParaEditar?.nome || 'Cliente', preco);
+        fetchFinancialHistory();
+        onSuccess();
+      } else {
+        showToast('Erro ao reverter pagamento.', 'error');
       }
     }
   };
@@ -253,8 +304,8 @@ const ClientDrawer: React.FC<ClientDrawerProps> = ({ isOpen, onClose, onSuccess,
             </div>
 
             {/* Card do Nome com Badge de Cliente */}
-            <div className={`${drawerStyles.bentoCard} ${drawerStyles.nameCard}`} style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <div className={drawerStyles.badgeCorner}>ID #{clienteParaEditar.id}</div>
+            <div className={`${drawerStyles.bentoCard} ${drawerStyles.nameCard}`} style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative' }}>
+              <span className="badge badge-blue badge-corner">ID #{clienteParaEditar.id}</span>
               <span className={drawerStyles.subcardLabel}>Nome do Cliente</span>
               <h2 style={{ fontSize: '1.25rem' }}>{clienteParaEditar.nome}</h2>
               <p style={{ margin: '0.25rem 0 0 0', color: 'var(--text-tertiary)', fontSize: '0.8rem', fontWeight: '500' }}>
@@ -302,14 +353,14 @@ const ClientDrawer: React.FC<ClientDrawerProps> = ({ isOpen, onClose, onSuccess,
                   : 'Não disponível'}
               </span>
             </div>
-            {clienteParaEditar.data_atualizacao && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
-                <span style={{ color: 'var(--text-tertiary)' }}>Última atualização:</span>
-                <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
-                  {new Date(clienteParaEditar.data_atualizacao).toLocaleString('pt-BR')}
-                </span>
-              </div>
-            )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+              <span style={{ color: 'var(--text-tertiary)' }}>Atualizado em:</span>
+              <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
+                {clienteParaEditar.data_atualizacao 
+                  ? new Date(clienteParaEditar.data_atualizacao).toLocaleString('pt-BR') 
+                  : 'Nenhuma alteração registrada'}
+              </span>
+            </div>
           </div>
         </motion.div>
         ) : (
@@ -346,7 +397,11 @@ const ClientDrawer: React.FC<ClientDrawerProps> = ({ isOpen, onClose, onSuccess,
                       <div key={a.id} style={{ display: 'flex', gap: '1rem', padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '1rem', border: '1px solid var(--glass-border)' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                           <div style={{ width: '2px', height: '10px', background: 'var(--border-color)' }} />
-                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ef4444', border: '3px solid rgba(239, 68, 68, 0.2)' }} />
+                          {barb?.imagem_url ? (
+                            <img src={barb.imagem_url} alt={barb.nome} style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(239, 68, 68, 0.2)' }} />
+                          ) : (
+                            <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ef4444', border: '3px solid rgba(239, 68, 68, 0.2)' }} />
+                          )}
                           <div style={{ width: '2px', flex: 1, background: 'var(--border-color)' }} />
                         </div>
                         <div style={{ flex: 1 }}>
@@ -373,16 +428,51 @@ const ClientDrawer: React.FC<ClientDrawerProps> = ({ isOpen, onClose, onSuccess,
               </div>
             </div>
 
-            {/* Histórico Recente (Pagos) */}
+            {/* Histórico Recente (Pagos) — com opção de reverter */}
             <div className={drawerStyles.bentoCard}>
                <span className={drawerStyles.subcardLabel} style={{ marginBottom: '1rem', display: 'block' }}>Últimos Serviços Pagos</span>
                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {history.filter(a => a.status === 'concluido' && a.pago).slice(0, 3).map(a => (
-                    <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem', background: 'rgba(255,255,255,0.01)', borderRadius: '0.75rem', fontSize: '0.8rem' }}>
-                       <span style={{ color: 'var(--text-secondary)' }}>{new Date(a.data_agendamento).toLocaleDateString('pt-BR')}</span>
-                       <span style={{ fontWeight: 600, color: '#059669' }}>Pago</span>
+                  {history.filter(a => a.status === 'concluido' && a.pago).slice(0, 5).length > 0 ? (
+                    history.filter(a => a.status === 'concluido' && a.pago).slice(0, 5).map(a => {
+                      const serv = servicos.find(s => s.id === a.servico_id);
+                      const barb = barbeiros.find(b => b.id === a.barbeiro_id);
+                      return (
+                        <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: 'rgba(255,255,255,0.01)', borderRadius: '0.75rem', border: '1px solid rgba(255,255,255,0.04)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                               {barb?.imagem_url ? (
+                                 <img src={barb.imagem_url} alt={barb.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                               ) : (
+                                 <Scissors size={14} color="var(--text-tertiary)" />
+                               )}
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                            <span style={{ fontWeight: 600, fontSize: '0.8rem', color: 'var(--text-primary)' }}>{serv?.nome || 'Serviço'}</span>
+                            <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
+                              {new Date(a.data_agendamento).toLocaleDateString('pt-BR')} • R$ {a.preco?.toLocaleString() || '0'}
+                            </span>
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#059669' }}>Pago</span>
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              icon={<Undo2 size={12} />} 
+                              onClick={() => handleReverterPagamento(a.id, a.preco, serv?.nome, barb?.nome)}
+                              style={{ fontSize: '0.7rem', padding: '0.3rem 0.6rem', color: 'var(--text-tertiary)' }}
+                            >
+                              Reverter
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-tertiary)' }}>
+                      <p style={{ fontSize: '0.8rem' }}>Nenhum serviço pago recentemente.</p>
                     </div>
-                  ))}
+                  )}
                </div>
             </div>
           </motion.div>

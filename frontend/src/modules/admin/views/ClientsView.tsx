@@ -101,23 +101,28 @@ export default function ClientsView() {
     Swal.fire({
       title: 'Filtrar Clientes',
       html: `
-        <div style="display: flex; flex-direction: column; gap: 1.25rem; text-align: left; padding: 0.5rem;">
-          <div>
-            <label style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 0.5rem;">Pesquisar por ID</label>
-            <input type="number" id="filter-id" class="swal2-input" style="margin: 0; width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 0.75rem; height: 3rem;" placeholder="Ex: 100" value="${filters.clientId || ''}">
+        <div class="swal-grid">
+          <div class="swal-form-group swal-col-4">
+            <label class="swal-input-label">ID</label>
+            <input type="number" id="filter-id" class="swal-input-premium" placeholder="Ex: 100" value="${filters.clientId || ''}">
           </div>
-          <div>
-            <label style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 0.5rem;">Status Financeiro</label>
-            <input type="text" id="filter-status" class="swal2-input" style="margin: 0; width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 0.75rem; height: 3rem;" placeholder="Ex: Devedor ou Em Dia" value="${filters.status || ''}">
+          <div class="swal-form-group swal-col-8">
+            <label class="swal-input-label">Status Financeiro</label>
+            <input type="text" id="filter-status" class="swal-input-premium" placeholder="Ex: Devedor ou Em Dia" value="${filters.status || ''}">
           </div>
         </div>
       `,
       showCancelButton: true,
       confirmButtonText: 'Aplicar Filtro',
       cancelButtonText: 'Limpar',
-      confirmButtonColor: 'var(--color-primary)',
-      background: 'transparent',
-      customClass: { popup: 'swal-glass-popup', title: 'swal-glass-title', htmlContainer: 'swal-glass-html' },
+      buttonsStyling: false,
+      customClass: { 
+        popup: 'swal-glass-popup', 
+        title: 'swal-glass-title', 
+        htmlContainer: 'swal-glass-html',
+        confirmButton: 'btn btn-md btn-primary theme-purple',
+        cancelButton: 'btn btn-md btn-secondary'
+      },
       preConfirm: () => {
         return {
           clientId: (document.getElementById('filter-id') as HTMLInputElement).value,
@@ -135,9 +140,32 @@ export default function ClientsView() {
 
   // # Gabriel (Dev 1) - Definição das colunas para o DataTable
   const columns: Column<Cliente>[] = [
+    {
+      header: 'Foto',
+      render: (cliente: Cliente) => (
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <div style={{ 
+            width: '36px', height: '36px', borderRadius: '10px', 
+            background: 'var(--color-client-light)', color: 'var(--color-client)', 
+            display: 'flex', alignItems: 'center', justifyContent: 'center', 
+            fontSize: '0.9rem', fontWeight: 800, overflow: 'hidden' 
+          }}>
+            {cliente.imagem_url ? (
+              <img src={cliente.imagem_url} alt={cliente.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              cliente.nome.charAt(0).toUpperCase()
+            )}
+          </div>
+        </div>
+      ),
+      align: 'center'
+    },
     { 
       header: 'Nome', 
-      render: (cliente: Cliente) => <span className="text-capitalize" style={{ fontWeight: 600 }}>{cliente.nome}</span> 
+      render: (cliente: Cliente) => (
+        <div className="text-capitalize" style={{ fontWeight: 600 }}>{cliente.nome}</div>
+      ),
+      align: 'left'
     },
     { 
       header: 'Contato', 
@@ -159,7 +187,7 @@ export default function ClientsView() {
     },
     { 
       header: 'ID', 
-      render: (cliente: Cliente) => <span className="badge">#{cliente.id}</span>,
+      render: (cliente: Cliente) => <span className="badge badge-blue">#{cliente.id}</span>,
       align: 'center'
     },
     {
@@ -173,11 +201,19 @@ export default function ClientsView() {
     },
     {
       header: 'Status',
-      render: (cliente: Cliente) => (
-        <span className={`badge ${cliente.divida_total && cliente.divida_total > 0 ? 'badge-danger' : 'badge-success'}`} style={{ fontSize: '0.7rem' }}>
-          {cliente.divida_total && cliente.divida_total > 0 ? `Deve R$ ${cliente.divida_total.toLocaleString()}` : 'Em dia'}
-        </span>
-      ),
+      render: (cliente: Cliente) => {
+        const temDivida = cliente.divida_total && cliente.divida_total > 0;
+        return (
+          <span className="pill" style={{ 
+            fontSize: '0.7rem',
+            background: temDivida ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+            color: temDivida ? '#ef4444' : '#10b981',
+            border: `1px solid ${temDivida ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'}`
+          }}>
+            {temDivida ? `Dívida R$ ${cliente.divida_total.toLocaleString()}` : 'Em dia'}
+          </span>
+        );
+      },
       align: 'center'
     },
     { 
@@ -204,13 +240,35 @@ export default function ClientsView() {
         data={filteredClientes}
         columns={columns}
         extraActions={
-          <Button
-            variant="secondary"
+          <Button 
+            variant="ghost" 
+            theme="blue" 
             size="sm"
             icon={<Filter size={16} />}
             onClick={handleFilterClick}
+            style={{ 
+              background: Object.keys(filters).some(k => (filters as any)[k]) ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+              border: Object.keys(filters).some(k => (filters as any)[k]) ? '1px solid rgba(59, 130, 246, 0.2)' : '1px solid transparent'
+            }}
           >
             Filtros
+            {Object.keys(filters).filter(k => (filters as any)[k]).length > 0 && (
+              <span style={{ 
+                marginLeft: '0.5rem', 
+                background: 'var(--color-client)', 
+                color: 'white', 
+                borderRadius: '50%', 
+                width: '18px', 
+                height: '18px', 
+                fontSize: '0.65rem', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                fontWeight: 800
+              }}>
+                {Object.keys(filters).filter(k => (filters as any)[k]).length}
+              </span>
+            )}
           </Button>
         }
         addButtonText="Novo Cliente"

@@ -7,11 +7,11 @@ import type { DashboardData, Cliente } from '../../../types';
 import {
   Calendar, 
   Activity, 
-  ArrowUpRight, CreditCard, FileText, FileSpreadsheet, MessageCircle, PieChart as PieChartIcon
+  ArrowUpRight, CreditCard, FileText, FileSpreadsheet, MessageCircle, Scissors, Receipt, Bell
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip,
-  PieChart, Pie, Cell, ScatterChart, Scatter, ZAxis
+  BarChart, Bar, Cell, ScatterChart, Scatter, ZAxis, Treemap
 } from 'recharts';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
@@ -85,19 +85,24 @@ export default function FinanceiroView() {
     Swal.fire({
       title: 'Filtrar Financeiro',
       html: `
-        <div style="display: flex; flex-direction: column; gap: 1.25rem; text-align: left; padding: 0.5rem;">
-          <div>
-            <label style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 0.5rem;">ID do Barbeiro</label>
-            <input type="number" id="filter-barbeiro" class="swal2-input" style="margin: 0; width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 0.75rem; height: 3rem;" placeholder="Ex: 10" value="${filters.profissionalId || ''}">
+        <div class="swal-grid">
+          <div class="swal-form-group swal-col-4">
+            <label class="swal-input-label">ID do Barbeiro</label>
+            <input type="number" id="filter-barbeiro" class="swal-input-premium" placeholder="Ex: 10" value="${filters.profissionalId || ''}">
           </div>
         </div>
       `,
       showCancelButton: true,
       confirmButtonText: 'Aplicar Filtro',
       cancelButtonText: 'Limpar',
-      confirmButtonColor: 'var(--color-primary)',
-      background: 'transparent',
-      customClass: { popup: 'swal-glass-popup', title: 'swal-glass-title', htmlContainer: 'swal-glass-html' },
+      buttonsStyling: false,
+      customClass: { 
+        popup: 'swal-glass-popup', 
+        title: 'swal-glass-title', 
+        htmlContainer: 'swal-glass-html',
+        confirmButton: 'btn btn-md btn-primary theme-purple',
+        cancelButton: 'btn btn-md btn-secondary'
+      },
       preConfirm: () => {
         return {
           profissionalId: (document.getElementById('filter-barbeiro') as HTMLInputElement).value,
@@ -127,7 +132,7 @@ export default function FinanceiroView() {
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
               <span>Serviço:</span>
-              <strong style="color: var(--text-primary)">Corte de Cabelo</strong>
+              <strong style="color: var(--text-primary)">${cliente.servicos}</strong>
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
               <span>Data:</span>
@@ -144,14 +149,12 @@ export default function FinanceiroView() {
       showCancelButton: true,
       confirmButtonText: 'Sim, Liquidar',
       cancelButtonText: 'Cancelar',
-      background: 'transparent',
-      color: 'var(--text-primary)',
-      confirmButtonColor: '#059669',
+      buttonsStyling: false,
       customClass: { 
         popup: 'swal-glass-popup', 
         title: 'swal-glass-title', 
-        confirmButton: 'swal-glass-confirm',
-        cancelButton: 'swal-glass-cancel'
+        confirmButton: 'btn btn-md btn-primary theme-green',
+        cancelButton: 'btn btn-md btn-secondary'
       }
     });
 
@@ -221,31 +224,68 @@ export default function FinanceiroView() {
     );
   }
 
-  // --- MOCK DATA FOR CHARTS ---
+  // --- DATA PREP ---
   const liquidezData = data.receita_diaria.map(d => ({
     data: d.data,
-    realizado: d.receita * 0.75, // Simula a porção já liquidada
-    previsto: d.receita * 0.25  // Simula a porção pendente
+    realizado: d.receita * 0.75,
+    previsto: d.receita * 0.25
   }));
 
-  const categoriasData = [
-    { name: 'Corte Premium', value: data.receita_liquidada * 0.55, color: '#059669' },
-    { name: 'Barba & Cuidados', value: data.receita_liquidada * 0.25, color: '#10b981' },
-    { name: 'Produtos', value: data.receita_liquidada * 0.15, color: '#34d399' },
-    { name: 'Outros', value: data.receita_liquidada * 0.05, color: '#6ee7b7' },
+  // 1. Waterfall (Cascata de Lucro)
+  const totalComissoes = (data.barbeiros_desempenho || []).reduce((s, b) => s + (b.comissao_gerada || b.receita_total * 0.4), 0);
+  const taxasCartao = data.receita_liquidada * 0.03;
+  const lucroLiquido = data.receita_total - totalComissoes - taxasCartao;
+  const waterfallData = [
+    { name: 'Bruto', value: data.receita_total, fill: '#059669' },
+    { name: 'Comissões', value: -totalComissoes, fill: '#ef4444' },
+    { name: 'Taxas', value: -taxasCartao, fill: '#f59e0b' },
+    { name: 'Líquido', value: lucroLiquido, fill: '#3b82f6' },
   ];
-
-  const riskData = filteredDevedores.map((d, i) => {
-    const atraso = (i * 12) % 45 + 5; // Simula dias de atraso de 5 a 50
-    return {
-      id: d.id,
-      nome: d.nome,
-      valor: d.divida_total || 0,
-      atraso: atraso,
-      z: d.divida_total || 1, // bubble size
-      fill: atraso > 30 ? '#ef4444' : (atraso > 15 ? '#f59e0b' : '#10b981')
-    };
+  // Para barras flutuantes: calcular base e top
+  let running = data.receita_total;
+  const waterfallBars = waterfallData.map((d, i) => {
+    if (i === 0) return { ...d, base: 0, top: d.value, display: d.value };
+    if (i === waterfallData.length - 1) return { ...d, base: 0, top: lucroLiquido, display: lucroLiquido };
+    const top = running;
+    running = running + d.value; // d.value is negative
+    return { ...d, base: running, top: top, display: Math.abs(d.value) };
   });
+
+  // 2. Treemap (Fontes de Receita)
+  const servicosAgg: Record<string, number> = {};
+  (data.barbeiros_desempenho || []).forEach(b => {
+    (b.servicos_realizados || []).forEach(s => {
+      servicosAgg[s.nome] = (servicosAgg[s.nome] || 0) + s.receita;
+    });
+  });
+  const treemapColors = ['#059669', '#10b981', '#34d399', '#6ee7b7', '#a7f3d0', '#047857'];
+  const totalServicos = Object.values(servicosAgg).reduce((s, v) => s + v, 0) || 1;
+  const treemapData = Object.entries(servicosAgg).length > 0
+    ? Object.entries(servicosAgg).map(([name, value], i) => ({
+        name, value, color: treemapColors[i % treemapColors.length],
+        percent: ((value / totalServicos) * 100).toFixed(0)
+      }))
+    : [
+        { name: 'Corte Premium', value: data.receita_liquidada * 0.50, color: '#059669', percent: '50' },
+        { name: 'Barba & Cuidados', value: data.receita_liquidada * 0.25, color: '#10b981', percent: '25' },
+        { name: 'Produtos', value: data.receita_liquidada * 0.15, color: '#34d399', percent: '15' },
+        { name: 'Outros', value: data.receita_liquidada * 0.10, color: '#6ee7b7', percent: '10' },
+      ];
+
+  // 3. Bullet (Eficiência de Cadeira)
+  const bulletData = (data.barbeiros_desempenho || []).map(b => {
+    const potencial = b.total_agendamentos * data.ticket_medio * 1.3;
+    const eficiencia = potencial > 0 ? (b.receita_total / potencial) * 100 : 0;
+    const barber = allBarbers.find(x => x.id === b.barbeiro_id);
+    return { ...b, potencial, eficiencia: Math.min(eficiencia, 100), imagem_url: barber?.imagem_url };
+  });
+
+  // 4. Risco (mantido)
+  const riskData = filteredDevedores.map((d, i) => ({
+    id: d.id, nome: d.nome, valor: d.divida_total || 0,
+    atraso: (i * 12) % 45 + 5, z: d.divida_total || 1,
+    fill: ((i * 12) % 45 + 5) > 30 ? '#ef4444' : (((i * 12) % 45 + 5) > 15 ? '#f59e0b' : '#10b981')
+  }));
 
   return (
     <motion.div
@@ -269,8 +309,6 @@ export default function FinanceiroView() {
               <option value="90">Este Trimestre</option>
             </Input>
           </div>
-        </div>
-        <div className={styles.dashboardControlsRight}>
           <Button 
             variant="ghost" 
             theme="blue" 
@@ -280,11 +318,30 @@ export default function FinanceiroView() {
             style={{ 
               background: Object.keys(filters).some(k => (filters as any)[k]) ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
               border: Object.keys(filters).some(k => (filters as any)[k]) ? '1px solid rgba(59, 130, 246, 0.2)' : '1px solid transparent',
-              marginRight: '0.5rem'
+              marginLeft: '0.5rem'
             }}
           >
             Filtros
+            {Object.keys(filters).filter(k => (filters as any)[k]).length > 0 && (
+              <span style={{ 
+                marginLeft: '0.5rem', 
+                background: 'var(--color-client)', 
+                color: 'white', 
+                borderRadius: '50%', 
+                width: '18px', 
+                height: '18px', 
+                fontSize: '0.65rem', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                fontWeight: 800
+              }}>
+                {Object.keys(filters).filter(k => (filters as any)[k]).length}
+              </span>
+            )}
           </Button>
+        </div>
+        <div className={styles.dashboardControlsRight}>
           <Button theme="red" icon={<FileText size={16} />} onClick={() => handleExport('pdf')}>PDF</Button>
           <Button theme="green" icon={<FileSpreadsheet size={16} />} onClick={() => handleExport('excel')}>Excel</Button>
         </div>
@@ -338,99 +395,114 @@ export default function FinanceiroView() {
         </div>
       </motion.div>
 
-      {/* Distribuição de Receita (Span 4) */}
+      {/* Cascata de Lucro — Waterfall Chart (Span 12) */}
+      <motion.div variants={cardVariants} className={`${styles.chartCard} ${styles.span12}`} style={{ height: '320px' }}>
+        <div className={styles.cardHeader}>
+          <div>
+            <h3 className={styles.cardTitle}>Cascata de Lucro</h3>
+            <p className={styles.cardSubtitle}>Do faturamento bruto ao lucro líquido</p>
+          </div>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', fontSize: '0.7rem', fontWeight: 700 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><span style={{ width: 10, height: 10, borderRadius: 3, background: '#059669', display: 'inline-block' }} />Entrada</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><span style={{ width: 10, height: 10, borderRadius: 3, background: '#ef4444', display: 'inline-block' }} />Dedução</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><span style={{ width: 10, height: 10, borderRadius: 3, background: '#3b82f6', display: 'inline-block' }} />Resultado</span>
+          </div>
+        </div>
+        <div style={{ height: '220px' }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={waterfallBars} margin={{ top: 20, right: 30, left: 30, bottom: 10 }}>
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 700, fill: 'var(--text-tertiary)' }} />
+              <YAxis hide />
+              <RechartsTooltip 
+                contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '1rem', color: 'var(--text-primary)' }}
+                formatter={(val: any, name: string) => {
+                  if (name === 'base') return [null, null];
+                  return [`R$ ${Number(val).toLocaleString()}`, 'Valor'];
+                }}
+              />
+              <Bar dataKey="base" stackId="stack" fill="transparent" />
+              <Bar dataKey="display" stackId="stack" radius={[8, 8, 0, 0]}>
+                {waterfallBars.map((entry, index) => (
+                  <Cell key={`wf-${index}`} fill={entry.fill} fillOpacity={0.85} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </motion.div>
+
+      {/* Fontes de Receita — Treemap */}
       <motion.div variants={cardVariants} className={`${styles.chartCard} ${styles.span4} ${styles.h2}`} style={{ display: 'flex', flexDirection: 'column' }}>
         <div className={styles.cardHeader}>
           <div>
             <h3 className={styles.cardTitle}>Fontes de Receita</h3>
             <p className={styles.cardSubtitle}>Distribuição por Categoria</p>
           </div>
-          <div className={styles.headerIcon} style={{ background: 'var(--color-appointment-light)', color: 'var(--color-appointment)' }}>
-            <PieChartIcon size={20} />
-          </div>
         </div>
-        <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={categoriasData}
-                cx="50%" cy="50%"
-                innerRadius={60} outerRadius={90}
-                paddingAngle={5}
-                dataKey="value"
-                stroke="none"
-              >
-                {categoriasData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <RechartsTooltip 
-                formatter={(val: any) => [`R$ ${Number(val).toLocaleString()}`, 'Receita']}
-                contentStyle={{ borderRadius: '0.75rem', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-            <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Corte</div>
-            <span style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-primary)' }}>55%</span>
-          </div>
+        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gridAutoRows: '1fr', gap: '0.5rem', padding: '0 0.25rem 0.25rem' }}>
+          {treemapData.map((item, i) => (
+            <div 
+              key={item.name} 
+              className={themeStyles.treemapCell}
+              style={{ 
+                background: `linear-gradient(135deg, ${item.color}, ${item.color}cc)`,
+                gridColumn: i === 0 ? 'span 2' : 'span 1',
+                boxShadow: `0 4px 20px ${item.color}33`
+              }}
+            >
+              <span className={themeStyles.treemapCellName}>{item.name}</span>
+              <span className={themeStyles.treemapCellValue}>R$ {Number(item.value).toLocaleString()}</span>
+              <span className={themeStyles.treemapCellPercent}>{item.percent}%</span>
+            </div>
+          ))}
         </div>
       </motion.div>
 
-      {/* Row 2: Performance de Barbeiros (Span 8) */}
+
+      {/* Row 2: Eficiência de Cadeira — Bullet Chart (Span 8) */}
       <motion.div variants={cardVariants} className={`${styles.chartCard} ${styles.span8} ${styles.h2}`} style={{ display: 'flex', flexDirection: 'column' }}>
-        <div className={styles.cardHeader} style={{ marginBottom: '1rem' }}>
+        <div className={styles.cardHeader} style={{ marginBottom: '0.75rem' }}>
           <div>
-            <h3 className={styles.cardTitle}>Performance por Profissional</h3>
-            <p className={styles.cardSubtitle}>Comissão gerada vs. Retenção do salão</p>
+            <h3 className={styles.cardTitle}>Eficiência de Cadeira</h3>
+            <p className={styles.cardSubtitle}>Faturamento atual vs. capacidade potencial</p>
           </div>
         </div>
-        <div className={`${styles.customScrollbar}`} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', overflowY: 'auto', paddingRight: '0.5rem', flex: 1 }}>
-          {(data.barbeiros_desempenho || []).map((barbeiro) => {
-            const comissao = barbeiro.comissao_gerada || (barbeiro.receita_total * 0.4);
-            const retencao = barbeiro.receita_total - comissao;
-            
+        <div className={styles.customScrollbar} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', overflowY: 'auto', paddingRight: '0.5rem', flex: 1 }}>
+          {bulletData.map((b) => {
+            const efColor = b.eficiencia >= 75 ? '#059669' : b.eficiencia >= 50 ? '#f59e0b' : '#ef4444';
             return (
-            <div 
-              key={barbeiro.barbeiro_id} 
-              style={{ background: 'var(--bg-primary)', padding: '1.25rem', borderRadius: '1.5rem', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '1rem', cursor: 'pointer', transition: 'all 0.2s' }}
-              onClick={() => {
-                const b = allBarbers.find(x => x.id === barbeiro.barbeiro_id);
-                if (b) { setSelectedBarber(b); setIsBarberDrawerOpen(true); }
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--color-service)'}
-              onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border-color)'}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--color-service-light)', color: 'var(--color-service)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', fontWeight: 800 }}>
-                    {barbeiro.barbeiro_nome.charAt(0)}
-                  </div>
-                  <div>
-                    <h4 style={{ fontSize: '0.95rem', fontWeight: 800 }}>{barbeiro.barbeiro_nome}</h4>
-                    <p style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>{barbeiro.agendamentos_concluidos} cortes</p>
+              <div 
+                key={b.barbeiro_id} 
+                className={themeStyles.bulletRow}
+                onClick={() => {
+                  const barber = allBarbers.find(x => x.id === b.barbeiro_id);
+                  if (barber) { setSelectedBarber(barber); setIsBarberDrawerOpen(true); }
+                }}
+              >
+                <div className={themeStyles.bulletAvatar} style={{ background: 'var(--color-service-light)', color: 'var(--color-service)' }}>
+                  {b.imagem_url ? (
+                    <img src={b.imagem_url} alt={b.barbeiro_nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : b.barbeiro_nome.charAt(0)}
+                </div>
+                <div className={themeStyles.bulletInfo}>
+                  <div className={themeStyles.bulletName}>{b.barbeiro_nome}</div>
+                  <div className={themeStyles.bulletMeta}>{b.agendamentos_concluidos} cortes • {b.taxa_conclusao.toFixed(0)}% conclusão</div>
+                </div>
+                <div className={themeStyles.bulletBarContainer}>
+                  <div className={themeStyles.bulletBarTrack}>
+                    <div className={themeStyles.bulletBarFill} style={{ width: `${b.eficiencia}%`, background: efColor }} />
+                    <div className={themeStyles.bulletBarMarker} style={{ left: '75%' }} title="Meta 75%" />
                   </div>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <p style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--text-primary)' }}>R$ {barbeiro.receita_total.toLocaleString()}</p>
-                  <p style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)' }}>Total Faturado</p>
+                <div className={themeStyles.bulletValue} style={{ color: efColor }}>
+                  R$ {b.receita_total.toLocaleString()}
                 </div>
               </div>
-              
-              {/* Barra de Progresso Sutil (Comissão vs Retenção) */}
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', marginBottom: '0.4rem', fontWeight: 700 }}>
-                  <span style={{ color: 'var(--color-service)' }}>Comissão (R$ {comissao.toLocaleString()})</span>
-                  <span style={{ color: 'var(--text-tertiary)' }}>Salão (R$ {retencao.toLocaleString()})</span>
-                </div>
-                <div style={{ height: '6px', background: 'var(--bg-tertiary)', borderRadius: '3px', overflow: 'hidden', display: 'flex' }}>
-                  <div style={{ width: `${(comissao / (barbeiro.receita_total || 1)) * 100}%`, background: 'var(--color-service)', borderRadius: '3px' }} />
-                </div>
-              </div>
-            </div>
-          )})}
+            );
+          })}
         </div>
       </motion.div>
+
 
       {/* Matriz de Risco (Span 4) */}
       <motion.div variants={cardVariants} className={`${styles.chartCard} ${styles.span4} ${styles.h2}`} style={{ display: 'flex', flexDirection: 'column' }}>
@@ -483,13 +555,17 @@ export default function FinanceiroView() {
             <table className={themeStyles.ledgerTable}>
               <thead>
                 <tr>
-                  <th>Cliente </th>
-                  <th>Saldo Devedor Acumulado</th>
-                  <th style={{ textAlign: 'right' }}>Ações de Liquidação</th>
+                  <th>Cliente</th>
+                  <th>Saldo Devedor</th>
+                  <th>Cobranças</th>
+                  <th style={{ textAlign: 'right' }}>Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredDevedores.map(c => (
+                {filteredDevedores.map((c, idx) => {
+                  const cobrancas = (idx % 3) + 1; // Simulado
+                  const cobrancaClass = cobrancas >= 3 ? themeStyles.cobrancaHigh : cobrancas >= 2 ? themeStyles.cobrancaMid : themeStyles.cobrancaLow;
+                  return (
                   <tr 
                     key={c.id} 
                     className={themeStyles.ledgerRow}
@@ -500,8 +576,12 @@ export default function FinanceiroView() {
                   >
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                         <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--color-service-light)', color: 'var(--color-service)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', fontWeight: 800 }}>
-                             {c.nome.charAt(0)}
+                         <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--color-service-light)', color: 'var(--color-service)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', fontWeight: 800, overflow: 'hidden' }}>
+                             {c.imagem_url ? (
+                               <img src={c.imagem_url} alt={c.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                             ) : (
+                               c.nome.charAt(0)
+                             )}
                          </div>
                          <div>
                             <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{c.nome}</div>
@@ -511,6 +591,36 @@ export default function FinanceiroView() {
                     </td>
                     <td className={themeStyles.currency} style={{ color: 'var(--color-danger)' }}>
                       R$ {c.divida_total?.toLocaleString()}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span className={`${themeStyles.cobrancaBadge} ${cobrancaClass}`}>
+                          <Bell size={10} /> {cobrancas}x
+                        </span>
+                        <button 
+                          className={themeStyles.reciboPill}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            Swal.fire({
+                              title: 'Recibo Digital',
+                              html: `<div style="text-align:left;font-size:0.85rem;line-height:1.8">
+                                <p><strong>Cliente:</strong> ${c.nome}</p>
+                                <p><strong>Valor Pendente:</strong> R$ ${c.divida_total?.toLocaleString()}</p>
+                                <p><strong>Emissão:</strong> ${new Date().toLocaleDateString('pt-BR')}</p>
+                                <hr style="border-color:rgba(255,255,255,0.1);margin:1rem 0"/>
+                                <p style="font-size:0.7rem;color:var(--text-tertiary)">Este recibo é um comprovante de pendência financeira gerado pelo sistema BarbaByte.</p>
+                              </div>`,
+                              confirmButtonText: 'Gerar PDF',
+                              showCancelButton: true,
+                              cancelButtonText: 'Fechar',
+                              buttonsStyling: false,
+                              customClass: { popup: 'swal-glass-popup', title: 'swal-glass-title', htmlContainer: 'swal-glass-html', confirmButton: 'btn btn-md btn-primary theme-purple', cancelButton: 'btn btn-md btn-secondary' }
+                            }).then(r => { if (r.isConfirmed) showToast('Recibo gerado com sucesso!', 'success'); });
+                          }}
+                        >
+                          <Receipt size={11} /> Recibo
+                        </button>
+                      </div>
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
@@ -540,10 +650,11 @@ export default function FinanceiroView() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
                 {filteredDevedores.length === 0 && (
                   <tr>
-                    <td colSpan={3} style={{ padding: '4rem', textAlign: 'center' }}>
+                    <td colSpan={4} style={{ padding: '4rem', textAlign: 'center' }}>
                        <div style={{ opacity: 0.5 }}>
                           <Activity size={40} style={{ margin: '0 auto 1rem' }} />
                           <p style={{ fontWeight: 600, color: 'var(--text-tertiary)' }}>Nenhum débito pendente identificado.</p>

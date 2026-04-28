@@ -19,13 +19,13 @@ export default function AppLayout() {
       showCancelButton: true,
       confirmButtonText: 'Sim, Sair',
       cancelButtonText: 'Permanecer Conectado',
-      confirmButtonColor: '#ef4444',
-      cancelButtonColor: 'var(--bg-tertiary)',
-      background: 'transparent',
+      buttonsStyling: false,
       customClass: {
         popup: 'swal-glass-popup',
         title: 'swal-glass-title',
-        htmlContainer: 'swal-glass-html'
+        htmlContainer: 'swal-glass-html',
+        confirmButton: 'btn btn-md btn-danger',
+        cancelButton: 'btn btn-md btn-secondary'
       }
     }).then((result) => {
       if (result.isConfirmed) {

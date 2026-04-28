@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, Bell, XCircle, Settings, CheckCircle2, ChevronRight, Users, Scissors, Briefcase, Calendar, Home, History, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, Bell, XCircle, Settings, CheckCircle2, ChevronRight, Users, Scissors, Briefcase, Calendar, Home, History, TrendingUp, AlertTriangle, Info as InfoIcon, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { type SidebarTab } from './Sidebar';
 import ThemeToggle from '../ui/ThemeToggle';
@@ -32,7 +32,7 @@ export default function Header({ activeTabName, activeTab }: HeaderProps) {
     message: string;
     time: string;
     read: boolean;
-    type: 'cancel' | 'system';
+    type: 'cancel' | 'system' | 'debt' | 'success' | 'info' | 'warning' | 'error';
   }
 
   const [showNotifications, setShowNotifications] = useState(false);
@@ -146,8 +146,20 @@ export default function Header({ activeTabName, activeTab }: HeaderProps) {
                         key={notif.id} 
                         className={`${styles.notificationItem} ${!notif.read ? styles.unread : ''}`}
                       >
-                        <div className={`${styles.notifIcon} ${notif.type === 'cancel' ? styles.iconCancel : styles.iconSystem}`}>
-                          {notif.type === 'cancel' ? <XCircle size={16} /> : <Settings size={16} />}
+                        <div className={`
+                          ${styles.notifIcon} 
+                          ${notif.type === 'cancel' ? styles.iconCancel : ''}
+                          ${notif.type === 'system' ? styles.iconSystem : ''}
+                          ${notif.type === 'debt' || notif.type === 'warning' ? styles.iconWarning : ''}
+                          ${notif.type === 'success' ? styles.iconSuccess : ''}
+                          ${notif.type === 'info' ? styles.iconInfo : ''}
+                          ${notif.type === 'error' ? styles.iconError : ''}
+                        `}>
+                          {notif.type === 'cancel' || notif.type === 'error' ? <XCircle size={16} /> : 
+                           notif.type === 'system' ? <Settings size={16} /> :
+                           notif.type === 'debt' || notif.type === 'warning' ? <AlertTriangle size={16} /> :
+                           notif.type === 'success' ? <CheckCircle size={16} /> :
+                           <InfoIcon size={16} />}
                         </div>
                         <div className={styles.notifContent}>
                           <p><strong>{notif.title}</strong> - {notif.message}</p>

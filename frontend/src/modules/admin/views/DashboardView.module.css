@@ -90,8 +90,23 @@
   box-shadow: none;
 }
 
-.chartCard:hover, .kpiCard:hover, .statMiniCard:hover {
+.chartCard:hover, .statMiniCard:hover {
   transform: translateY(-6px) scale(1.01);
+  box-shadow: var(--shadow-xl);
+}
+
+.kpiCard:hover {
+  transform: translateY(-6px);  
+  box-shadow: var(--shadow-xl);
+}
+
+/* Remover efeito de hover no Flip Card para não bugar o 3D */
+.flipCardContainer:hover {
+  transform: none !important;
+}
+
+.flipCardContainer:hover .kpiCard {
+  transform: none !important;
   box-shadow: var(--shadow-xl);
 }
 
@@ -391,10 +406,187 @@
   margin-top: auto; 
 }
 
+/* ── FLIP CARD (Faturamento Bruto ↔ Definir Metas) ── */
+
+.flipCardContainer {
+  perspective: 1200px;
+  grid-column: span 4;
+  height: 380px;
+}
+
+.flipCardInner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.8s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.flipCardInner.flipped {
+  transform: rotateY(-180deg);
+}
+
+.flipFront,
+.flipBack {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 1.75rem;
+  overflow: hidden;
+}
+
+.flipBack {
+  transform: rotateY(180deg);
+  background: var(--color-client);
+  color: white;
+  padding: 1.5rem; /* Reduzido de 2rem */
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.flipBackHeader {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1.25rem;
+  position: relative;
+}
+
+.flipBackTitle {
+  font-size: 1.85rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.flipBackSubtitle {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  margin-top: 0.2rem;
+  font-weight: 500;
+}
+
+.flipBackCloseBtn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.flipBackCloseBtn:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.flipInputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem; /* Reduzido de 1.25rem */
+  flex: 1;
+  overflow-y: auto; /* Prevenção de quebra */
+}
+
+.flipInputWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.flipInputLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+}
+
+.flipInput {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.75rem;
+  color: white;
+  font-weight: 700;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.flipInput::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.flipInput:focus {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+}
+
+.flipInputLg {
+  padding: 0.85rem 1rem;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.flipInputSm {
+  padding: 0.6rem 0.85rem;
+  font-size: 0.85rem;
+}
+
+.flipSaveBtn {
+  margin-top: auto;
+  width: 100%;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 0.75rem;
+  color: white;
+  font-weight: 800;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.flipSaveBtn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Efeito de Glow Verde para o Ticket Médio */
+.ticketCardGlow {
+  position: relative;
+  overflow: hidden;
+}
+
+.ticketCardGlow::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 70%;  
+  background: linear-gradient(to top, rgba(16, 185, 129, 0.08) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
 /* Responsive Grid */
 @media (max-width: 1200px) {
-  .span8, .span4, .span6 { grid-column: span 12; }
+  .span8, .span4, .span6, .flipCardContainer { grid-column: span 12; }
   .h3, .h2 { height: auto; min-height: 400px; }
+  .flipCardContainer { height: auto; min-height: 400px; }
 }
 
 @media (max-width: 600px) {

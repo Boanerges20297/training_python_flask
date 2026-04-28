@@ -95,23 +95,28 @@ export default function BarbersView() {
     Swal.fire({
       title: 'Filtrar Equipe',
       html: `
-        <div style="display: flex; flex-direction: column; gap: 1.25rem; text-align: left; padding: 0.5rem;">
-          <div>
-            <label style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 0.5rem;">Pesquisar por ID</label>
-            <input type="number" id="filter-id" class="swal2-input" style="margin: 0; width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 0.75rem; height: 3rem;" placeholder="Ex: 10" value="${filters.profissionalId || ''}">
+        <div class="swal-grid">
+          <div class="swal-form-group swal-col-4">
+            <label class="swal-input-label">ID</label>
+            <input type="number" id="filter-id" class="swal-input-premium" placeholder="Ex: 10" value="${filters.profissionalId || ''}">
           </div>
-          <div>
-            <label style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 0.5rem;">Status</label>
-            <input type="text" id="filter-status" class="swal2-input" style="margin: 0; width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 0.75rem; height: 3rem;" placeholder="Ex: ativo ou inativo" value="${filters.status || ''}">
+          <div class="swal-form-group swal-col-8">
+            <label class="swal-input-label">Status</label>
+            <input type="text" id="filter-status" class="swal-input-premium" placeholder="Ex: ativo ou inativo" value="${filters.status || ''}">
           </div>
         </div>
       `,
       showCancelButton: true,
       confirmButtonText: 'Aplicar Filtro',
       cancelButtonText: 'Limpar',
-      confirmButtonColor: 'var(--color-primary)',
-      background: 'transparent',
-      customClass: { popup: 'swal-glass-popup', title: 'swal-glass-title', htmlContainer: 'swal-glass-html' },
+      buttonsStyling: false,
+      customClass: { 
+        popup: 'swal-glass-popup', 
+        title: 'swal-glass-title', 
+        htmlContainer: 'swal-glass-html',
+        confirmButton: 'btn btn-md btn-primary theme-purple',
+        cancelButton: 'btn btn-md btn-secondary'
+      },
       preConfirm: () => {
         return {
           profissionalId: (document.getElementById('filter-id') as HTMLInputElement).value,
@@ -141,6 +146,26 @@ export default function BarbersView() {
       style: { width: '40px' }
     },
     {
+      header: 'Foto',
+      render: (barbeiro: Barbeiro) => (
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <div style={{ 
+            width: '36px', height: '36px', borderRadius: '10px', 
+            background: 'var(--color-barber-light)', color: 'var(--color-barber)', 
+            display: 'flex', alignItems: 'center', justifyContent: 'center', 
+            fontSize: '0.9rem', fontWeight: 800, overflow: 'hidden' 
+          }}>
+            {barbeiro.imagem_url ? (
+              <img src={barbeiro.imagem_url} alt={barbeiro.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              barbeiro.nome.charAt(0).toUpperCase()
+            )}
+          </div>
+        </div>
+      ),
+      align: 'center'
+    },
+    {
       header: 'Nome',
       render: (barbeiro: Barbeiro) => (
         <div className="text-capitalize" style={{ fontWeight: 600 }}>{barbeiro.nome}</div>
@@ -150,24 +175,19 @@ export default function BarbersView() {
     {
       header: 'Especialidades',
       render: (barbeiro: Barbeiro) => (
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          gap: '0.5rem',
-          fontSize: '0.85rem', 
-          color: '#94a3b8'
-        }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
           <Award size={14} color="#f59e0b" style={{ flexShrink: 0 }} />
-          <span className="text-capitalize" style={{ textAlign: 'center' }}>
-            {barbeiro.especialidades?.slice(0, 2).map(e => getSpecialtyLabel(e)).join(', ')}
-            {barbeiro.especialidades?.length > 2 && (
-              <span style={{ fontSize: '0.7rem', color: 'var(--color-amber)', marginLeft: '4px', fontWeight: 700 }}>
-                +{barbeiro.especialidades.length - 2}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            {barbeiro.especialidades?.slice(0, 2).map((e, idx) => (
+              <span key={e} className="text-capitalize" style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                {getSpecialtyLabel(e)}{idx === 0 && barbeiro.especialidades!.length > 1 && ','}
               </span>
+            ))}
+            {barbeiro.especialidades?.length > 2 && (
+              <span style={{ fontSize: '0.7rem', color: '#f59e0b', fontWeight: 800 }}>+{barbeiro.especialidades.length - 2}</span>
             )}
-            {(!barbeiro.especialidades || barbeiro.especialidades.length === 0) && 'N/A'}
-          </span>
+            {(!barbeiro.especialidades || barbeiro.especialidades.length === 0) && <span className="badge">N/A</span>}
+          </div>
         </div>
       ),
       align: 'center',
@@ -192,14 +212,11 @@ export default function BarbersView() {
       header: 'Status',
       render: (barbeiro: Barbeiro) => (
         <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <span style={{ 
-            padding: '0.25rem 0.75rem', 
-            borderRadius: '1rem', 
-            fontSize: '0.75rem', 
-            fontWeight: 700,
+          <span className="pill" style={{ 
             background: barbeiro.ativo ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
             color: barbeiro.ativo ? '#10b981' : '#ef4444',
-            border: `1px solid ${barbeiro.ativo ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`
+            border: `1px solid ${barbeiro.ativo ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`,
+            fontSize: '0.7rem'
           }}>
             {barbeiro.ativo ? 'ATIVO' : 'INATIVO'}
           </span>
@@ -209,7 +226,7 @@ export default function BarbersView() {
     },
     {
       header: 'ID',
-      render: (barbeiro: Barbeiro) => <span className="badge" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>#{barbeiro.id}</span>,
+      render: (barbeiro: Barbeiro) => <span className="badge badge-amber">#{barbeiro.id}</span>,
       align: 'center'
     },
     {
@@ -245,13 +262,35 @@ export default function BarbersView() {
         data={filteredBarbeiros}
         columns={columns}
         extraActions={
-          <Button
-            variant="secondary"
+          <Button 
+            variant="ghost" 
+            theme="amber" 
             size="sm"
             icon={<Filter size={16} />}
             onClick={handleFilterClick}
+            style={{ 
+              background: Object.keys(filters).some(k => (filters as any)[k]) ? 'rgba(245, 158, 11, 0.1)' : 'transparent',
+              border: Object.keys(filters).some(k => (filters as any)[k]) ? '1px solid rgba(245, 158, 11, 0.2)' : '1px solid transparent'
+            }}
           >
             Filtros
+            {Object.keys(filters).filter(k => (filters as any)[k]).length > 0 && (
+              <span style={{ 
+                marginLeft: '0.5rem', 
+                background: 'var(--color-barber)', 
+                color: 'white', 
+                borderRadius: '50%', 
+                width: '18px', 
+                height: '18px', 
+                fontSize: '0.65rem', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                fontWeight: 800
+              }}>
+                {Object.keys(filters).filter(k => (filters as any)[k]).length}
+              </span>
+            )}
           </Button>
         }
         selectable={true}

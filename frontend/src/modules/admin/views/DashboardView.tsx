@@ -4,7 +4,7 @@ import { getDashboardInfo } from '../../../api/dashboard';
 import type { DashboardData } from '../../../types';
 import {
   TrendingUp, Calendar,
-  Activity, FileText, FileSpreadsheet, Filter
+  Activity, FileText, FileSpreadsheet, Filter, Target, X
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -99,6 +99,19 @@ const DashboardView = () => {
   const [allServicos, setAllServicos] = useState<Servico[]>([]);
   const [fullAgendamentos, setFullAgendamentos] = useState<Agendamento[]>([]);
 
+  // Estado do Flip Card de Metas
+  const [isGoalFlipped, setIsGoalFlipped] = useState(false);
+  const [goalValues, setGoalValues] = useState({
+    metaFaturamento: '',
+    metaClientes: '',
+    metaPeriodo: '30'
+  });
+
+  const handleSaveGoals = () => {
+    showToast('Metas definidas com sucesso!', 'success');
+    setIsGoalFlipped(false);
+  };
+
   const { showToast } = useToast();
 
   const fetchDashboard = async (dias: number) => {
@@ -142,27 +155,32 @@ const DashboardView = () => {
     Swal.fire({
       title: 'Filtrar Agenda do Dia',
       html: `
-        <div style="display: flex; flex-direction: column; gap: 1.25rem; text-align: left; padding: 0.5rem;">
-          <div>
-            <label style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 0.5rem;">ID do Profissional</label>
-            <input type="number" id="filter-profissional" class="swal2-input" style="margin: 0; width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 0.75rem; height: 3rem;" placeholder="Ex: 12" value="${filters.profissionalId || ''}">
+        <div class="swal-grid">
+          <div class="swal-form-group swal-col-4">
+            <label class="swal-input-label">ID Profissional</label>
+            <input type="number" id="filter-profissional" class="swal-input-premium" placeholder="Ex: 10" value="${filters.profissionalId || ''}">
           </div>
-          <div>
-            <label style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 0.5rem;">ID do Serviço</label>
-            <input type="number" id="filter-servico" class="swal2-input" style="margin: 0; width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 0.75rem; height: 3rem;" placeholder="Ex: 5" value="${filters.servicoId || ''}">
+          <div class="swal-form-group swal-col-4">
+            <label class="swal-input-label">ID Serviço</label>
+            <input type="number" id="filter-servico" class="swal-input-premium" placeholder="Ex: 5" value="${filters.servicoId || ''}">
           </div>
-          <div>
-            <label style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 0.5rem;">Status</label>
-            <input type="text" id="filter-status" class="swal2-input" style="margin: 0; width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 0.75rem; height: 3rem;" placeholder="Ex: pendente, concluído..." value="${filters.status || ''}">
+          <div class="swal-form-group swal-col-4">
+            <label class="swal-input-label">Status</label>
+            <input type="text" id="filter-status" class="swal-input-premium" placeholder="Pendente..." value="${filters.status || ''}">
           </div>
         </div>
       `,
       showCancelButton: true,
       confirmButtonText: 'Aplicar Filtros',
       cancelButtonText: 'Limpar Tudo',
-      confirmButtonColor: 'var(--color-primary)',
-      background: 'transparent',
-      customClass: { popup: 'swal-glass-popup', title: 'swal-glass-title', htmlContainer: 'swal-glass-html' },
+      buttonsStyling: false,
+      customClass: { 
+        popup: 'swal-glass-popup', 
+        title: 'swal-glass-title', 
+        htmlContainer: 'swal-glass-html',
+        confirmButton: 'btn btn-md btn-primary theme-purple',
+        cancelButton: 'btn btn-md btn-secondary'
+      },
       preConfirm: () => {
         return {
           profissionalId: (document.getElementById('filter-profissional') as HTMLInputElement).value,
@@ -196,10 +214,13 @@ const DashboardView = () => {
         title: 'Pronto!',
         text: `O download do arquivo ${type.toUpperCase()} iniciará em breve.`,
         icon: 'success',
-        background: 'transparent',
-        color: 'var(--text-primary)',
-        confirmButtonColor: 'var(--color-client)',
-        customClass: { popup: 'swal-glass-popup', title: 'swal-glass-title', htmlContainer: 'swal-glass-html', confirmButton: 'swal-glass-confirm' }
+        buttonsStyling: false,
+        customClass: { 
+          popup: 'swal-glass-popup', 
+          title: 'swal-glass-title', 
+          htmlContainer: 'swal-glass-html', 
+          confirmButton: 'btn btn-md btn-primary theme-green'
+        }
       });
     });
   };
@@ -257,9 +278,38 @@ const DashboardView = () => {
             }}
           >
             Filtros
+            {Object.keys(filters).filter(k => (filters as any)[k]).length > 0 && (
+              <span style={{ 
+                marginLeft: '0.5rem', 
+                background: 'var(--color-purple)', 
+                color: 'white', 
+                borderRadius: '50%', 
+                width: '18px', 
+                height: '18px', 
+                fontSize: '0.65rem', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                fontWeight: 800
+              }}>
+                {Object.keys(filters).filter(k => (filters as any)[k]).length}
+              </span>
+            )}
           </Button>
         </div>
         <div className={styles.dashboardControlsRight}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            icon={<Target size={16} />}
+            onClick={() => setIsGoalFlipped(!isGoalFlipped)}
+            style={{ 
+              background: isGoalFlipped ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+              border: isGoalFlipped ? '1px solid rgba(59, 130, 246, 0.2)' : '1px solid transparent'
+            }}
+          >
+            Metas
+          </Button>
           <Button variant="primary" theme="red" icon={<FileText size={16} />} onClick={() => handleExport('pdf')}>PDF</Button>
           <Button variant="primary" theme="green" icon={<FileSpreadsheet size={16} />} onClick={() => handleExport('excel')}>Excel</Button>
         </div>
@@ -311,44 +361,106 @@ const DashboardView = () => {
         </div>
       </motion.div>
 
-      {/* 2. Faturamento Bruto (Topo Direita) */}
-      <motion.div variants={cardVariants} className={`${styles.kpiCard} ${styles.span4} ${styles.h2}`} style={{ background: 'var(--color-client)', color: 'white', position: 'relative', overflow: 'hidden', padding: '1.75rem' }}>
-        <div style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', width: '85px', height: '85px', zIndex: 3 }}>
-          <svg viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)', overflow: 'visible' }}>
-            <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="10" strokeLinecap="round" />
-            <circle cx="50" cy="50" r="42" fill="none" stroke="white" strokeWidth="10" strokeDasharray="263.8" strokeDashoffset={263.8 * (1 - 0.85)} strokeLinecap="round" style={{ transition: 'stroke-dashoffset 1.5s ease-out', filter: 'drop-shadow(0 0 5px rgba(255,255,255,0.5))' }} />
-          </svg>
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontSize: '1rem', fontWeight: 900 }}>85%</span>
-            <span style={{ fontSize: '0.5rem', fontWeight: 700, textTransform: 'uppercase', opacity: 0.8 }}>Meta</span>
+      {/* 2. Faturamento Bruto — Flip Card (Frente: KPI / Verso: Metas) */}
+      <motion.div variants={cardVariants} className={styles.flipCardContainer}>
+        <div className={`${styles.flipCardInner} ${isGoalFlipped ? styles.flipped : ''}`}>
+          {/* ═══ FRENTE ═══ */}
+          <div className={styles.flipFront}>
+            <div className={styles.kpiCard} style={{ background: 'var(--color-client)', color: 'white', position: 'relative', overflow: 'hidden', padding: '1.75rem', height: '100%', borderRadius: '1.75rem' }}>
+              <div style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', width: '85px', height: '85px', zIndex: 3 }}>
+                <svg viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)', overflow: 'visible' }}>
+                  <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="10" strokeLinecap="round" />
+                  <circle cx="50" cy="50" r="42" fill="none" stroke="white" strokeWidth="10" strokeDasharray="263.8" strokeDashoffset={263.8 * (1 - (goalValues.metaFaturamento ? Math.min(data.receita_total / parseFloat(goalValues.metaFaturamento), 1) : 0.85))} strokeLinecap="round" style={{ transition: 'stroke-dashoffset 1.5s ease-out', filter: 'drop-shadow(0 0 5px rgba(255,255,255,0.5))' }} />
+                </svg>
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontSize: '1rem', fontWeight: 900 }}>
+                    {goalValues.metaFaturamento ? `${Math.min(Math.round((data.receita_total / parseFloat(goalValues.metaFaturamento)) * 100), 100)}%` : '85%'}
+                  </span>
+                  <span style={{ fontSize: '0.5rem', fontWeight: 700, textTransform: 'uppercase', opacity: 0.8 }}>Meta</span>
+                </div>
+              </div>
+              <div className={styles.kpiContent} style={{ height: '100%', display: 'flex', flexDirection: 'column', zIndex: 2, position: 'relative' }}>
+                <div style={{ maxWidth: '65%' }}>
+                  <p className={styles.kpiLabel} style={{ color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>Faturamento Bruto</p>
+                  <h2 className={styles.kpiValue} style={{ fontSize: 'clamp(2rem, 4vw, 3.2rem)', color: 'white', marginTop: '0.5rem', lineHeight: 1.1 }}>R$ {data.receita_total.toLocaleString('pt-BR')}</h2>
+                  <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)', marginTop: '0.75rem' }}>
+                    {goalValues.metaFaturamento 
+                      ? `Meta: R$ ${parseFloat(goalValues.metaFaturamento).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`
+                      : `Próximo à meta semanal de R$ ${(data.receita_total * 1.15).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`
+                    }
+                  </p>
+                </div>
+                <div style={{ height: '110px', marginTop: 'auto', marginLeft: '-1.75rem', marginRight: '-1.75rem' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={data.receita_diaria}>
+                      <defs>
+                        <linearGradient id="colorFaturamento" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="white" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="white" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <RechartsTooltip 
+                        contentStyle={{ background: 'var(--bg-secondary)', border: 'none', borderRadius: '1rem', color: 'var(--text-primary)', fontSize: '0.75rem' }}
+                        formatter={(value: any) => [`R$ ${value}`, 'Faturamento']}
+                        labelFormatter={(label) => `Dia: ${label}`}
+                      />
+                      <Area type="monotone" dataKey="receita" stroke="white" strokeWidth={2.5} fillOpacity={1} fill="url(#colorFaturamento)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+              <div style={{ position: 'absolute', bottom: '-40px', right: '-40px', width: '220px', height: '220px', background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%)', borderRadius: '50%', zIndex: 1 }} />
+            </div>
           </div>
-        </div>
-        <div className={styles.kpiContent} style={{ height: '100%', display: 'flex', flexDirection: 'column', zIndex: 2, position: 'relative' }}>
-          <div style={{ maxWidth: '65%' }}>
-            <p className={styles.kpiLabel} style={{ color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>Faturamento Bruto</p>
-            <h2 className={styles.kpiValue} style={{ fontSize: 'clamp(2rem, 4vw, 3.2rem)', color: 'white', marginTop: '0.5rem', lineHeight: 1.1 }}>R$ {data.receita_total.toLocaleString('pt-BR')}</h2>
-            <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)', marginTop: '0.75rem' }}>Próximo à meta semanal de R$ {(data.receita_total * 1.15).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</p>
-          </div>
-          <div style={{ height: '110px', marginTop: 'auto', marginLeft: '-1.75rem', marginRight: '-1.75rem' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data.receita_diaria}>
-                <defs>
-                  <linearGradient id="colorFaturamento" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="white" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="white" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <RechartsTooltip 
-                  contentStyle={{ background: 'var(--bg-secondary)', border: 'none', borderRadius: '1rem', color: 'var(--text-primary)', fontSize: '0.75rem' }}
-                  formatter={(value: any) => [`R$ ${value}`, 'Faturamento']}
-                  labelFormatter={(label) => `Dia: ${label}`}
+
+          {/* ═══ VERSO (Definir Metas) ═══ */}
+          <div className={styles.flipBack}>
+            <div className={styles.flipBackHeader}>
+              <div>
+                <h1 className={styles.flipBackTitle}>Definir Metas</h1>
+                <p className={styles.flipBackSubtitle}>Configure os objetivos do período</p>
+              </div>
+              <button className={styles.flipBackCloseBtn} onClick={() => setIsGoalFlipped(false)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className={styles.flipInputGroup}>
+              <div className={styles.flipInputWrapper} style={{ marginTop: '0.5rem' }}>
+                <label className={styles.flipInputLabel}>Meta de Faturamento (R$)</label>
+                <input 
+                  type="text"
+                  className={`${styles.flipInput} ${styles.flipInputLg}`}
+                  placeholder="R$ 0,00"
+                  value={goalValues.metaFaturamento ? `R$ ${parseFloat(goalValues.metaFaturamento).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '');
+                    const numericValue = (Number(val) / 100).toString();
+                    setGoalValues(prev => ({ ...prev, metaFaturamento: numericValue }));
+                  }}
                 />
-                <Area type="monotone" dataKey="receita" stroke="white" strokeWidth={2.5} fillOpacity={1} fill="url(#colorFaturamento)" />
-              </AreaChart>
-            </ResponsiveContainer>
+              </div>
+
+              <div className={styles.flipInputWrapper}>
+                <label className={styles.flipInputLabel}>Período de Referência</label>
+                <select 
+                  className={`${styles.flipInput} ${styles.flipInputSm}`}
+                  value={goalValues.metaPeriodo}
+                  onChange={(e) => setGoalValues(prev => ({ ...prev, metaPeriodo: e.target.value }))}
+                >
+                  <option value="7" style={{ color: '#1e293b' }}>Semanal</option>
+                  <option value="15" style={{ color: '#1e293b' }}>Quinzenal</option>
+                  <option value="30" style={{ color: '#1e293b' }}>Mensal</option>
+                  <option value="90" style={{ color: '#1e293b' }}>Trimestral</option>
+                </select>
+              </div>
+            </div>
+
+            <button className={styles.flipSaveBtn} onClick={handleSaveGoals}>
+              Salvar Metas
+            </button>
           </div>
         </div>
-        <div style={{ position: 'absolute', bottom: '-40px', right: '-40px', width: '220px', height: '220px', background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%)', borderRadius: '50%', zIndex: 1 }} />
       </motion.div>
 
       {/* 3. Agenda do Dia (Esquerda - Ocupa 2 Alturas) */}
@@ -395,8 +507,12 @@ const DashboardView = () => {
                         </p>
                         <p style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', fontWeight: 800 }}>Hoje</p>
                       </div>
-                      <div style={{ width: '52px', height: '52px', borderRadius: '16px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-client-light)', color: 'var(--color-client)', fontSize: '1.5rem', fontWeight: '800' }}>
-                        {cliente?.nome.charAt(0).toUpperCase() || 'C'}
+                      <div style={{ width: '52px', height: '52px', borderRadius: '16px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-client-light)', color: 'var(--color-client)', fontSize: '1.5rem', fontWeight: '800', overflow: 'hidden' }}>
+                        {cliente?.imagem_url ? (
+                          <img src={cliente.imagem_url} alt={cliente.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          cliente?.nome.charAt(0).toUpperCase() || 'C'
+                        )}
                       </div>
                       <div style={{ flex: 1, overflow: 'hidden' }}>
                         <h4 style={{ fontSize: '1.1rem', fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cliente?.nome || 'Cliente'}</h4>
@@ -409,7 +525,7 @@ const DashboardView = () => {
                       </div>
                       <div style={{ textAlign: 'right', flexShrink: 0 }}>
                         <p style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--color-service)' }}>R$ {item.preco?.toLocaleString() || '0'}</p>
-                        <span className={styles.badge} style={{ marginTop: '0.4rem', background: 'var(--bg-tertiary)', color: 'var(--text-secondary)', fontSize: '0.6rem', padding: '0.2rem 0.5rem' }}>{item.status}</span>
+                        <span className="pill" style={{ marginTop: '0.4rem', fontSize: '0.65rem', textTransform: 'uppercase' }}>{item.status}</span>
                       </div>
                     </div>
                   </div>
@@ -425,7 +541,7 @@ const DashboardView = () => {
       </motion.div>
 
       {/* 4. Ticket Médio (Direita - Acima do Mapa) */}
-      <motion.div variants={cardVariants} className={`${styles.kpiCard} ${styles.span4} ${styles.h4}`} style={{ background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+      <motion.div variants={cardVariants} className={`${styles.kpiCard} ${styles.span4} ${styles.h4} ${styles.ticketCardGlow}`} style={{ background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <p className={styles.kpiLabel} style={{ color: 'var(--text-tertiary)' }}>Ticket Médio Diário</p>

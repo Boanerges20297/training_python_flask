@@ -97,23 +97,28 @@ export default function ServicesView() {
     Swal.fire({
       title: 'Filtrar Serviços',
       html: `
-        <div style="display: flex; flex-direction: column; gap: 1.25rem; text-align: left; padding: 0.5rem;">
-          <div>
-            <label style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 0.5rem;">Pesquisar por ID</label>
-            <input type="number" id="filter-id" class="swal2-input" style="margin: 0; width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 0.75rem; height: 3rem;" placeholder="Ex: 5" value="${filters.servicoId || ''}">
+        <div class="swal-grid">
+          <div class="swal-form-group swal-col-4">
+            <label class="swal-input-label">ID</label>
+            <input type="number" id="filter-id" class="swal-input-premium" placeholder="Ex: 5" value="${filters.servicoId || ''}">
           </div>
-          <div>
-            <label style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 0.5rem;">Status</label>
-            <input type="text" id="filter-status" class="swal2-input" style="margin: 0; width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 0.75rem; height: 3rem;" placeholder="Ex: ativo ou inativo" value="${filters.status || ''}">
+          <div class="swal-form-group swal-col-8">
+            <label class="swal-input-label">Status</label>
+            <input type="text" id="filter-status" class="swal-input-premium" placeholder="Ex: ativo ou inativo" value="${filters.status || ''}">
           </div>
         </div>
       `,
       showCancelButton: true,
       confirmButtonText: 'Aplicar Filtro',
       cancelButtonText: 'Limpar',
-      confirmButtonColor: 'var(--color-primary)',
-      background: 'transparent',
-      customClass: { popup: 'swal-glass-popup', title: 'swal-glass-title', htmlContainer: 'swal-glass-html' },
+      buttonsStyling: false,
+      customClass: { 
+        popup: 'swal-glass-popup', 
+        title: 'swal-glass-title', 
+        htmlContainer: 'swal-glass-html',
+        confirmButton: 'btn btn-md btn-primary theme-purple',
+        cancelButton: 'btn btn-md btn-secondary'
+      },
       preConfirm: () => {
         return {
           servicoId: (document.getElementById('filter-id') as HTMLInputElement).value,
@@ -132,7 +137,7 @@ export default function ServicesView() {
   // # Gabriel (Dev 1) - Colunas da Tabela de Serviços
   const columns: Column<Servico>[] = [
     {
-      header: '',
+      header: 'FOTO',
       render: (servico: Servico) => (
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           {servico.imagem_url ? (
@@ -191,11 +196,7 @@ export default function ServicesView() {
     },
     {
       header: 'ID',
-      render: (servico: Servico) => (
-        <span className="badge" style={{ color: '#10b981', background: 'rgba(16, 185, 129, 0.1)' }}>
-          #{servico.id}
-        </span>
-      ),
+      render: (servico: Servico) => <span className="badge badge-green">#{servico.id}</span>,
       align: 'center'
     },
     {
@@ -234,12 +235,34 @@ export default function ServicesView() {
         columns={columns}
         extraActions={
           <Button 
-            variant="secondary" 
+            variant="ghost" 
+            theme="green" 
             size="sm"
             icon={<Filter size={16} />}
             onClick={handleFilterClick}
+            style={{ 
+              background: Object.keys(filters).some(k => (filters as any)[k]) ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
+              border: Object.keys(filters).some(k => (filters as any)[k]) ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid transparent'
+            }}
           >
             Filtros
+            {Object.keys(filters).filter(k => (filters as any)[k]).length > 0 && (
+              <span style={{ 
+                marginLeft: '0.5rem', 
+                background: 'var(--color-service)', 
+                color: 'white', 
+                borderRadius: '50%', 
+                width: '18px', 
+                height: '18px', 
+                fontSize: '0.65rem', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                fontWeight: 800
+              }}>
+                {Object.keys(filters).filter(k => (filters as any)[k]).length}
+              </span>
+            )}
           </Button>
         }
         addButtonText="Novo Serviço"
