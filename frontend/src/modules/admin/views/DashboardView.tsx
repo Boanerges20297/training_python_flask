@@ -8,7 +8,8 @@ import {
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, CartesianGrid
+  PieChart, Pie, Cell, CartesianGrid,
+  ComposedChart, Bar, Line, ReferenceLine
 } from 'recharts';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
@@ -151,6 +152,42 @@ const DashboardView = () => {
     });
   }, [agendaReal, filters]);
 
+  const ticketChartData = useMemo(() => {
+    if (!data) return [];
+    return data.receita_diaria.map(item => ({
+      ...item,
+      ticket: item.agendamentos_concluidos > 0 ? parseFloat((item.receita / item.agendamentos_concluidos).toFixed(2)) : 0,
+      dateLabel: item.data ? item.data.split('-').slice(1).reverse().join('/') : '',
+    }));
+  }, [data]);
+
+  const clockData = useMemo(() => {
+    if (!data) return [];
+    return Array.from({ length: 24 }).map((_, i) => {
+      const entry = data.top_5_horarios.find(h => Math.floor(h.hora) === i);
+      const volume = entry ? entry.total_agendamentos : 0;
+      const isWorkHour = i >= 8 && i < 20;
+      
+      // As pílulas variam de tamanho de acordo com os agendamentos.
+      // Horas inativas (20h-08h) têm um tamanho base reduzido.
+      const baseSize = isWorkHour ? 1.2 : 0.6;
+      const value = baseSize + (volume * 1.8); 
+
+      return { 
+        name: `${i}h`, 
+        value, 
+        volume,
+        isWorkHour,
+        heat: volume > 0 ? Math.min(volume / 6, 1) : 0
+      };
+    });
+  }, [data]);
+
+  const peakHourObj = useMemo(() => {
+    if (!data || !data.top_5_horarios || data.top_5_horarios.length === 0) return null;
+    return data.top_5_horarios.reduce((prev, current) => (prev.total_agendamentos > current.total_agendamentos) ? prev : current);
+  }, [data]);
+
   const handleFilterClick = () => {
     Swal.fire({
       title: 'Filtrar Agenda do Dia',
@@ -236,19 +273,7 @@ const DashboardView = () => {
     );
   }
 
-  // --- DATA PREP ---
-  const peakHourObj = data.top_5_horarios.length > 0
-    ? data.top_5_horarios.reduce((prev, current) => (prev.total_agendamentos > current.total_agendamentos) ? prev : current)
-    : null;
-  const maxVolume = peakHourObj ? peakHourObj.total_agendamentos : 1;
-
-  // Heatmap Clock Data (24 slices mapping hours 0-23)
-  const clockData = Array.from({ length: 24 }).map((_, i) => {
-    const entry = data.top_5_horarios.find(h => Math.floor(h.hora) === i);
-    const volume = entry ? entry.total_agendamentos : 0;
-    const heatIndex = volume / maxVolume; // 0 to 1
-    return { name: `${i}h`, value: 1, heat: heatIndex, volume };
-  });
+  // --- RENDER ---
 
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="visible" className={styles.dashboardContainer}>
@@ -315,7 +340,7 @@ const DashboardView = () => {
         </div>
       </div>
 
-      {/* ── BENTO GRID FLAT STRUCTURE ── */}
+      {/* ── BENTO GRID  ── */}
       
       {/* 1. Evolução de Fluxo (Topo Esquerda) */}
       <motion.div variants={cardVariants} className={`${styles.chartCard} ${styles.span8} ${styles.h2}`}>
@@ -541,34 +566,83 @@ const DashboardView = () => {
       </motion.div>
 
       {/* 4. Ticket Médio (Direita - Acima do Mapa) */}
-      <motion.div variants={cardVariants} className={`${styles.kpiCard} ${styles.span4} ${styles.h4} ${styles.ticketCardGlow}`} style={{ background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-        <div>
+      <motion.div variants={cardVariants} className={`${styles.kpiCard} ${styles.span4} ${styles.h4} ${styles.ticketCardGlow}`} style={{ background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ marginBottom: '1.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <p className={styles.kpiLabel} style={{ color: 'var(--text-tertiary)' }}>Ticket Médio Diário</p>
             <ComparisonBadge value={5.2} trend="down" />
           </div>
           <h2 className={styles.kpiValue} style={{ fontSize: '3rem', color: 'var(--text-primary)', marginTop: '0.5rem' }}>R$ {data.ticket_medio.toFixed(2).replace('.', ',')}</h2>
         </div>
-        <div style={{ position: 'relative', height: '140px', marginTop: 'auto', marginLeft: '-20px' }}>
+        
+        <div style={{ flex: 1, position: 'relative', marginLeft: '-20px', marginRight: '-10px' }}>
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data.receita_diaria}>
-               <defs>
-                <linearGradient id="colorTicket" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--color-service)" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="var(--color-service)" stopOpacity={0} />
+            <ComposedChart data={ticketChartData} margin={{ top: 20, right: 5, left: 5, bottom: 20 }}>
+              <defs>
+                <linearGradient id="colorTicketBar" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--color-service)" stopOpacity={0.9} />
+                  <stop offset="95%" stopColor="var(--color-service)" stopOpacity={0.3} />
                 </linearGradient>
+                <filter id="barShadow" height="130%">
+                  <feGaussianBlur in="SourceAlpha" stdDeviation="3" />
+                  <feOffset dx="0" dy="2" result="offsetblur" />
+                  <feComponentTransfer><feFuncA type="linear" slope="0.3" /></feComponentTransfer>
+                  <feMerge><feMergeNode /><feMergeNode in="SourceGraphic" /></feMerge>
+                </filter>
               </defs>
-              <RechartsTooltip 
-                contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '1rem', color: 'var(--text-primary)' }}
-                formatter={(value: any, _name: any, props: any) => {
-                  const agendamentos = props.payload.agendamentos_concluidos;
-                  const ticket = agendamentos > 0 ? (value / agendamentos).toFixed(2) : 0;
-                  return [`R$ ${ticket}`, 'Ticket'];
-                }}
-                labelFormatter={(label) => `Dia: ${label}`}
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" opacity={0.2} />
+              <XAxis 
+                dataKey="dateLabel" 
+                tick={{ fontSize: 10, fill: 'var(--text-tertiary)', fontWeight: 600 }}
+                axisLine={false}
+                tickLine={false}
+                interval="preserveStartEnd"
+                dy={10}
               />
-              <Area type="stepAfter" dataKey="receita" stroke="var(--color-service)" strokeWidth={3} fillOpacity={1} fill="url(#colorTicket)" />
-            </AreaChart>
+              <YAxis 
+                tick={{ fontSize: 10, fill: 'var(--text-tertiary)' }}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(val) => `R$${val}`}
+              />
+              <RechartsTooltip 
+                contentStyle={{ 
+                  background: 'var(--bg-secondary)', 
+                  border: '1px solid var(--border-color)', 
+                  borderRadius: '1rem',
+                  boxShadow: 'var(--shadow-lg)'
+                }}
+                formatter={(value: any) => [`R$ ${value}`, 'Ticket Médio']}
+                labelFormatter={(label) => `Data: ${label}`}
+              />
+              <Bar 
+                dataKey="ticket" 
+                fill="url(#colorTicketBar)" 
+                radius={[6, 6, 0, 0]} 
+                filter="url(#barShadow)"
+                barSize={Math.max(4, 300 / ticketChartData.length)}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="ticket" 
+                stroke="var(--color-purple)" 
+                strokeWidth={3} 
+                dot={{ r: 3, fill: 'var(--color-purple)', strokeWidth: 2, stroke: 'var(--bg-primary)' }}
+                activeDot={{ r: 6, strokeWidth: 0 }}
+              />
+              <ReferenceLine 
+                y={data.ticket_medio} 
+                stroke="var(--color-red)" 
+                strokeDasharray="5 5" 
+                label={{ 
+                  position: 'top', 
+                  value: `Média: R$ ${data.ticket_medio.toFixed(0)}`, 
+                  fill: 'var(--color-red)', 
+                  fontSize: 10,
+                  fontWeight: 700 
+                }} 
+              />
+            </ComposedChart>
           </ResponsiveContainer>
         </div>
       </motion.div>
@@ -578,55 +652,65 @@ const DashboardView = () => {
         <div className={styles.cardHeader}>
           <div>
             <h3 className={styles.cardTitle}>Mapa de Ocupação</h3>
-            <p className={styles.cardSubtitle}>Intensidade por horário</p>
+            <p className={styles.cardSubtitle}>Ciclo de 24h e intensidade de calor</p>
           </div>
           <ComparisonBadge value={24} trend="up" />
         </div>
-        <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ position: 'absolute', inset: '10%', pointerEvents: 'none', border: '1px dashed var(--border-color)', borderRadius: '50%', opacity: 0.3 }} />
-          <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', fontSize: '0.7rem', color: 'var(--text-tertiary)', fontWeight: 800 }}>
-            <span style={{ position: 'absolute', top: '5%', left: '50%', transform: 'translateX(-50%)' }}>00h</span>
-            <span style={{ position: 'absolute', top: '50%', right: '5%', transform: 'translateY(-50%)' }}>06h</span>
-            <span style={{ position: 'absolute', bottom: '5%', left: '50%', transform: 'translateX(-50%)' }}>12h</span>
-            <span style={{ position: 'absolute', top: '50%', left: '5%', transform: 'translateY(-50%)' }}>18h</span>
-          </div>
-          <div style={{ position: 'relative', width: '180px', height: '180px' }}>
-            <PieChart width={180} height={180}>
-              <Pie
-                data={clockData}
-                cx={90} cy={90}
-                innerRadius={60} outerRadius={80}
-                startAngle={90} endAngle={-270}
-                dataKey="value" stroke="none"
-                paddingAngle={0}
-              >
-                {clockData.map((entry, index) => {
-                  const hour = parseInt(entry.name);
-                  const isWorkHour = hour >= 8 && hour <= 20;
-                  let color = 'rgba(255,255,255,0.05)';
-                  if (isWorkHour) {
-                    if (entry.heat > 0.8) color = '#ff5722';
-                    else if (entry.heat > 0.5) color = '#ff9800';
-                    else if (entry.heat > 0.2) color = '#ffc107';
-                    else color = 'var(--bg-tertiary)';
-                  }
-                  return (
-                    <Cell 
-                      key={`cell-${index}`} 
-                      fill={color} 
-                      style={{ filter: entry.heat > 0.6 ? 'drop-shadow(0 0 4px ' + color + ')' : 'none' }} 
-                    />
-                  );
-                })}
-              </Pie>
-              <RechartsTooltip 
-                contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '0.75rem', fontSize: '0.8rem' }}
-                formatter={(_: any, __: any, props: any) => [`${props.payload.volume} Agendamentos`, `${props.payload.name}`]}
-              />
-            </PieChart>
+        <div style={{ 
+          flex: 1, 
+          position: 'relative', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          minHeight: '200px',
+          background: 'radial-gradient(circle, rgba(249, 115, 22, 0.04) 0%, transparent 70%)',
+          borderRadius: '2rem'
+        }}>
+          <div style={{ width: '220px', height: '220px', position: 'relative' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={clockData}
+                  cx="50%" cy="50%"
+                  innerRadius="78%"
+                  outerRadius="100%"
+                  cornerRadius={6}
+                  paddingAngle={2}
+                  dataKey="value"
+                  stroke="none"
+                  startAngle={90}
+                  endAngle={-270}
+                >
+                  {clockData.map((entry, index) => {
+                    let fillColor = 'rgba(255, 255, 255, 0.03)'; // Default inativo
+                    if (entry.isWorkHour) {
+                      if (entry.volume === 0) fillColor = 'rgba(67, 93, 243, 0.08)';
+                      else if (entry.heat > 0.8) fillColor = '#ef4444';
+                      else if (entry.heat > 0.4) fillColor = '#f97316'; 
+                      else fillColor = '#fbbf24'; 
+                    }
+                    
+                    return (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={fillColor}
+                        fillOpacity={entry.isWorkHour ? 1 : 0.4}
+                      />
+                    );
+                  })}
+                </Pie>
+                <RechartsTooltip 
+                  contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '1rem', fontSize: '0.8rem', boxShadow: 'var(--shadow-lg)' }}
+                  formatter={(_: any, __: any, props: any) => [
+                    `${props.payload.volume} Agendamentos`, 
+                    `Horário: ${props.payload.name} ${props.payload.isWorkHour ? '' : '(Fechado)'}`
+                  ]}
+                />
+              </PieChart>
+            </ResponsiveContainer>
             <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-              <div style={{ fontSize: '0.55rem', fontWeight: 800, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Pico</div>
-              <span style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1 }}>{peakHourObj ? `${Math.floor(peakHourObj.hora)}` : '--'}</span>
+              <div style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Pico</div>
+              <span style={{ fontSize: '2.4rem', fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1 }}>{peakHourObj ? `${Math.floor(peakHourObj.hora)}h` : '--'}</span>
             </div>
           </div>
         </div>
