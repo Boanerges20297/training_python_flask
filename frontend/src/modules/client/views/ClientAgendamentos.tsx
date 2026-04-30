@@ -56,7 +56,7 @@ const ClientAgendamentos: React.FC<ClientAgendamentosProps> = ({ agendamentos, s
           const event = new CustomEvent('barbabyte:notificacao', {
             detail: {
               title: 'Agendamento Cancelado',
-              message: `Um agendamento do serviço #${agendamento.servico_id} foi cancelado pelo cliente #${agendamento.cliente_id}.`,
+              message: `Um agendamento do serviço #${agendamento.servicos_ids[0]} foi cancelado pelo cliente #${agendamento.cliente_id}.`,
               time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
               type: 'cancel'
             }
@@ -70,7 +70,7 @@ const ClientAgendamentos: React.FC<ClientAgendamentosProps> = ({ agendamentos, s
   };
 
   const columns: Column<Agendamento>[] = [
-    { header: 'Serviço', render: (a) => <span className="text-capitalize">{servicoMap[a.servico_id]?.nome || '#' + a.servico_id}</span> },
+    { header: 'Serviço', render: (a) => <span className="text-capitalize">{servicoMap[a.servicos_ids[0]]?.nome || '#' + a.servicos_ids[0]}</span> },
     { header: 'Profissional', render: (a) => <span className="text-capitalize">{barbeiroMap[a.barbeiro_id]?.nome || '#' + a.barbeiro_id}</span>, align: 'center' },
     { header: 'Data', render: (a) => <span>{formatDate(a.data_agendamento)}</span>, align: 'center' },
     { header: 'Status', render: (a) => <span className={`status-pill ${a.status || 'pendente'}`}>{a.status || 'pendente'}</span>, align: 'center' },
@@ -100,7 +100,7 @@ const ClientAgendamentos: React.FC<ClientAgendamentosProps> = ({ agendamentos, s
         searchFilter={(item, query) => {
           const q = query.toLowerCase();
           const bName = barbeiroMap[item.barbeiro_id]?.nome || '';
-          const sName = servicoMap[item.servico_id]?.nome || '';
+          const sName = servicoMap[item.servicos_ids[0]]?.nome || '';
           return (
             bName.toLowerCase().includes(q) ||
             sName.toLowerCase().includes(q) ||

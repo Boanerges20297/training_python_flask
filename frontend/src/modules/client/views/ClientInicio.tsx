@@ -60,17 +60,17 @@ const ClientInicio: React.FC<ClientInicioProps> = ({
           <div className="client-highlight-info">
             <h3>Próximo Agendamento</h3>
             <p className="text-capitalize">
-              {servicoMap[proximoAgendamento.servico_id]?.nome || 'Serviço'} com{' '}
+              {servicoMap[proximoAgendamento.servicos_ids[0]]?.nome || 'Serviço'} com{' '}
               {barbeiroMap[proximoAgendamento.barbeiro_id]?.nome || 'Profissional'}
             </p>
             <div className="highlight-detail">
               <Calendar size={13} />
               {formatDate(proximoAgendamento.data_agendamento)}
-              {servicoMap[proximoAgendamento.servico_id] && (
+              {servicoMap[proximoAgendamento.servicos_ids[0]] && (
                 <>
                   <span>•</span>
                   <Clock size={13} />
-                  {servicoMap[proximoAgendamento.servico_id].duracao_minutos} min
+                  {servicoMap[proximoAgendamento.servicos_ids[0]].duracao_minutos} min
                 </>
               )}
             </div>

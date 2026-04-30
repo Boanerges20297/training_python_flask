@@ -62,7 +62,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             {cancelText}
           </Button>
           <Button 
-            theme={type === 'danger' ? 'danger' : 'purple'} 
+            theme={type === 'danger' ? 'red' : 'purple'} 
             onClick={onConfirm}
             isLoading={isLoading}
           >

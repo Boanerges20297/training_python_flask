@@ -69,13 +69,13 @@
 
 .chartCard, .kpiCard, .statMiniCard {
   background: var(--bg-secondary);
-  border: none; /* Removendo bordas como solicitado */
+  border: 1px solid var(--border-color);
   border-radius: 1.75rem;
   padding: 2rem;
   box-shadow: var(--card-shadow);
   transition: transform 0.4s var(--transition-spring), 
               box-shadow 0.4s var(--transition-spring),
-              background 0.3s ease;
+              border-color 0.3s ease;
   position: relative;
   overflow: hidden;
   will-change: transform, box-shadow;
@@ -84,11 +84,16 @@
 [data-theme="dark"] .chartCard, 
 [data-theme="dark"] .kpiCard, 
 [data-theme="dark"] .statMiniCard {
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  box-shadow: none;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
 }
+
+.chartCardHoverBlue:hover { border-color: rgba(59, 130, 246, 0.5); box-shadow: 0 8px 30px rgba(59, 130, 246, 0.2); }
+.chartCardHoverGreen:hover { border-color: rgba(16, 185, 129, 0.5); box-shadow: 0 8px 30px rgba(16, 185, 129, 0.2); }
+.chartCardHoverRed:hover { border-color: rgba(239, 68, 68, 0.5); box-shadow: 0 8px 30px rgba(239, 68, 68, 0.2); }
 
 .chartCard:hover, .statMiniCard:hover {
   transform: translateY(-6px) scale(1.01);
@@ -131,6 +136,10 @@
 .span10 { grid-column: span 10; }
 .span11 { grid-column: span 11; }
 .span12 { grid-column: span 12; }
+
+.rowSpan2 {
+  grid-row: span 2;
+}
 
 .rowSpan2 { grid-row: span 2; }
 

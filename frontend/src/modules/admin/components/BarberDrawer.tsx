@@ -3,8 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { createBarbeiro, updateBarbeiro } from '../../../api/barbers';
 import { getServicos } from '../../../api/services';
 import type { Barbeiro, Servico } from '../../../types';
-import { User, Phone, Mail, Plus, Edit2, Lock, ToggleLeft, ToggleRight, Scissors, History, TrendingUp, DollarSign, Calendar as CalendarIcon, CheckCircle } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { User, Phone, Mail, Plus, Edit2, Lock, ToggleLeft, ToggleRight, Scissors, History, TrendingUp, DollarSign, CheckCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { getAgendamentos } from '../../../api/appointments';
 import { getClientes } from '../../../api/clients';
 import { Drawer } from '../../../components/ui/Drawer';
@@ -390,7 +390,6 @@ const BarberDrawer: React.FC<BarberDrawerProps> = ({ isOpen, onClose, onSuccess,
                   value={searchTermHistory}
                   onChange={(e) => setSearchTermHistory(e.target.value)}
                   icon={<TrendingUp size={16} />}
-                  size="sm"
                 />
               </div>
 

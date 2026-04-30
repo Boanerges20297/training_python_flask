@@ -82,7 +82,7 @@ const BarberHistorico: React.FC<BarberHistoricoProps> = ({
     },
     {
       header: 'Serviço',
-      render: (a) => <span className="text-capitalize">{servicoMap[a.servico_id]?.nome || '#' + a.servico_id}</span>,
+      render: (a) => <span className="text-capitalize">{servicoMap[a.servicos_ids[0]]?.nome || '#' + a.servicos_ids[0]}</span>,
     },
     {
       header: 'Data',

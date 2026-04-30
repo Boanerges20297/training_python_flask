@@ -3,15 +3,17 @@ import { motion } from 'framer-motion';
 import { getDashboardInfo } from '../../../api/dashboard';
 import { getClientes } from '../../../api/clients';
 import { getBarbeiros } from '../../../api/barbers';
-import type { DashboardData, Cliente } from '../../../types';
+import { getServicos } from '../../../api/services';
+import { getAgendamentos } from '../../../api/appointments';
+import type { DashboardData, Cliente, Servico, Agendamento } from '../../../types';
 import {
   Calendar, 
   Activity, 
-  ArrowUpRight, CreditCard, FileText, FileSpreadsheet, MessageCircle, Scissors, Receipt, Bell
+  ArrowUpRight, CreditCard, FileText, FileSpreadsheet, MessageCircle, Receipt, Bell
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip,
-  BarChart, Bar, Cell, ScatterChart, Scatter, ZAxis, Treemap
+  Cell, ScatterChart, Scatter, ZAxis, Treemap, ComposedChart, Line
 } from 'recharts';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
@@ -41,6 +43,35 @@ const cardVariants = {
   }
 };
 
+const CustomTreemapContent = (props: any) => {
+  const { x, y, width, height, name, percent, color } = props;
+  return (
+    <g>
+      <rect
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        style={{
+          fill: color,
+          stroke: 'rgba(15, 23, 42, 1)',
+          strokeWidth: 2,
+        }}
+      />
+      {width > 50 && height > 30 && (
+        <text x={x + width / 2} y={y + height / 2 - 5} textAnchor="middle" fill="#fff" fontSize={12} fontWeight={800}>
+          {name}
+        </text>
+      )}
+      {width > 50 && height > 50 && (
+        <text x={x + width / 2} y={y + height / 2 + 10} textAnchor="middle" fill="rgba(255,255,255,0.8)" fontSize={10} fontWeight={600}>
+          {percent}%
+        </text>
+      )}
+    </g>
+  );
+};
+
 export default function FinanceiroView() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [devedores, setDevedores] = useState<Cliente[]>([]);
@@ -57,16 +88,26 @@ export default function FinanceiroView() {
   const [isClientDrawerOpen, setIsClientDrawerOpen] = useState(false);
   const [filters, setFilters] = useState<FilterData>({});
   
+  const [allServices, setAllServices] = useState<Servico[]>([]);
+  const [allAgendamentos, setAllAgendamentos] = useState<Agendamento[]>([]);
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+  
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [dashRes, clientsRes, barbersRes] = await Promise.all([
+      const [dashRes, clientsRes, barbersRes, servicesRes, agendsRes] = await Promise.all([
         getDashboardInfo(diasFiltro),
         getClientes(1, 100),
-        getBarbeiros(1, 100)
+        getBarbeiros(1, 100),
+        getServicos(1, 100),
+        getAgendamentos(1, 100)
       ]);
       setData(dashRes);
       setAllBarbers(barbersRes.items || []);
+      setAllServices(servicesRes.items || []);
+      setAllAgendamentos(agendsRes.items || []);
       
       const devedoresList = (clientsRes.items || []).filter(c => (c.divida_total || 0) > 0);
       setDevedores(devedoresList);
@@ -132,7 +173,16 @@ export default function FinanceiroView() {
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
               <span>Serviço:</span>
-              <strong style="color: var(--text-primary)">${cliente.servicos}</strong>
+              <strong style="color: var(--text-primary)">
+                ${(() => {
+                  const pending = allAgendamentos.find(a => a.cliente_id === cliente.id && a.status === 'concluido' && !a.pago);
+                  if (pending && pending.servicos_ids && pending.servicos_ids.length > 0) {
+                    const s = allServices.find(srv => srv.id === pending.servicos_ids[0]);
+                    return s ? s.nome : 'Serviço não identificado';
+                  }
+                  return 'Saldo Acumulado';
+                })()}
+              </strong>
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
               <span>Data:</span>
@@ -213,6 +263,9 @@ export default function FinanceiroView() {
     return matchesSearch;
   });
 
+  const totalPages = Math.ceil(filteredDevedores.length / itemsPerPage);
+  const paginatedDevedores = filteredDevedores.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   if (loading || !data) {
     return (
       <div className={styles.loadingState}>
@@ -225,31 +278,21 @@ export default function FinanceiroView() {
   }
 
   // --- DATA PREP ---
-  const liquidezData = data.receita_diaria.map(d => ({
-    data: d.data,
-    realizado: d.receita * 0.75,
-    previsto: d.receita * 0.25
-  }));
+  const liquidezData = data.receita_diaria.map((d, index, arr) => {
+    const past = arr.slice(Math.max(0, index - 2), index + 1);
+    const mediaMovel = past.reduce((acc, curr) => acc + (curr.receita * 0.75), 0) / past.length;
+    return {
+      data: d.data,
+      realizado: d.receita * 0.75,
+      previsto: d.receita * 0.25,
+      mediaMovel
+    };
+  });
 
   // 1. Waterfall (Cascata de Lucro)
   const totalComissoes = (data.barbeiros_desempenho || []).reduce((s, b) => s + (b.comissao_gerada || b.receita_total * 0.4), 0);
   const taxasCartao = data.receita_liquidada * 0.03;
   const lucroLiquido = data.receita_total - totalComissoes - taxasCartao;
-  const waterfallData = [
-    { name: 'Bruto', value: data.receita_total, fill: '#059669' },
-    { name: 'Comissões', value: -totalComissoes, fill: '#ef4444' },
-    { name: 'Taxas', value: -taxasCartao, fill: '#f59e0b' },
-    { name: 'Líquido', value: lucroLiquido, fill: '#3b82f6' },
-  ];
-  // Para barras flutuantes: calcular base e top
-  let running = data.receita_total;
-  const waterfallBars = waterfallData.map((d, i) => {
-    if (i === 0) return { ...d, base: 0, top: d.value, display: d.value };
-    if (i === waterfallData.length - 1) return { ...d, base: 0, top: lucroLiquido, display: lucroLiquido };
-    const top = running;
-    running = running + d.value; // d.value is negative
-    return { ...d, base: running, top: top, display: Math.abs(d.value) };
-  });
 
   // 2. Treemap (Fontes de Receita)
   const servicosAgg: Record<string, number> = {};
@@ -273,12 +316,14 @@ export default function FinanceiroView() {
       ];
 
   // 3. Bullet (Eficiência de Cadeira)
-  const bulletData = (data.barbeiros_desempenho || []).map(b => {
-    const potencial = b.total_agendamentos * data.ticket_medio * 1.3;
-    const eficiencia = potencial > 0 ? (b.receita_total / potencial) * 100 : 0;
-    const barber = allBarbers.find(x => x.id === b.barbeiro_id);
-    return { ...b, potencial, eficiencia: Math.min(eficiencia, 100), imagem_url: barber?.imagem_url };
-  });
+  const bulletData = (data.barbeiros_desempenho || [])
+    .map(b => {
+      const potencial = b.total_agendamentos * (data.ticket_medio || 45) * 1.3;
+      const eficiencia = potencial > 0 ? (b.receita_total / potencial) * 100 : 0;
+      const barber = allBarbers.find(x => x.id === b.barbeiro_id);
+      return { ...b, potencial, eficiencia: Math.min(eficiencia, 100), imagem_url: barber?.imagem_url };
+    })
+    .sort((a, b) => b.eficiencia - a.eficiencia);
 
   // 4. Risco (mantido)
   const riskData = filteredDevedores.map((d, i) => ({
@@ -347,155 +392,92 @@ export default function FinanceiroView() {
         </div>
       </div>
 
-      {/* ── BENTO GRID FINANCEIRO ── */}
+      {/* ── HIGH-DENSITY BENTO GRID FINANCEIRO ── */}
 
-      {/* Row 1: Liquidez (Span 8) e Distribuição (Span 4) */}
+      {/* Row 1 & 2: Liquidez Avançada (Span 8 / RowSpan 2) */}
       <motion.div 
         variants={cardVariants} 
-        className={`${styles.kpiCard} ${styles.span8} ${styles.h2} ${themeStyles.premiumKpi}`}
-        style={{ background: 'var(--bg-secondary)', display: 'flex', flexDirection: 'column' }}
+        className={`${styles.chartCard} ${styles.chartCardHoverGreen} ${styles.span8} ${styles.rowSpan2}`}
+        style={{ display: 'flex', flexDirection: 'column', minHeight: '600px' }}
       >
         <div className={styles.cardHeader}>
           <div>
-            <h3 className={styles.cardTitle}>Liquidez do Caixa</h3>
-            <p className={styles.cardSubtitle}>Realizado (Verde) vs. Previsto (Tracejado)</p>
+            <h3 className={styles.cardTitle}>Liquidez Avançada</h3>
+            <p className={styles.cardSubtitle}>Realizado vs. Previsto com Média Móvel</p>
           </div>
           <div className={styles.headerIcon} style={{ background: 'var(--color-service-light)', color: 'var(--color-service)' }}>
              <ArrowUpRight size={20} />
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '3rem', flex: 1, padding: '0 1rem' }}>
-           <div style={{ flex: '0 0 auto' }}>
-              <div className={themeStyles.labelCompact}>Caixa Atual</div>
-              <h2 className={themeStyles.valueLarge} style={{ fontSize: '3.5rem', margin: '0.5rem 0' }}>R$ {data.receita_liquidada.toLocaleString()}</h2>
-              <div className={themeStyles.healthIndicator} style={{ width: '260px' }}>
-                <span>Saúde Financeira</span>
-                <div className={themeStyles.healthBar}>
-                  <div className={themeStyles.healthProgress} style={{ width: `${(data.receita_liquidada / (data.receita_total || 1)) * 100}%` }}></div>
-                </div>
-                <span style={{ color: 'var(--color-service)' }}>{((data.receita_liquidada / (data.receita_total || 1)) * 100).toFixed(0)}%</span>
-              </div>
-           </div>
-
-           <div style={{ flex: 1, height: '220px', minWidth: 0 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={liquidezData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <XAxis dataKey="data" hide />
-                  <YAxis hide />
-                  <RechartsTooltip 
-                    contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '1rem', color: 'var(--text-primary)' }}
-                    formatter={(val: any, name: any) => [`R$ ${Number(val).toFixed(2)}`, String(name).charAt(0).toUpperCase() + String(name).slice(1)]}
-                  />
-                  <Area type="monotone" dataKey="realizado" stackId="1" stroke="var(--color-service)" strokeWidth={3} fill="var(--color-service-light)" fillOpacity={0.8} />
-                  <Area type="monotone" dataKey="previsto" stackId="1" stroke="#9ca3af" strokeDasharray="5 5" fill="var(--bg-tertiary)" fillOpacity={0.3} />
-                </AreaChart>
-              </ResponsiveContainer>
-           </div>
+        <div style={{ padding: '0 1.5rem' }}>
+          <h2 className={themeStyles.valueLarge} style={{ fontSize: '3rem', margin: '0' }}>R$ {data.receita_liquidada.toLocaleString()}</h2>
+          <span className={themeStyles.labelCompact}>Caixa Atual</span>
         </div>
-      </motion.div>
 
-      {/* Cascata de Lucro — Waterfall Chart (Span 12) */}
-      <motion.div variants={cardVariants} className={`${styles.chartCard} ${styles.span12}`} style={{ height: '320px' }}>
-        <div className={styles.cardHeader}>
-          <div>
-            <h3 className={styles.cardTitle}>Cascata de Lucro</h3>
-            <p className={styles.cardSubtitle}>Do faturamento bruto ao lucro líquido</p>
-          </div>
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', fontSize: '0.7rem', fontWeight: 700 }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><span style={{ width: 10, height: 10, borderRadius: 3, background: '#059669', display: 'inline-block' }} />Entrada</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><span style={{ width: 10, height: 10, borderRadius: 3, background: '#ef4444', display: 'inline-block' }} />Dedução</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><span style={{ width: 10, height: 10, borderRadius: 3, background: '#3b82f6', display: 'inline-block' }} />Resultado</span>
-          </div>
-        </div>
-        <div style={{ height: '220px' }}>
+        <div className={themeStyles.chartGlow} style={{ flex: 1, minHeight: '350px', width: '100%', marginTop: '1rem' }}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={waterfallBars} margin={{ top: 20, right: 30, left: 30, bottom: 10 }}>
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 700, fill: 'var(--text-tertiary)' }} />
+            <ComposedChart data={liquidezData} margin={{ top: 20, right: 10, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorRealizado" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="data" hide />
               <YAxis hide />
               <RechartsTooltip 
-                contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '1rem', color: 'var(--text-primary)' }}
-                formatter={(val: any, name: string) => {
-                  if (name === 'base') return [null, null];
-                  return [`R$ ${Number(val).toLocaleString()}`, 'Valor'];
-                }}
+                contentStyle={{ background: 'rgba(15, 23, 42, 0.8)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '1rem', color: 'white' }}
+                formatter={(val: any, name: any) => [`R$ ${Number(val).toFixed(2)}`, String(name).charAt(0).toUpperCase() + String(name).slice(1)]}
               />
-              <Bar dataKey="base" stackId="stack" fill="transparent" />
-              <Bar dataKey="display" stackId="stack" radius={[8, 8, 0, 0]}>
-                {waterfallBars.map((entry, index) => (
-                  <Cell key={`wf-${index}`} fill={entry.fill} fillOpacity={0.85} />
-                ))}
-              </Bar>
-            </BarChart>
+              <Area type="monotone" dataKey="realizado" stroke="none" fill="url(#colorRealizado)" fillOpacity={1} />
+              <Line type="monotone" dataKey="realizado" stroke="#10b981" strokeWidth={3} dot={false} style={{ filter: 'drop-shadow(0 0 8px #10b981)' }} />
+              <Line type="monotone" dataKey="mediaMovel" stroke="#f97316" strokeWidth={1.5} dot={false} strokeDasharray="3 3" />
+              <Area type="monotone" dataKey="previsto" stroke="#64748b" strokeDasharray="5 5" fill="transparent" />
+            </ComposedChart>
           </ResponsiveContainer>
         </div>
       </motion.div>
 
-      {/* Fontes de Receita — Treemap */}
-      <motion.div variants={cardVariants} className={`${styles.chartCard} ${styles.span4} ${styles.h2}`} style={{ display: 'flex', flexDirection: 'column' }}>
-        <div className={styles.cardHeader}>
-          <div>
-            <h3 className={styles.cardTitle}>Fontes de Receita</h3>
-            <p className={styles.cardSubtitle}>Distribuição por Categoria</p>
-          </div>
-        </div>
-        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gridAutoRows: '1fr', gap: '0.5rem', padding: '0 0.25rem 0.25rem' }}>
-          {treemapData.map((item, i) => (
-            <div 
-              key={item.name} 
-              className={themeStyles.treemapCell}
-              style={{ 
-                background: `linear-gradient(135deg, ${item.color}, ${item.color}cc)`,
-                gridColumn: i === 0 ? 'span 2' : 'span 1',
-                boxShadow: `0 4px 20px ${item.color}33`
-              }}
-            >
-              <span className={themeStyles.treemapCellName}>{item.name}</span>
-              <span className={themeStyles.treemapCellValue}>R$ {Number(item.value).toLocaleString()}</span>
-              <span className={themeStyles.treemapCellPercent}>{item.percent}%</span>
-            </div>
-          ))}
-        </div>
+      {/* Row 1: Lucro Líquido Destaque (Span 4) */}
+      <motion.div variants={cardVariants} className={`${styles.chartCard} ${styles.span4}`} style={{ background: '#059669', color: 'white', display: 'flex', flexDirection: 'column', justifyContent: 'center', boxShadow: 'inset 0 0 40px rgba(0,0,0,0.2)', height: '288px' }}>
+         <div style={{ position: 'relative', zIndex: 1 }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 700, opacity: 0.9, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Lucro Líquido</h3>
+            <h2 style={{ fontSize: '3rem', fontWeight: 900, margin: '0.5rem 0 0 0', letterSpacing: '-0.05em' }}>R$ {lucroLiquido.toLocaleString()}</h2>
+            <p style={{ fontSize: '0.8rem', fontWeight: 600, opacity: 0.8 }}>Margem de {((lucroLiquido / (data.receita_total || 1)) * 100).toFixed(0)}%</p>
+         </div>
+         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '60%', opacity: 0.2, pointerEvents: 'none' }}>
+            <ResponsiveContainer width="100%" height="100%">
+               <AreaChart data={liquidezData}>
+                  <Area type="monotone" dataKey="realizado" stroke="white" strokeWidth={2} fill="white" />
+               </AreaChart>
+            </ResponsiveContainer>
+         </div>
       </motion.div>
 
-
-      {/* Row 2: Eficiência de Cadeira — Bullet Chart (Span 8) */}
-      <motion.div variants={cardVariants} className={`${styles.chartCard} ${styles.span8} ${styles.h2}`} style={{ display: 'flex', flexDirection: 'column' }}>
-        <div className={styles.cardHeader} style={{ marginBottom: '0.75rem' }}>
+      {/* Row 2: Eficiência de Cadeira (Span 4) */}
+      <motion.div variants={cardVariants} className={`${styles.chartCard} ${styles.chartCardHoverBlue} ${styles.span4}`} style={{ display: 'flex', flexDirection: 'column', height: '288px' }}>
+        <div className={styles.cardHeader} style={{ marginBottom: '1rem' }}>
           <div>
             <h3 className={styles.cardTitle}>Eficiência de Cadeira</h3>
-            <p className={styles.cardSubtitle}>Faturamento atual vs. capacidade potencial</p>
+            <p className={styles.cardSubtitle}>Real x Potencial</p>
           </div>
         </div>
-        <div className={styles.customScrollbar} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', overflowY: 'auto', paddingRight: '0.5rem', flex: 1 }}>
+        <div className={styles.customScrollbar} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', overflowY: 'auto', paddingRight: '0.5rem', flex: 1 }}>
           {bulletData.map((b) => {
-            const efColor = b.eficiencia >= 75 ? '#059669' : b.eficiencia >= 50 ? '#f59e0b' : '#ef4444';
+            const efColor = b.eficiencia >= 75 ? '#10b981' : b.eficiencia >= 50 ? '#f59e0b' : '#ef4444';
             return (
-              <div 
-                key={b.barbeiro_id} 
-                className={themeStyles.bulletRow}
-                onClick={() => {
-                  const barber = allBarbers.find(x => x.id === b.barbeiro_id);
-                  if (barber) { setSelectedBarber(barber); setIsBarberDrawerOpen(true); }
-                }}
-              >
-                <div className={themeStyles.bulletAvatar} style={{ background: 'var(--color-service-light)', color: 'var(--color-service)' }}>
-                  {b.imagem_url ? (
-                    <img src={b.imagem_url} alt={b.barbeiro_nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : b.barbeiro_nome.charAt(0)}
+              <div key={b.barbeiro_id} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', cursor: 'pointer' }} onClick={() => {
+                const barber = allBarbers.find(x => x.id === b.barbeiro_id);
+                if (barber) { setSelectedBarber(barber); setIsBarberDrawerOpen(true); }
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>{b.barbeiro_nome}</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: efColor }}>{b.eficiencia.toFixed(0)}%</span>
                 </div>
-                <div className={themeStyles.bulletInfo}>
-                  <div className={themeStyles.bulletName}>{b.barbeiro_nome}</div>
-                  <div className={themeStyles.bulletMeta}>{b.agendamentos_concluidos} cortes • {b.taxa_conclusao.toFixed(0)}% conclusão</div>
-                </div>
-                <div className={themeStyles.bulletBarContainer}>
-                  <div className={themeStyles.bulletBarTrack}>
-                    <div className={themeStyles.bulletBarFill} style={{ width: `${b.eficiencia}%`, background: efColor }} />
-                    <div className={themeStyles.bulletBarMarker} style={{ left: '75%' }} title="Meta 75%" />
-                  </div>
-                </div>
-                <div className={themeStyles.bulletValue} style={{ color: efColor }}>
-                  R$ {b.receita_total.toLocaleString()}
+                <div style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', position: 'relative' }}>
+                  <div style={{ height: '100%', width: `${b.eficiencia}%`, background: `linear-gradient(90deg, ${efColor}40, ${efColor})`, borderRadius: '4px', boxShadow: `0 0 10px ${efColor}66` }} />
+                  <div style={{ position: 'absolute', left: '75%', top: '-2px', bottom: '-2px', width: '2px', background: 'white', boxShadow: '0 0 4px rgba(255,255,255,0.8)' }} />
                 </div>
               </div>
             );
@@ -503,29 +485,51 @@ export default function FinanceiroView() {
         </div>
       </motion.div>
 
-
-      {/* Matriz de Risco (Span 4) */}
-      <motion.div variants={cardVariants} className={`${styles.chartCard} ${styles.span4} ${styles.h2}`} style={{ display: 'flex', flexDirection: 'column' }}>
+      {/* Row 3: Treemap Categorias (Span 6) */}
+      <motion.div variants={cardVariants} className={`${styles.chartCard} ${styles.chartCardHoverBlue} ${styles.span6}`} style={{ height: '400px', display: 'flex', flexDirection: 'column' }}>
         <div className={styles.cardHeader}>
           <div>
-            <h3 className={styles.cardTitle}>Matriz de Risco</h3>
-            <p className={styles.cardSubtitle}>Tempo vs. Valor da Dívida</p>
+            <h3 className={styles.cardTitle}>Fontes de Receita</h3>
+            <p className={styles.cardSubtitle}>Distribuição por Categoria</p>
           </div>
         </div>
-        <div style={{ flex: 1, position: 'relative' }}>
+        <div style={{ flex: 1, overflow: 'visible', margin: '0 -1rem -1rem -1rem' }}>
           <ResponsiveContainer width="100%" height="100%">
-            <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: -20 }}>
-              <XAxis dataKey="atraso" type="number" name="Dias" unit="d" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--text-tertiary)' }} />
-              <YAxis dataKey="valor" type="number" name="Valor" unit=" R$" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--text-tertiary)' }} />
-              <ZAxis dataKey="z" type="number" range={[50, 400]} />
+            <Treemap
+              data={treemapData}
+              dataKey="value"
+              aspectRatio={4/3}
+              stroke="var(--bg-secondary)"
+              content={<CustomTreemapContent />}
+            />
+          </ResponsiveContainer>
+        </div>
+      </motion.div>
+
+      {/* Row 3: Matriz de Risco Scatter (Span 6) */}
+      <motion.div variants={cardVariants} className={`${styles.chartCard} ${styles.chartCardHoverRed} ${styles.span6}`} style={{ height: '400px', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top right, rgba(16,185,129,0.05) 0%, rgba(245,158,11,0.05) 50%, rgba(239,68,68,0.15) 100%)', pointerEvents: 'none', borderRadius: '1.75rem' }} />
+        
+        <div className={styles.cardHeader} style={{ position: 'relative', zIndex: 1 }}>
+          <div>
+            <h3 className={styles.cardTitle}>Matriz de Risco</h3>
+            <p className={styles.cardSubtitle}>Dias de Atraso vs. Valor</p>
+          </div>
+        </div>
+        <div style={{ flex: 1, position: 'relative', zIndex: 1 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
+              <XAxis dataKey="atraso" type="number" name="Dias" unit="d" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--text-tertiary)' }} />
+              <YAxis dataKey="valor" type="number" name="Valor" unit=" R$" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--text-tertiary)' }} />
+              <ZAxis dataKey="z" type="number" range={[100, 1000]} />
               <RechartsTooltip 
                 cursor={{ strokeDasharray: '3 3' }} 
-                contentStyle={{ borderRadius: '0.75rem', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+                contentStyle={{ background: 'rgba(15, 23, 42, 0.8)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '1rem', color: 'white' }}
                 formatter={(val: any, name: any) => [name === 'Valor' ? `R$ ${val}` : `${val} dias`, name === 'Valor' ? 'Dívida' : 'Atraso']}
               />
               <Scatter name="Devedores" data={riskData} fill="#8884d8">
                 {riskData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.fill} fillOpacity={0.8} />
+                  <Cell key={`cell-${index}`} fill={entry.fill} fillOpacity={0.6} stroke={entry.fill} strokeWidth={2} />
                 ))}
               </Scatter>
             </ScatterChart>
@@ -533,8 +537,7 @@ export default function FinanceiroView() {
         </div>
       </motion.div>
 
-
-      {/* Row 3: Ledger (Span 12) */}
+      {/* Row 4: Ledger (Span 12) */}
       <motion.div variants={cardVariants} className={`${styles.chartCard} ${styles.span12} ${styles.h3}`} style={{ height: 'auto', minHeight: '520px' }}>
          <div className={styles.cardHeader} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
@@ -562,7 +565,7 @@ export default function FinanceiroView() {
                 </tr>
               </thead>
               <tbody>
-                {filteredDevedores.map((c, idx) => {
+                {paginatedDevedores.map((c, idx) => {
                   const cobrancas = (idx % 3) + 1; // Simulado
                   const cobrancaClass = cobrancas >= 3 ? themeStyles.cobrancaHigh : cobrancas >= 2 ? themeStyles.cobrancaMid : themeStyles.cobrancaLow;
                   return (
@@ -665,7 +668,38 @@ export default function FinanceiroView() {
               </tbody>
             </table>
          </div>
+          {totalPages > 1 && (
+
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginTop: '2rem', paddingBottom: '1rem' }}>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => {
+                  setCurrentPage(p => Math.max(1, p - 1));
+                  document.querySelector(`.${styles.span12}`)?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                disabled={currentPage === 1}
+              >
+                Anterior
+              </Button>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-tertiary)', fontWeight: 600 }}>
+                Página {currentPage} de {totalPages}
+              </span>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => {
+                  setCurrentPage(p => Math.min(totalPages, p + 1));
+                  document.querySelector(`.${styles.span12}`)?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                disabled={currentPage === totalPages}
+              >
+                Próxima
+              </Button>
+            </div>
+          )}
       </motion.div>
+
 
 
 

@@ -107,6 +107,22 @@ export const handlers = [
       const receita = concluidos.reduce((acc, a) => acc + (a.preco || 0), 0);
       const comissao = (receita * (b.comissao_percentual || 50)) / 100;
       
+      // Agrupa serviços reais para o Treemap
+      const servicosMap: Record<string, { nome: string, quantidade: number, receita: number }> = {};
+      const allServicos = db.getAll('servicos');
+      
+      concluidos.forEach(a => {
+        (a.servicos_ids || []).forEach(sid => {
+          const s = allServicos.find(x => x.id === sid);
+          if (s) {
+            if (!servicosMap[s.nome]) servicosMap[s.nome] = { nome: s.nome, quantidade: 0, receita: 0 };
+            servicosMap[s.nome].quantidade += 1;
+            // No mock, se houver múltiplos serviços, dividimos o preço proporcionalmente ou usamos o preço do serviço
+            servicosMap[s.nome].receita += s.preco || 0;
+          }
+        });
+      });
+
       return {
         barbeiro_id: b.id,
         barbeiro_nome: b.nome.split(' ')[0],
@@ -116,31 +132,33 @@ export const handlers = [
         receita_total: receita,
         comissao_gerada: comissao,
         taxa_conclusao: agendsB.length > 0 ? Math.round((concluidos.length / agendsB.length) * 100) : 0,
-        servicos_realizados: [
-          { nome: "Serviços Gerais", quantidade: concluidos.length, receita: receita }
-        ]
+        servicos_realizados: Object.values(servicosMap)
       };
     });
 
     const receita_diaria = Array.from({length: dias}).map((_, i) => {
       const d = new Date();
       d.setDate(agora.getDate() - (dias - 1 - i));
+      // Cria uma curva de crescimento fake mas estável
+      const baseReceita = 300 + (i * 10); 
       return {
         data: d.toISOString().split('T')[0],
-        receita: Math.floor(Math.random() * 800) + 200,
-        agendamentos_concluidos: Math.floor(Math.random() * 15) + 3
+        receita: baseReceita + Math.floor(Math.random() * 200),
+        agendamentos_concluidos: Math.floor(baseReceita / 50) + Math.floor(Math.random() * 5)
       };
     });
 
     const receita_total_calc = receita_diaria.reduce((acc, d) => acc + d.receita, 0);
+    const receita_liquidada_real = agendsFiltrados.filter(a => a.status === 'concluido' && a.pago).reduce((acc, a) => acc + (a.preco || 0), 0);
+    const receita_pendente_real = agendsFiltrados.filter(a => a.status === 'concluido' && !a.pago).reduce((acc, a) => acc + (a.preco || 0), 0);
 
     return HttpResponse.json({
       data: {
         periodo_inicio: dataLimite.toISOString(),
         periodo_fim: agora.toISOString(),
         receita_total: receita_total_calc,
-        receita_liquidada: receita_total_calc * 0.8,
-        receita_pendente: receita_total_calc * 0.2,
+        receita_liquidada: receita_liquidada_real || receita_total_calc * 0.75,
+        receita_pendente: receita_pendente_real || receita_total_calc * 0.25,
         total_dividas,
         agendamentos_total: agendsFiltrados.length,
         agendamentos_concluidos,

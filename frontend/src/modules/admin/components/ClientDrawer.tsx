@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { createCliente, updateCliente } from '../../../api/clients';
 import type { Cliente } from '../../../types';
-import { User, Phone, Mail, Plus, Edit2, Lock, Users, History } from 'lucide-react';
+import { User, Phone, Mail, Plus, Edit2, Lock, Users, History, Scissors } from 'lucide-react';
 import { Drawer } from '../../../components/ui/Drawer';
 import Input, { cleanPhone } from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
@@ -391,7 +391,7 @@ const ClientDrawer: React.FC<ClientDrawerProps> = ({ isOpen, onClose, onSuccess,
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {history.filter(a => a.status === 'concluido' && !a.pago).length > 0 ? (
                   history.filter(a => a.status === 'concluido' && !a.pago).map(a => {
-                    const serv = servicos.find(s => s.id === a.servico_id);
+                    const serv = servicos.find(s => s.id === a.servicos_ids[0]);
                     const barb = barbeiros.find(b => b.id === a.barbeiro_id);
                     return (
                       <div key={a.id} style={{ display: 'flex', gap: '1rem', padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '1rem', border: '1px solid var(--glass-border)' }}>
@@ -434,7 +434,7 @@ const ClientDrawer: React.FC<ClientDrawerProps> = ({ isOpen, onClose, onSuccess,
                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   {history.filter(a => a.status === 'concluido' && a.pago).slice(0, 5).length > 0 ? (
                     history.filter(a => a.status === 'concluido' && a.pago).slice(0, 5).map(a => {
-                      const serv = servicos.find(s => s.id === a.servico_id);
+                      const serv = servicos.find(s => s.id === a.servicos_ids[0]);
                       const barb = barbeiros.find(b => b.id === a.barbeiro_id);
                       return (
                         <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: 'rgba(255,255,255,0.01)', borderRadius: '0.75rem', border: '1px solid rgba(255,255,255,0.04)' }}>

@@ -72,11 +72,6 @@ export default function AppointmentsView() {
   }, [barbeiros]);
 
   // REMOVER QUANDO: O Backend implementar JOINs nas rotas de agendamento.
-  const barberStatusMap = useMemo(() => {
-    const map: Record<number, boolean> = {};
-    barbeiros.forEach(b => { if (b.id) map[b.id] = b.ativo; });
-    return map;
-  }, [barbeiros]);
 
   const serviceMap = useMemo(() => {
     const map: Record<number, string> = {};
@@ -127,7 +122,7 @@ export default function AppointmentsView() {
       if (success) {
         const appointment = agendamentos.find(a => a.id === appointmentToDelete);
         if (appointment) {
-          const clientName = clientMap[appointment.cliente_id] || 'Cliente';
+          const clientName = clientMap[appointment.cliente_id]?.nome || 'Cliente';
           const serviceName = appointment.servicos_ids && appointment.servicos_ids.length > 0 
             ? serviceMap[appointment.servicos_ids[0]] 
             : 'Serviço';
@@ -439,7 +434,7 @@ export default function AppointmentsView() {
           const q = query.toLowerCase();
           const cName = clientMap[item.cliente_id]?.nome || '';
           const bName = barberMap[item.barbeiro_id]?.nome || '';
-          const sName = serviceMap[item.servico_id] || '';
+          const sName = serviceMap[item.servicos_ids[0]] || '';
           return (
             cName.toLowerCase().includes(q) ||
             bName.toLowerCase().includes(q) ||

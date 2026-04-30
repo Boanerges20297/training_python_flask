@@ -47,7 +47,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
           : '';
         setFormData({
           cliente_id: String(agendamentoParaEditar.cliente_id),
-          servico_id: String(agendamentoParaEditar.servico_id),
+          servico_id: String(agendamentoParaEditar.servicos_ids?.[0] || ''),
           barbeiro_id: String(agendamentoParaEditar.barbeiro_id),
           data_agendamento: dataFormatada,
           observacoes: agendamentoParaEditar.observacoes || ''
@@ -85,13 +85,13 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
 
       const payload = {
         cliente_id: parseInt(formData.cliente_id),
-        servico_id: parseInt(formData.servico_id),
+        servicos_ids: [parseInt(formData.servico_id)],
         barbeiro_id: parseInt(formData.barbeiro_id),
         data_agendamento: formData.data_agendamento,
         observacoes: formData.observacoes,
       };
 
-      if (!payload.cliente_id || !payload.servico_id || !payload.barbeiro_id || !payload.data_agendamento) {
+      if (!payload.cliente_id || !payload.servicos_ids[0] || !payload.barbeiro_id || !payload.data_agendamento) {
         throw "Preencha todos os campos obrigatórios.";
       }
 

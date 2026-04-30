@@ -15,7 +15,6 @@ import Input from '../../../components/ui/Input';
 import { useToast } from '../../../components/ui/Toast';
 import styles from './DashboardView.module.css';
 import AppointmentDrawer from '../components/AppointmentDrawer';
-import ClientDrawer from '../components/ClientDrawer';
 import type { FilterData } from '../../../types/filters';
 import { getAgendamentos } from '../../../api/appointments';
 import { getClientes } from '../../../api/clients';
@@ -90,9 +89,6 @@ const DashboardView = () => {
   const [selectedAppointment, setSelectedAppointment] = useState<Agendamento | null>(null);
   const [isAppointmentOpen, setIsAppointmentOpen] = useState(false);
   
-  const [selectedClient, setSelectedClient] = useState<Cliente | null>(null);
-  const [isClientOpen, setIsClientOpen] = useState(false);
-
   const [filters, setFilters] = useState<FilterData>({});
 
   const [allBarbeiros, setAllBarbeiros] = useState<Barbeiro[]>([]);
@@ -677,12 +673,6 @@ const DashboardView = () => {
         allAgendamentos={fullAgendamentos}
       />
 
-      <ClientDrawer 
-        isOpen={isClientOpen}
-        onClose={() => setIsClientOpen(false)}
-        clienteParaEditar={selectedClient}
-        onSuccess={() => fetchDashboard(diasFiltro)}
-      />
     </motion.div>
   );
 };

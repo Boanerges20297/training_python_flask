@@ -1,6 +1,6 @@
 import type { Cliente, Barbeiro, Servico, Agendamento } from '../types';
 
-const STORAGE_KEY = 'barbabyte_mock_db_v10';
+const STORAGE_KEY = 'barbabyte_mock_db_v13';
 
 interface MockDB {
   clientes: Cliente[];
@@ -14,10 +14,20 @@ interface MockDB {
 const initialData: MockDB = {
   clientes: [
     { id: 1, nome: 'Gabriel Castro', email: 'gabriel@email.com', telefone: '11999999999', observacoes: 'Cliente VIP, prefere corte degradê.', data_cadastro: '2026-04-10T10:00:00Z', data_atualizacao: '2026-04-20T14:30:00Z', status: 'devedor', divida_total: 80.00 },
-    { id: 2, nome: 'Felipe Amorim', email: 'felipe@email.com', telefone: '11888888888', observacoes: 'Inadimplente no mês de Março.', data_cadastro: '2026-04-12T09:00:00Z', status: 'ativo', divida_total: 0 },
-    { id: 3, nome: 'Mariana Costa', email: 'mariana@email.com', telefone: '11777777777', observacoes: 'Gosta de atendimento pontual.', data_cadastro: '2026-04-15T11:20:00Z', status: 'ativo', divida_total: 0 },
-    { id: 4, nome: 'Rodrigo Faro', email: 'rodrigo@email.com', telefone: '11666666666', observacoes: '', data_cadastro: '2026-04-18T16:45:00Z', status: 'ausente', divida_total: 0 },
-    { id: 5, nome: 'Juliana Paes', email: 'juliana@email.com', telefone: '11555555555', observacoes: 'Vem sempre acompanhada.', data_cadastro: '2026-04-20T10:10:00Z', status: 'ativo', divida_total: 0 }
+    { id: 2, nome: 'Felipe Amorim', email: 'felipe@email.com', telefone: '11888888888', status: 'ativo', divida_total: 0, data_cadastro: '2026-04-12T09:00:00Z' },
+    { id: 3, nome: 'Mariana Costa', email: 'mariana@email.com', telefone: '11777777777', status: 'ativo', divida_total: 0, data_cadastro: '2026-04-15T11:20:00Z' },
+    { id: 4, nome: 'Rodrigo Faro', email: 'rodrigo@email.com', telefone: '11666666666', status: 'ausente', divida_total: 0, data_cadastro: '2026-04-18T16:45:00Z' },
+    { id: 5, nome: 'Juliana Paes', email: 'juliana@email.com', telefone: '11555555555', status: 'ativo', divida_total: 0, data_cadastro: '2026-04-20T10:10:00Z' },
+    { id: 6, nome: 'Arthur Aguiar', email: 'arthur@email.com', telefone: '11444444444', status: 'devedor', divida_total: 350.00, data_cadastro: '2026-03-01T10:00:00Z' },
+    { id: 7, nome: 'Enzo Ferrari', email: 'enzo@email.com', telefone: '11333333333', status: 'devedor', divida_total: 120.00, data_cadastro: '2026-04-05T15:00:00Z' },
+    { id: 8, nome: 'Bruno Mars', email: 'bruno@email.com', telefone: '11222222222', status: 'ativo', divida_total: 0, data_cadastro: '2026-04-18T09:00:00Z' },
+    { id: 9, nome: 'Gusttavo Lima', email: 'gusttavo@email.com', telefone: '11111111111', status: 'devedor', divida_total: 210.00, data_cadastro: '2026-04-22T11:00:00Z' },
+    { id: 10, nome: 'Zeca Pagodinho', email: 'zeca@email.com', telefone: '11000000000', status: 'devedor', divida_total: 45.00, data_cadastro: '2026-04-15T18:00:00Z' },
+    { id: 11, nome: 'Neymar Jr', email: 'ney@email.com', telefone: '11911111111', status: 'ativo', divida_total: 0, data_cadastro: '2026-04-01T10:00:00Z' },
+    { id: 12, nome: 'Lionel Messi', email: 'messi@email.com', telefone: '11922222222', status: 'devedor', divida_total: 150.00, data_cadastro: '2026-04-02T10:00:00Z' },
+    { id: 13, nome: 'Cristiano Ronaldo', email: 'cr7@email.com', telefone: '11933333333', status: 'ativo', divida_total: 0, data_cadastro: '2026-04-03T10:00:00Z' },
+    { id: 14, nome: 'Lewis Hamilton', email: 'lewis@email.com', telefone: '11944444444', status: 'devedor', divida_total: 45.00, data_cadastro: '2026-04-04T10:00:00Z' },
+    { id: 15, nome: 'Max Verstappen', email: 'max@email.com', telefone: '11955555555', status: 'devedor', divida_total: 90.00, data_cadastro: '2026-04-05T10:00:00Z' }
   ],
   barbeiros: [
     { 
@@ -30,7 +40,8 @@ const initialData: MockDB = {
       justificativa: '',
       servicos_ids: [1, 2, 4],
       data_cadastro: '2026-04-01T08:00:00Z',
-      comissao_percentual: 50
+      comissao_percentual: 50,
+      imagem_url: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=100&h=100&fit=crop'
     },
     { 
       id: 2, 
@@ -42,7 +53,8 @@ const initialData: MockDB = {
       justificativa: '',
       servicos_ids: [2, 3],
       data_cadastro: '2026-04-05T09:30:00Z',
-      comissao_percentual: 50
+      comissao_percentual: 50,
+      imagem_url: 'https://images.unsplash.com/photo-1552058544-f2b08422138a?w=100&h=100&fit=crop'
     },
     { 
       id: 3, 
@@ -54,27 +66,45 @@ const initialData: MockDB = {
       justificativa: '',
       servicos_ids: [5],
       data_cadastro: '2026-04-10T14:00:00Z',
-      comissao_percentual: 40
+      comissao_percentual: 40,
+      imagem_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop'
+    },
+    { 
+      id: 4, 
+      nome: 'Ricardo Silva', 
+      especialidades: ['corte_masculino'], 
+      email: 'ricardo@barba.com', 
+      telefone: '11444444444', 
+      ativo: true,
+      justificativa: '',
+      servicos_ids: [1, 3],
+      data_cadastro: '2026-04-15T10:00:00Z',
+      comissao_percentual: 45,
+      imagem_url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop'
     }
   ],
   servicos: [
-    { id: 1, nome: 'Corte Degradê', preco: 45.00, duracao_minutos: 40, imagem_url: 'https://images.unsplash.com/photo-1599351431247-f10b218d73b2?w=100&h=100&fit=crop', data_criacao: '2026-04-01T10:00:00Z', data_atualizacao: '2026-04-25T18:00:00Z' },
-    { id: 2, nome: 'Barba Terapia', preco: 35.00, duracao_minutos: 30, imagem_url: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=100&h=100&fit=crop', data_criacao: '2026-04-01T10:00:00Z' },
-    { id: 3, nome: 'Combo Master', preco: 75.00, duracao_minutos: 60, imagem_url: 'https://images.unsplash.com/photo-1517832606299-7ae9b720a186?w=100&h=100&fit=crop', data_criacao: '2026-04-01T10:00:00Z' },
-    { id: 4, nome: 'Sobrancelha', preco: 20.00, duracao_minutos: 15, imagem_url: 'https://images.unsplash.com/photo-1593011504938-164741369796?w=100&h=100&fit=crop', data_criacao: '2026-04-05T12:00:00Z' },
-    { id: 5, nome: 'Platinado', preco: 120.00, duracao_minutos: 120, imagem_url: 'https://images.unsplash.com/photo-1620331311520-246422fd82f9?w=100&h=100&fit=crop', data_criacao: '2026-04-10T15:00:00Z' }
+    { id: 1, nome: 'Corte Degradê', preco: 45.00, duracao_minutos: 40, imagem_url: 'https://images.unsplash.com/photo-1621605815841-2879406db065?w=100&h=100&fit=crop', data_criacao: '2026-04-01T10:00:00Z' },
+    { id: 2, nome: 'Barba Terapia', preco: 35.00, duracao_minutos: 30, imagem_url: 'https://images.unsplash.com/photo-1593702288056-7927b442d0fa?w=100&h=100&fit=crop', data_criacao: '2026-04-01T10:00:00Z' },
+    { id: 3, nome: 'Combo Master', preco: 85.00, duracao_minutos: 60, imagem_url: 'https://images.unsplash.com/photo-1517832606299-7ae9b720a186?w=100&h=100&fit=crop', data_criacao: '2026-04-01T10:00:00Z' },
+    { id: 4, nome: 'Sobrancelha', preco: 25.00, duracao_minutos: 15, imagem_url: 'https://images.unsplash.com/photo-1481326056332-e2746f336e9d?w=100&h=100&fit=crop', data_criacao: '2026-04-05T12:00:00Z' },
+    { id: 5, nome: 'Platinado', preco: 150.00, duracao_minutos: 120, imagem_url: 'https://images.unsplash.com/photo-1620331311520-246422fd82f9?w=100&h=100&fit=crop', data_criacao: '2026-04-10T15:00:00Z' },
+    { id: 6, nome: 'Pigmentação', preco: 50.00, duracao_minutos: 30, imagem_url: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=100&h=100&fit=crop', data_criacao: '2026-04-12T10:00:00Z' },
+    { id: 7, nome: 'Corte Infantil', preco: 35.00, duracao_minutos: 30, imagem_url: 'https://images.unsplash.com/photo-1503910321444-4061f5280205?w=100&h=100&fit=crop', data_criacao: '2026-04-15T10:00:00Z' }
   ],
   agendamentos: [
-    { id: 1, cliente_id: 1, barbeiro_id: 1, servicos_ids: [1], data_agendamento: '2026-04-20T09:00:00', status: 'concluido', preco: 45.00, observacoes: 'Esqueceu a carteira.', data_criacao: '2026-04-19T10:00:00Z', pago: false },
-    { id: 2, cliente_id: 2, barbeiro_id: 1, servicos_ids: [1], data_agendamento: '2026-04-25T10:00:00', status: 'concluido', preco: 45.00, observacoes: '', data_criacao: '2026-04-24T11:00:00Z', pago: true },
-    { id: 3, cliente_id: 3, barbeiro_id: 2, servicos_ids: [2], data_agendamento: '2026-04-25T11:00:00', status: 'pendente', preco: 35.00, observacoes: '', data_criacao: '2026-04-24T12:00:00Z', pago: false },
-    { id: 4, cliente_id: 4, barbeiro_id: 1, servicos_ids: [3], data_agendamento: '2026-04-25T14:00:00', status: 'cancelado', preco: 75.00, observacoes: '', data_criacao: '2026-04-24T13:00:00Z', pago: false },
-    { id: 5, cliente_id: 1, barbeiro_id: 2, servicos_ids: [2], data_agendamento: '2026-04-23T15:30:00', status: 'concluido', preco: 35.00, observacoes: 'Lançado em conta.', data_criacao: '2026-04-22T14:00:00Z', pago: false },
-    { id: 6, cliente_id: 5, barbeiro_id: 3, servicos_ids: [5], data_agendamento: '2026-04-26T10:00:00', status: 'pendente', preco: 120.00, observacoes: '', data_criacao: '2026-04-25T15:00:00Z', pago: false },
-    { id: 7, cliente_id: 2, barbeiro_id: 1, servicos_ids: [4], data_agendamento: '2026-04-24T17:00:00', status: 'concluido', preco: 20.00, observacoes: '', data_criacao: '2026-04-23T10:00:00Z', pago: true },
-    { id: 8, cliente_id: 3, barbeiro_id: 2, servicos_ids: [3], data_agendamento: '2026-04-24T16:00:00', status: 'concluido', preco: 75.00, observacoes: '', data_criacao: '2026-04-23T11:00:00Z', pago: true },
-    { id: 9, cliente_id: 4, barbeiro_id: 1, servicos_ids: [1], data_agendamento: '2026-04-27T09:30:00', status: 'pendente', preco: 45.00, observacoes: '', data_criacao: '2026-04-25T16:00:00Z', pago: false },
-    { id: 10, cliente_id: 1, barbeiro_id: 3, servicos_ids: [5], data_agendamento: '2026-04-27T14:00:00', status: 'pendente', preco: 120.00, observacoes: '', data_criacao: '2026-04-25T17:00:00Z', pago: false }
+    ...Array.from({ length: 60 }).map((_, i) => ({
+      id: i + 1,
+      cliente_id: (i % 15) + 1,
+      barbeiro_id: (i % 4) + 1,
+      servicos_ids: [(i % 7) + 1],
+      data_agendamento: new Date(Date.now() - (i * 8 * 3600 * 1000)).toISOString().replace('Z', ''),
+      status: i % 12 === 0 ? 'cancelado' : 'concluido',
+      preco: [45, 35, 85, 25, 150, 50, 35][i % 7],
+      pago: i % 5 !== 0,
+      observacoes: '',
+      data_criacao: new Date(Date.now() - (i * 10 * 3600 * 1000)).toISOString()
+    }))
   ],
   currentSession: null
 };

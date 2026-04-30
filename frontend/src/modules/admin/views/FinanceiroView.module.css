@@ -135,13 +135,68 @@
   transition: width 1s ease-out;
 }
 
-/* ═══ WATERFALL CHART ═══ */
-.waterfallLabel {
-  font-size: 0.7rem;
+/* ═══ CHART GLOW ═══ */
+.chartGlow {
+  filter: drop-shadow(0 0 12px rgba(5, 150, 105, 0.25));
+}
+
+/* ═══ MICRO-ANOTAÇÕES ═══ */
+.microAnnotation {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.65rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  fill: var(--text-tertiary);
+  color: var(--text-tertiary);
+  padding: 0.35rem 0.7rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0.5rem;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.microDanger {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.06);
+  border-color: rgba(239, 68, 68, 0.12);
+}
+
+.microWarning {
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.06);
+  border-color: rgba(245, 158, 11, 0.12);
+}
+
+.microSuccess {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.06);
+  border-color: rgba(16, 185, 129, 0.12);
+}
+
+/* ═══ WATERFALL CHART ═══ */
+.waterfallCard {
+  position: relative;
+  overflow: hidden;
+}
+
+.waterfallCard::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40%;
+  background: linear-gradient(to top, rgba(59, 130, 246, 0.04) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.waterfallValueLabel {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 /* ═══ BULLET CHART ═══ */
@@ -328,3 +383,92 @@
   border-color: rgba(99, 102, 241, 0.3);
   transform: translateY(-1px);
 }
+
+/* ═══ RISK MATRIX GRADIENT ═══ */
+.riskMatrixBg {
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  background: linear-gradient(135deg,
+    rgba(16, 185, 129, 0.06) 0%,
+    rgba(245, 158, 11, 0.06) 50%,
+    rgba(239, 68, 68, 0.08) 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.riskZoneLabel {
+  position: absolute;
+  font-size: 0.55rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  opacity: 0.25;
+  z-index: 0;
+}
+
+/* ═══ BULLET BAR GLOW ═══ */
+.bulletBarFillGlow {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 1s cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+  box-shadow: 0 0 10px currentColor;
+}
+
+/* ═══ KPI STAT ROW ═══ */
+.kpiStatRow {
+  display: flex;
+  gap: 1rem;
+}
+
+.kpiStatCard {
+  flex: 1;
+  padding: 1.25rem;
+  border-radius: 1.25rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.kpiStatCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+}
+
+.kpiStatCardBlue::before { background: #3b82f6; }
+.kpiStatCardGreen::before { background: #10b981; }
+.kpiStatCardRed::before { background: #ef4444; }
+.kpiStatCardAmber::before { background: #f59e0b; }
+
+.kpiStatLabel {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-tertiary);
+}
+
+.kpiStatValue {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  color: var(--text-primary);
+}
+
+.kpiStatDelta {
+  font-size: 0.6rem;
+  font-weight: 700;
+}
+

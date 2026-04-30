@@ -88,7 +88,7 @@ const BarberAgendaDia: React.FC<BarberAgendaDiaProps> = ({
     },
     {
       header: 'Serviço',
-      render: (a) => <span className="text-capitalize">{servicoMap[a.servico_id]?.nome || 'Serviço'}</span>,
+      render: (a) => <span className="text-capitalize">{servicoMap[a.servicos_ids[0]]?.nome || 'Serviço'}</span>,
     },
     {
       header: 'Horário',
@@ -145,7 +145,7 @@ const BarberAgendaDia: React.FC<BarberAgendaDiaProps> = ({
           <div className="barber-highlight-info">
             <h3>Próximo Cliente</h3>
             <p className="text-capitalize">
-              {clienteMap[nextClient.cliente_id]?.nome} • {servicoMap[nextClient.servico_id]?.nome}
+              {clienteMap[nextClient.cliente_id]?.nome} • {servicoMap[nextClient.servicos_ids[0]]?.nome}
             </p>
             <p className="highlight-detail">
               {new Date(nextClient.data_agendamento).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}

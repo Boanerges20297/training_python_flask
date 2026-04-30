@@ -46,9 +46,10 @@ export default function ClientsView() {
   }, [page]);
 
   const filteredClientes = clientes.filter(c => {
-    if (filters.clientId && String(c.id) !== filters.clientId) return false;
-    if (filters.status) {
-      const s = filters.status.toLowerCase();
+    const f = filters as any;
+    if (f.clientId && String(c.id) !== f.clientId) return false;
+    if (f.status) {
+      const s = f.status.toLowerCase();
       if (s === 'devedor' || s === 'com divida' || s === 'deve') {
         if (!c.divida_total || c.divida_total <= 0) return false;
       } else if (s === 'em dia' || s === 'pago') {
@@ -104,7 +105,7 @@ export default function ClientsView() {
         <div class="swal-grid">
           <div class="swal-form-group swal-col-4">
             <label class="swal-input-label">ID</label>
-            <input type="number" id="filter-id" class="swal-input-premium" placeholder="Ex: 100" value="${filters.clientId || ''}">
+            <input type="number" id="filter-id" class="swal-input-premium" placeholder="Ex: 100" value="${(filters as any).clientId || ''}">
           </div>
           <div class="swal-form-group swal-col-8">
             <label class="swal-input-label">Status Financeiro</label>
@@ -116,26 +117,26 @@ export default function ClientsView() {
       confirmButtonText: 'Aplicar Filtro',
       cancelButtonText: 'Limpar',
       buttonsStyling: false,
-      customClass: { 
-        popup: 'swal-glass-popup', 
-        title: 'swal-glass-title', 
-        htmlContainer: 'swal-glass-html',
-        confirmButton: 'btn btn-md btn-primary theme-purple',
-        cancelButton: 'btn btn-md btn-secondary'
-      },
-      preConfirm: () => {
-        return {
-          clientId: (document.getElementById('filter-id') as HTMLInputElement).value,
-          status: (document.getElementById('filter-status') as HTMLInputElement).value,
-        };
-      }
-    }).then((result) => {
-      if (result.isConfirmed) {
-        setFilters(result.value);
-      } else if (result.dismiss === Swal.DismissReason.cancel) {
-        setFilters({});
-      }
-    });
+        customClass: { 
+          popup: 'swal-glass-popup', 
+          title: 'swal-glass-title', 
+          htmlContainer: 'swal-glass-html',
+          confirmButton: 'btn btn-md btn-primary theme-purple',
+          cancelButton: 'btn btn-md btn-secondary'
+        },
+        preConfirm: () => {
+          return {
+            clientId: (document.getElementById('filter-id') as HTMLInputElement).value,
+            status: (document.getElementById('filter-status') as HTMLInputElement).value,
+          };
+        }
+      }).then((result) => {
+        if (result.isConfirmed) {
+          setFilters(result.value);
+        } else if (result.dismiss === Swal.DismissReason.cancel) {
+          setFilters({});
+        }
+      });
   };
 
   // # Gabriel (Dev 1) - Definição das colunas para o DataTable
@@ -210,7 +211,7 @@ export default function ClientsView() {
             color: temDivida ? '#ef4444' : '#10b981',
             border: `1px solid ${temDivida ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'}`
           }}>
-            {temDivida ? `Dívida R$ ${cliente.divida_total.toLocaleString()}` : 'Em dia'}
+            {temDivida ? `Dívida R$ ${(cliente.divida_total || 0).toLocaleString()}` : 'Em dia'}
           </span>
         );
       },
