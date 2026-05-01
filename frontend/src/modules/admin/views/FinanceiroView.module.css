@@ -472,3 +472,108 @@
   font-weight: 700;
 }
 
+/* ═══ RANKING ═══ */
+.rankRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.rankRow:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateX(8px);
+  border-color: var(--color-service-light);
+}
+
+.rankBadge {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  background: var(--bg-tertiary);
+  color: var(--text-tertiary);
+}
+
+.rankGold {
+  background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+  color: #78350f;
+  box-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
+}
+
+.rankSilver {
+  background: linear-gradient(135deg, #94a3b8 0%, #475569 100%);
+  color: white;
+  box-shadow: 0 0 15px rgba(148, 163, 184, 0.3);
+}
+
+.rankBronze {
+  background: linear-gradient(135deg, #a8a29e 0%, #78716c 100%);
+  color: white;
+}
+
+.rankAvatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  object-fit: cover;
+  border: 2px solid rgba(255,255,255,0.1);
+}
+
+.rankInfo {
+  flex: 1;
+}
+
+.rankName {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.rankEfficiency {
+  font-size: 0.75rem;
+  font-weight: 800;
+  margin-top: 0.2rem;
+}
+
+/* ═══ CARD LUCRO ═══ */
+.profitCard {
+  background: linear-gradient(135deg, #065f46 0%, #064e3b 100%) !important;
+  color: white !important;
+  overflow: hidden;
+  position: relative;
+}
+
+.profitCard h2, .profitCard h3, .profitCard p {
+  color: white !important;
+}
+
+.profitChartContainer {
+  height: 80px;
+  margin-top: auto;
+  opacity: 0.6;
+}
+
+.profitTrend {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.6rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  backdrop-filter: blur(4px);
+}
+
+

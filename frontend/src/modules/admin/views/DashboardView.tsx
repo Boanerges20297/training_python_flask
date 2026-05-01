@@ -608,7 +608,10 @@ const DashboardView = () => {
                   borderRadius: '1rem',
                   boxShadow: 'var(--shadow-lg)'
                 }}
-                formatter={(value: any) => [`R$ ${value}`, 'Ticket Médio']}
+                formatter={(value: any, name?: any) => {
+                  if (name === 'trend') return [null, null];
+                  return [`R$ ${value}`, 'Ticket Médio'];
+                }}
                 labelFormatter={(label) => `Data: ${label}`}
               />
               <Bar 
@@ -621,6 +624,7 @@ const DashboardView = () => {
               <Line 
                 type="monotone" 
                 dataKey="ticket" 
+                name="trend"
                 stroke="var(--color-purple)" 
                 strokeWidth={3} 
                 dot={{ r: 3, fill: 'var(--color-purple)', strokeWidth: 2, stroke: 'var(--bg-primary)' }}
@@ -644,7 +648,18 @@ const DashboardView = () => {
       </motion.div>
 
       {/* 5. Mapa de Ocupação (Direita - Abaixo do Ticket) */}
-      <motion.div variants={cardVariants} className={`${styles.chartCard} ${styles.span4} ${styles.h2}`} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
+      <motion.div 
+        variants={cardVariants} 
+        className={`${styles.chartCard} ${styles.span4} ${styles.h2}`} 
+        style={{ 
+          padding: '1.5rem', 
+          display: 'flex', 
+          flexDirection: 'column',
+          background: 'radial-gradient(circle at 50% 50%, rgba(245, 158, 11, 0.08) 0%, transparent 85%)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}
+      >
         <div className={styles.cardHeader}>
           <div>
             <h3 className={styles.cardTitle}>Mapa de Ocupação</h3>
@@ -658,13 +673,21 @@ const DashboardView = () => {
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'center', 
-          minHeight: '200px',
-          background: 'radial-gradient(circle, rgba(249, 115, 22, 0.04) 0%, transparent 70%)',
+          minHeight: '260px',
           borderRadius: '2rem'
         }}>
+          {/* Guias de Horário (00h, 06h, 12h, 18h) */}
+          <div style={{ position: 'absolute', inset: '10%', pointerEvents: 'none', border: '1px dashed var(--border-color)', borderRadius: '50%', opacity: 0.15 }} />
+          <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', fontSize: '0.65rem', color: 'var(--text-tertiary)', fontWeight: 800, opacity: 0.6 }}>
+            <span style={{ position: 'absolute', top: '2%', left: '50%', transform: 'translateX(-50%)' }}>00h</span>
+            <span style={{ position: 'absolute', top: '50%', right: '2%', transform: 'translateY(-50%)' }}>06h</span>
+            <span style={{ position: 'absolute', bottom: '2%', left: '50%', transform: 'translateX(-50%)' }}>12h</span>
+            <span style={{ position: 'absolute', top: '50%', left: '2%', transform: 'translateY(-50%)' }}>18h</span>
+          </div>
+
           <div style={{ width: '220px', height: '220px', position: 'relative' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                 <Pie
                   data={clockData}
                   cx="50%" cy="50%"
@@ -678,28 +701,37 @@ const DashboardView = () => {
                   endAngle={-270}
                 >
                   {clockData.map((entry, index) => {
-                    let fillColor = 'rgba(255, 255, 255, 0.03)'; // Default inativo
+                    let fillColor = 'rgba(148, 163, 184, 0.08)'; // Fechado (Muted)
                     if (entry.isWorkHour) {
-                      if (entry.volume === 0) fillColor = 'rgba(67, 93, 243, 0.08)';
-                      else if (entry.heat > 0.8) fillColor = '#ef4444';
-                      else if (entry.heat > 0.4) fillColor = '#f97316'; 
-                      else fillColor = '#fbbf24'; 
+                      if (entry.volume === 0) fillColor = 'rgba(59, 130, 246, 0.15)'; // Aberto s/ agendamento (Soft Blue)
+                      else if (entry.heat > 0.8) fillColor = '#ef4444'; // Pico (Red)
+                      else if (entry.heat > 0.4) fillColor = '#f97316'; // Médio (Orange)
+                      else fillColor = '#fbbf24'; // Baixo (Amber)
                     }
                     
                     return (
                       <Cell 
                         key={`cell-${index}`} 
                         fill={fillColor}
-                        fillOpacity={entry.isWorkHour ? 1 : 0.4}
+                        style={{ filter: entry.heat > 0.7 ? 'drop-shadow(0 0 8px ' + fillColor + ')' : 'none' }}
                       />
                     );
                   })}
                 </Pie>
                 <RechartsTooltip 
-                  contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '1rem', fontSize: '0.8rem', boxShadow: 'var(--shadow-lg)' }}
-                  formatter={(_: any, __: any, props: any) => [
+                  contentStyle={{ 
+                    background: 'var(--bg-secondary)', 
+                    border: '1px solid var(--border-color)', 
+                    borderRadius: '1rem', 
+                    fontSize: '0.8rem', 
+                    boxShadow: 'var(--shadow-lg)',
+                    color: 'var(--text-primary)'
+                  }}
+                  itemStyle={{ color: 'var(--text-primary)' }}
+                  labelStyle={{ color: 'var(--text-tertiary)', fontWeight: 700, marginBottom: '4px' }}
+                  formatter={(_value: any, _: any, props: any) => [
                     `${props.payload.volume} Agendamentos`, 
-                    `Horário: ${props.payload.name} ${props.payload.isWorkHour ? '' : '(Fechado)'}`
+                    `Horário: ${props.payload.name}`
                   ]}
                 />
               </PieChart>

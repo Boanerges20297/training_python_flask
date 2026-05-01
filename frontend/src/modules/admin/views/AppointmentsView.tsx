@@ -335,6 +335,33 @@ export default function AppointmentsView() {
       align: 'center'
     },
     {
+      header: 'Status',
+      render: (agend: Agendamento) => (
+        <span className="pill" style={{ 
+          fontSize: '0.7rem',
+          background: agend.status === 'concluido' 
+            ? 'rgba(16, 185, 129, 0.1)' 
+            : agend.status === 'cancelado' 
+              ? 'rgba(239, 68, 68, 0.1)' 
+              : 'rgba(168, 85, 247, 0.1)', 
+          color: agend.status === 'concluido' 
+            ? '#10b981' 
+            : agend.status === 'cancelado' 
+              ? '#ef4444' 
+              : '#a855f7',
+          border: `1px solid ${agend.status === 'concluido' 
+            ? 'rgba(16, 185, 129, 0.2)' 
+            : agend.status === 'cancelado' 
+              ? 'rgba(239, 68, 68, 0.2)' 
+              : 'rgba(168, 85, 247, 0.2)'}`,
+          fontWeight: 700
+        }}>
+          {agend.status || 'Pendente'}
+        </span>
+      ),
+      align: 'center'
+    },
+    {
       header: 'Pagamento',
       render: (agend: Agendamento) => (
         <span className="pill" style={{ 

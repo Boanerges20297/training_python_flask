@@ -47,6 +47,7 @@ const AppointmentDrawer: React.FC<AppointmentDrawerProps> = ({
   const [useCustomTime, setUseCustomTime] = useState(false);
   const [mode, setMode] = useState<'view' | 'edit'>('view');
   const [isTogglingPago, setIsTogglingPago] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -144,6 +145,47 @@ const AppointmentDrawer: React.FC<AppointmentDrawerProps> = ({
         showToast('Erro ao processar solicitação.', 'error');
       } finally {
         setIsTogglingPago(false);
+      }
+    }
+  };
+
+  const handleUpdateStatus = async (newStatus: string) => {
+    if (!agendamentoParaEditar) return;
+    
+    const result = await Swal.fire({
+      title: 'Alterar Status?',
+      text: `Deseja marcar este agendamento como ${newStatus.toUpperCase()}?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Voltar',
+      buttonsStyling: false,
+      customClass: {
+        popup: 'swal-glass-popup',
+        title: 'swal-glass-title',
+        htmlContainer: 'swal-glass-html',
+        confirmButton: 'btn btn-md btn-primary theme-purple',
+        cancelButton: 'btn btn-md btn-secondary'
+      }
+    });
+
+    if (result.isConfirmed) {
+      setIsUpdatingStatus(true);
+      try {
+        const payload: Partial<Agendamento> = { status: newStatus };
+        // Se for concluído, podemos sugerir marcar como pago também, mas vamos manter separado por enquanto
+        const ok = await updateAgendamento(agendamentoParaEditar.id, payload);
+        if (ok) {
+          showToast(`Status atualizado para ${newStatus}!`, 'success');
+          onSuccess();
+          onClose();
+        } else {
+          showToast('Erro ao atualizar status.', 'error');
+        }
+      } catch {
+        showToast('Erro técnico ao processar status.', 'error');
+      } finally {
+        setIsUpdatingStatus(false);
       }
     }
   };
@@ -276,32 +318,96 @@ const AppointmentDrawer: React.FC<AppointmentDrawerProps> = ({
           </div>
 
           {/* 2. Layout Masonry: Data/Hora e Status (Lado a Lado) */}
-          <div className={drawerStyles.bentoMasonry}>
-            {/* Card de Horário */}
-            <div className={drawerStyles.bentoCard} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '0.5rem', position: 'relative' }}>
-              <span className="badge badge-purple badge-corner">ID #{agendamentoParaEditar.id}</span>
-              <span className={drawerStyles.subcardLabel}>Horário</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-purple)', fontWeight: 800, fontSize: '1.1rem' }}>
-                <Clock size={18} />
-                {new Date(agendamentoParaEditar.data_agendamento).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            {/* Coluna Esquerda: Horário e Status Stacked */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {/* Card de Horário */}
+              <div className={drawerStyles.bentoCard} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '0.5rem', position: 'relative', padding: '1.25rem' }}>
+                <span className="badge badge-purple badge-corner">ID #{agendamentoParaEditar.id}</span>
+                <span className={drawerStyles.subcardLabel}>Horário</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-purple)', fontWeight: 800, fontSize: '1.1rem' }}>
+                  <Clock size={18} />
+                  {new Date(agendamentoParaEditar.data_agendamento).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                </div>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+                  {new Date(agendamentoParaEditar.data_agendamento).toLocaleDateString('pt-BR')}
+                </span>
               </div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                {new Date(agendamentoParaEditar.data_agendamento).toLocaleDateString('pt-BR')}
-              </span>
+
+              {/* Card de Status */}
+              <div className={drawerStyles.bentoCard} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '0.5rem', padding: '1.25rem' }}>
+                <span className={drawerStyles.subcardLabel}>Status Atual</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <div className="pill" style={{ 
+                    padding: '0.35rem 0.75rem', 
+                    fontSize: '0.65rem', 
+                    background: agendamentoParaEditar.status === 'concluido' 
+                      ? 'rgba(16, 185, 129, 0.1)' 
+                      : agendamentoParaEditar.status === 'cancelado' 
+                        ? 'rgba(239, 68, 68, 0.1)' 
+                        : 'rgba(168, 85, 247, 0.1)', 
+                    color: agendamentoParaEditar.status === 'concluido' 
+                      ? '#10b981' 
+                      : agendamentoParaEditar.status === 'cancelado' 
+                        ? '#ef4444' 
+                        : '#a855f7',
+                    border: `1px solid ${agendamentoParaEditar.status === 'concluido' 
+                      ? 'rgba(16, 185, 129, 0.2)' 
+                      : agendamentoParaEditar.status === 'cancelado' 
+                        ? 'rgba(239, 68, 68, 0.2)' 
+                        : 'rgba(168, 85, 247, 0.2)'}`,
+                    textTransform: 'uppercase', width: 'fit-content',
+                    fontWeight: 800
+                  }}>
+                    {agendamentoParaEditar.status || 'Pendente'}
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* Card de Status */}
-            <div className={drawerStyles.bentoCard} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '0.5rem' }}>
-              <span className={drawerStyles.subcardLabel}>Status</span>
-              <div className="pill" style={{ 
-                padding: '0.35rem 0.75rem', 
-                fontSize: '0.65rem', 
-                background: agendamentoParaEditar.status === 'concluido' ? 'rgba(74, 222, 128, 0.1)' : 'rgba(168, 85, 247, 0.1)', 
-                color: agendamentoParaEditar.status === 'concluido' ? '#4ade80' : '#a855f7',
-                border: `1px solid ${agendamentoParaEditar.status === 'concluido' ? 'rgba(74, 222, 128, 0.2)' : 'rgba(168, 85, 247, 0.2)'}`,
-                textTransform: 'uppercase', width: 'fit-content'
-              }}>
-                {agendamentoParaEditar.status || 'Pendente'}
+            {/* Coluna Direita: AÇÕES DE STATUS ═══ */}
+            <div className={drawerStyles.bentoCard} style={{ background: 'rgba(255,255,255,0.02)', display: 'flex', flexDirection: 'column', padding: '1.25rem' }}>
+              <span className={drawerStyles.subcardLabel} style={{ marginBottom: '1rem', display: 'block' }}>Ações de Fluxo</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1, justifyContent: 'center' }}>
+                {agendamentoParaEditar.status !== 'concluido' && (
+                  <Button 
+                    size="md" 
+                    theme="green" 
+                    icon={<DollarSign size={18} />} 
+                    onClick={() => handleUpdateStatus('concluido')}
+                    disabled={isUpdatingStatus}
+                    style={{ width: '100%' }}
+                  >
+                    Concluir
+                  </Button>
+                )}
+                
+                {agendamentoParaEditar.status !== 'cancelado' && (
+                  <Button 
+                    size="md" 
+                    theme="red" 
+                    variant="secondary"
+                    icon={<Ban size={18} />} 
+                    onClick={() => handleUpdateStatus('cancelado')}
+                    disabled={isUpdatingStatus}
+                    style={{ width: '100%' }}
+                  >
+                    Cancelar
+                  </Button>
+                )}
+
+                {(agendamentoParaEditar.status === 'concluido' || agendamentoParaEditar.status === 'cancelado') && (
+                  <Button 
+                    size="md" 
+                    theme="purple" 
+                    icon={<Clock size={18} />} 
+                    onClick={() => handleUpdateStatus('pendente')}
+                    disabled={isUpdatingStatus}
+                    style={{ width: '100%' }}
+                  >
+                    Reabrir
+                  </Button>
+                )}
               </div>
             </div>
           </div>

@@ -9,11 +9,11 @@ import type { DashboardData, Cliente, Servico, Agendamento } from '../../../type
 import {
   Calendar, 
   Activity, 
-  ArrowUpRight, CreditCard, FileText, FileSpreadsheet, MessageCircle, Receipt, Bell
+  ArrowUpRight, CreditCard, FileText, FileSpreadsheet, MessageCircle, Receipt, Bell, TrendingUp, Medal
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip,
-  Cell, ScatterChart, Scatter, ZAxis, Treemap, ComposedChart, Line
+  Cell, ScatterChart, Scatter, ZAxis, Treemap, ComposedChart, Line, BarChart, Bar
 } from 'recharts';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
@@ -53,22 +53,40 @@ const CustomTreemapContent = (props: any) => {
         width={width}
         height={height}
         style={{
-          fill: color,
-          stroke: 'rgba(15, 23, 42, 1)',
+          fill: color || '#10b981',
+          stroke: 'rgba(255,255,255,0.1)',
           strokeWidth: 2,
+          opacity: 0.8
         }}
       />
       {width > 50 && height > 30 && (
-        <text x={x + width / 2} y={y + height / 2 - 5} textAnchor="middle" fill="#fff" fontSize={12} fontWeight={800}>
-          {name}
-        </text>
-      )}
-      {width > 50 && height > 50 && (
-        <text x={x + width / 2} y={y + height / 2 + 10} textAnchor="middle" fill="rgba(255,255,255,0.8)" fontSize={10} fontWeight={600}>
-          {percent}%
+        <text x={x + 10} y={y + 20} fill="#fff" fontSize={12} fontWeight={800} style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          {name} ({percent}%)
         </text>
       )}
     </g>
+  );
+};
+
+const CustomWaterfallBar = (props: any) => {
+  const { fill, x, y, width, height } = props;
+  const radius = 8;
+  const h = Math.abs(height);
+  if (h < 2) return <rect x={x} y={y} width={width} height={2} fill={fill} />; // Garantir visibilidade mínima
+  
+  return (
+    <path
+      d={`
+        M${x},${y + h} 
+        L${x},${y + radius} 
+        Q${x},${y} ${x + radius},${y} 
+        L${x + width - radius},${y} 
+        Q${x + width},${y} ${x + width},${y + radius} 
+        L${x + width},${y + h} 
+        Z
+      `}
+      fill={fill}
+    />
   );
 };
 
@@ -315,7 +333,7 @@ export default function FinanceiroView() {
         { name: 'Outros', value: data.receita_liquidada * 0.10, color: '#6ee7b7', percent: '10' },
       ];
 
-  // 3. Bullet (Eficiência de Cadeira)
+  // 3. Eficiência de Cadeira
   const bulletData = (data.barbeiros_desempenho || [])
     .map(b => {
       const potencial = b.total_agendamentos * (data.ticket_medio || 45) * 1.3;
@@ -394,13 +412,13 @@ export default function FinanceiroView() {
 
       {/* ── HIGH-DENSITY BENTO GRID FINANCEIRO ── */}
 
-      {/* Row 1 & 2: Liquidez Avançada (Span 8 / RowSpan 2) */}
+      {/* Row 1: Liquidez Avançada (Span 8) */}
       <motion.div 
         variants={cardVariants} 
-        className={`${styles.chartCard} ${styles.chartCardHoverGreen} ${styles.span8} ${styles.rowSpan2}`}
-        style={{ display: 'flex', flexDirection: 'column', minHeight: '600px' }}
+        className={`${styles.chartCard} ${styles.chartCardHoverGreen} ${styles.span8}`}
+        style={{ display: 'flex', flexDirection: 'column', height: '500px' }}
       >
-        <div className={styles.cardHeader}>
+        <div className={styles.cardHeader} style={{ marginBottom: '0.5rem' }}>
           <div>
             <h3 className={styles.cardTitle}>Liquidez Avançada</h3>
             <p className={styles.cardSubtitle}>Realizado vs. Previsto com Média Móvel</p>
@@ -410,83 +428,150 @@ export default function FinanceiroView() {
           </div>
         </div>
 
-        <div style={{ padding: '0 1.5rem' }}>
-          <h2 className={themeStyles.valueLarge} style={{ fontSize: '3rem', margin: '0' }}>R$ {data.receita_liquidada.toLocaleString()}</h2>
-          <span className={themeStyles.labelCompact}>Caixa Atual</span>
+        <div style={{ padding: '0 1.5rem', marginTop: '-0.5rem', zIndex: 2 }}>
+          <h2 style={{ fontSize: '3rem', fontWeight: 900, color: 'var(--text-primary)', margin: '0', letterSpacing: '-0.05em', lineHeight: 1 }}>
+            R$ {data.receita_liquidada.toLocaleString()}
+          </h2>
+          <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--color-service)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+            CAIXA ATUAL
+          </span>
         </div>
 
-        <div className={themeStyles.chartGlow} style={{ flex: 1, minHeight: '350px', width: '100%', marginTop: '1rem' }}>
+        <div className={themeStyles.chartGlow} style={{ flex: 1, width: '100%', marginTop: '0', paddingBottom: '0.5rem' }}>
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={liquidezData} margin={{ top: 20, right: 10, left: 0, bottom: 0 }}>
+            <ComposedChart data={liquidezData} margin={{ top: 20, right: 30, left: 10, bottom: 10 }}>
               <defs>
                 <linearGradient id="colorRealizado" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.5}/>
                   <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <XAxis dataKey="data" hide />
-              <YAxis hide />
-              <RechartsTooltip 
-                contentStyle={{ background: 'rgba(15, 23, 42, 0.8)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '1rem', color: 'white' }}
-                formatter={(val: any, name: any) => [`R$ ${Number(val).toFixed(2)}`, String(name).charAt(0).toUpperCase() + String(name).slice(1)]}
+              <XAxis 
+                dataKey="data" 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fontSize: 10, fill: 'var(--text-tertiary)', opacity: 0.5 }}
+                dy={10}
               />
-              <Area type="monotone" dataKey="realizado" stroke="none" fill="url(#colorRealizado)" fillOpacity={1} />
-              <Line type="monotone" dataKey="realizado" stroke="#10b981" strokeWidth={3} dot={false} style={{ filter: 'drop-shadow(0 0 8px #10b981)' }} />
-              <Line type="monotone" dataKey="mediaMovel" stroke="#f97316" strokeWidth={1.5} dot={false} strokeDasharray="3 3" />
-              <Area type="monotone" dataKey="previsto" stroke="#64748b" strokeDasharray="5 5" fill="transparent" />
+              <YAxis 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fontSize: 10, fill: 'var(--text-tertiary)', opacity: 0.5 }}
+                domain={['dataMin - 100', 'dataMax + 100']}
+                tickFormatter={(val) => `R$${val}`}
+              />
+              <RechartsTooltip 
+                contentStyle={{ background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '1rem', color: 'white' }}
+                formatter={(val: any, name: any) => {
+                  if (name === "fill") return [null, null];
+                  return [`R$ ${Number(val).toLocaleString()}`, name];
+                }}
+                labelFormatter={(label) => `Data: ${label}`}
+              />
+              <Area type="monotone" dataKey="realizado" name="fill" stroke="none" fill="url(#colorRealizado)" fillOpacity={1} />
+              <Line 
+                type="monotone" 
+                dataKey="realizado" 
+                name="Realizado" 
+                stroke="#10b981" 
+                strokeWidth={4} 
+                dot={({ cx, cy, payload, index }) => {
+                  const isMax = payload.realizado === Math.max(...liquidezData.map(d => d.realizado));
+                  if (isMax) {
+                    return (
+                      <g key={`dot-${index}`}>
+                        <circle cx={cx} cy={cy} r={8} fill="#10b981" fillOpacity={0.3} />
+                        <circle cx={cx} cy={cy} r={4} fill="#10b981" stroke="white" strokeWidth={2} />
+                        <text x={cx} y={cy - 15} textAnchor="middle" fill="#10b981" fontSize={10} fontWeight={900}>RECORDE</text>
+                      </g>
+                    );
+                  }
+                  return null;
+                }} 
+                style={{ filter: 'drop-shadow(0 0 12px rgba(16, 185, 129, 0.6))' }} 
+              />
+              <Line type="monotone" dataKey="mediaMovel" name="Média Móvel" stroke="#f97316" strokeWidth={2} dot={false} strokeDasharray="5 5" />
+              <Area type="monotone" dataKey="previsto" name="Previsto" stroke="#64748b" strokeDasharray="3 3" fill="transparent" />
             </ComposedChart>
           </ResponsiveContainer>
         </div>
       </motion.div>
 
-      {/* Row 1: Lucro Líquido Destaque (Span 4) */}
-      <motion.div variants={cardVariants} className={`${styles.chartCard} ${styles.span4}`} style={{ background: '#059669', color: 'white', display: 'flex', flexDirection: 'column', justifyContent: 'center', boxShadow: 'inset 0 0 40px rgba(0,0,0,0.2)', height: '288px' }}>
-         <div style={{ position: 'relative', zIndex: 1 }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 700, opacity: 0.9, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Lucro Líquido</h3>
-            <h2 style={{ fontSize: '3rem', fontWeight: 900, margin: '0.5rem 0 0 0', letterSpacing: '-0.05em' }}>R$ {lucroLiquido.toLocaleString()}</h2>
-            <p style={{ fontSize: '0.8rem', fontWeight: 600, opacity: 0.8 }}>Margem de {((lucroLiquido / (data.receita_total || 1)) * 100).toFixed(0)}%</p>
+      {/* Row 1: Lucro Líquido Dynamic Card (Span 4) */}
+      <motion.div variants={cardVariants} className={`${styles.chartCard} ${themeStyles.profitCard} ${styles.span4}`} style={{ height: '500px', display: 'flex', flexDirection: 'column', padding: 0 }}>
+         <div style={{ padding: '2rem 2rem 0 2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <h3 style={{ fontSize: '0.75rem', fontWeight: 800, opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.15em' }}>Lucro Líquido Estimado</h3>
+                <h2 style={{ fontSize: '2.5rem', fontWeight: 900, margin: '0.25rem 0', letterSpacing: '-0.05em' }}>R$ {lucroLiquido.toLocaleString()}</h2>
+              </div>
+              <div className={themeStyles.profitTrend}>
+                <TrendingUp size={14} /> +12.5%
+              </div>
+            </div>
+            
+            <p style={{ fontSize: '0.85rem', fontWeight: 600, opacity: 0.9, marginTop: '0.5rem' }}>
+              Margem de lucro atual de <strong style={{ color: '#6ee7b7' }}>{((lucroLiquido / (data.receita_total || 1)) * 100).toFixed(0)}%</strong>. 
+              Superando a meta mensal em 4.2%.
+            </p>
          </div>
-         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '60%', opacity: 0.2, pointerEvents: 'none' }}>
+
+         <div className={themeStyles.profitChartContainer} style={{ flex: 1, width: '100%', marginTop: 'auto', overflow: 'hidden' }}>
             <ResponsiveContainer width="100%" height="100%">
-               <AreaChart data={liquidezData}>
-                  <Area type="monotone" dataKey="realizado" stroke="white" strokeWidth={2} fill="white" />
-               </AreaChart>
+              <AreaChart data={liquidezData.slice(-10)} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="splitColor" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="20%" stopColor="#34d399" stopOpacity={0.6}/>
+                    <stop offset="80%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="data" hide />
+                <RechartsTooltip 
+                  contentStyle={{ background: '#064e3b', border: 'none', borderRadius: '0.75rem', fontSize: '0.75rem', color: 'white' }}
+                  itemStyle={{ color: 'white' }}
+                  formatter={(val: any, name: any) => {
+                    if (name === "meta") return [`R$ ${Number(val).toLocaleString()}`, 'Meta Diária'];
+                    return [`R$ ${Number(val).toLocaleString()}`, 'Lucro do Dia'];
+                  }}
+                  labelFormatter={(label) => `Data: ${label}`}
+                />
+                <Area 
+                  type="stepAfter" 
+                  dataKey="realizado" 
+                  stroke="#6ee7b7" 
+                  strokeWidth={3} 
+                  fill="url(#splitColor)" 
+                  animationDuration={2000}
+                  dot={({ cx, cy, payload, index }) => {
+                    const meta = data.receita_total / 30;
+                    const isMetaBatida = payload.realizado > meta && index === 9; // Mostrar no último ponto se bateu a meta
+                    if (isMetaBatida) {
+                      return (
+                        <g key={`meta-${index}`}>
+                          <circle cx={cx} cy={cy} r={6} fill="#34d399" stroke="white" strokeWidth={2} />
+                          <text x={cx} y={cy - 12} textAnchor="middle" fill="#34d399" fontSize={10} fontWeight={900}>META BATIDA</text>
+                        </g>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                {/* Linha de referencia para a meta */}
+                <Line 
+                  type="monotone" 
+                  dataKey={() => data.receita_total / 30} 
+                  name="meta"
+                  stroke="rgba(255,255,255,0.3)" 
+                  strokeDasharray="3 3" 
+                  dot={false}
+                />
+              </AreaChart>
             </ResponsiveContainer>
          </div>
       </motion.div>
 
-      {/* Row 2: Eficiência de Cadeira (Span 4) */}
-      <motion.div variants={cardVariants} className={`${styles.chartCard} ${styles.chartCardHoverBlue} ${styles.span4}`} style={{ display: 'flex', flexDirection: 'column', height: '288px' }}>
-        <div className={styles.cardHeader} style={{ marginBottom: '1rem' }}>
-          <div>
-            <h3 className={styles.cardTitle}>Eficiência de Cadeira</h3>
-            <p className={styles.cardSubtitle}>Real x Potencial</p>
-          </div>
-        </div>
-        <div className={styles.customScrollbar} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', overflowY: 'auto', paddingRight: '0.5rem', flex: 1 }}>
-          {bulletData.map((b) => {
-            const efColor = b.eficiencia >= 75 ? '#10b981' : b.eficiencia >= 50 ? '#f59e0b' : '#ef4444';
-            return (
-              <div key={b.barbeiro_id} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', cursor: 'pointer' }} onClick={() => {
-                const barber = allBarbers.find(x => x.id === b.barbeiro_id);
-                if (barber) { setSelectedBarber(barber); setIsBarberDrawerOpen(true); }
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>{b.barbeiro_nome}</span>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: efColor }}>{b.eficiencia.toFixed(0)}%</span>
-                </div>
-                <div style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', position: 'relative' }}>
-                  <div style={{ height: '100%', width: `${b.eficiencia}%`, background: `linear-gradient(90deg, ${efColor}40, ${efColor})`, borderRadius: '4px', boxShadow: `0 0 10px ${efColor}66` }} />
-                  <div style={{ position: 'absolute', left: '75%', top: '-2px', bottom: '-2px', width: '2px', background: 'white', boxShadow: '0 0 4px rgba(255,255,255,0.8)' }} />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </motion.div>
-
-      {/* Row 3: Treemap Categorias (Span 6) */}
-      <motion.div variants={cardVariants} className={`${styles.chartCard} ${styles.chartCardHoverBlue} ${styles.span6}`} style={{ height: '400px', display: 'flex', flexDirection: 'column' }}>
+      {/* Row 2: Treemap Categorias (Span 8) */}
+      <motion.div variants={cardVariants} className={`${styles.chartCard} ${styles.chartCardHoverBlue} ${styles.span8}`} style={{ height: '650px', display: 'flex', flexDirection: 'column' }}>
         <div className={styles.cardHeader}>
           <div>
             <h3 className={styles.cardTitle}>Fontes de Receita</h3>
@@ -506,8 +591,62 @@ export default function FinanceiroView() {
         </div>
       </motion.div>
 
-      {/* Row 3: Matriz de Risco Scatter (Span 6) */}
-      <motion.div variants={cardVariants} className={`${styles.chartCard} ${styles.chartCardHoverRed} ${styles.span6}`} style={{ height: '400px', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+      {/* Row 2: Ranking de Eficiência (Span 4) */}
+      <motion.div variants={cardVariants} className={`${styles.chartCard} ${styles.chartCardHoverBlue} ${styles.span4}`} style={{ display: 'flex', flexDirection: 'column', height: '650px' }}>
+        <div className={styles.cardHeader} style={{ marginBottom: '1.5rem' }}>
+          <div>
+            <h3 className={styles.cardTitle}>Ranking de Eficiência</h3>
+            <p className={styles.cardSubtitle}>Top Barbeiros por Performance</p>
+          </div>
+          <Medal size={20} style={{ color: '#fbbf24' }} />
+        </div>
+        <div className={styles.customScrollbar} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', overflowY: 'auto', paddingRight: '0.5rem', flex: 1 }}>
+          {bulletData.map((b, idx) => {
+            const efColor = b.eficiencia >= 75 ? '#10b981' : b.eficiencia >= 50 ? '#f59e0b' : '#ef4444';
+            const rankClass = idx === 0 ? themeStyles.rankGold : idx === 1 ? themeStyles.rankSilver : idx === 2 ? themeStyles.rankBronze : '';
+            
+            return (
+              <div key={b.barbeiro_id} className={themeStyles.rankRow} onClick={() => {
+                const barber = allBarbers.find(x => x.id === b.barbeiro_id);
+                if (barber) { setSelectedBarber(barber); setIsBarberDrawerOpen(true); }
+              }}>
+                <div className={`${themeStyles.rankBadge} ${rankClass}`}>
+                  {idx + 1}
+                </div>
+                
+                {b.imagem_url ? (
+                  <img src={b.imagem_url} alt={b.barbeiro_nome} className={themeStyles.rankAvatar} />
+                ) : (
+                  <div className={themeStyles.rankAvatar} style={{ background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '1.2rem', color: 'var(--text-secondary)' }}>
+                    {b.barbeiro_nome.charAt(0)}
+                  </div>
+                )}
+
+                <div className={themeStyles.rankInfo}>
+                  <div className={themeStyles.rankName}>{b.barbeiro_nome}</div>
+                  <div className={themeStyles.rankEfficiency} style={{ color: efColor }}>
+                    {b.eficiencia.toFixed(0)}% Eficiência
+                  </div>
+                </div>
+
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-primary)' }}>R$ {b.receita_total.toLocaleString()}</div>
+                  <div style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--text-tertiary)' }}>{b.agendamentos_concluidos} atend.</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(16, 185, 129, 0.05)', borderRadius: '1rem', border: '1px solid rgba(16, 185, 129, 0.1)' }}>
+          <p style={{ fontSize: '0.75rem', fontWeight: 600, color: '#10b981', margin: 0 }}>
+            <TrendingUp size={12} style={{ marginRight: '4px' }} />
+            O time está operando com <strong>78%</strong> da capacidade total.
+          </p>
+        </div>
+      </motion.div>
+
+      {/* Row 4: Matriz de Risco Scatter (Span 12) */}
+      <motion.div variants={cardVariants} className={`${styles.chartCard} ${styles.chartCardHoverRed} ${styles.span12}`} style={{ height: '450px', display: 'flex', flexDirection: 'column', position: 'relative' }}>
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top right, rgba(16,185,129,0.05) 0%, rgba(245,158,11,0.05) 50%, rgba(239,68,68,0.15) 100%)', pointerEvents: 'none', borderRadius: '1.75rem' }} />
         
         <div className={styles.cardHeader} style={{ position: 'relative', zIndex: 1 }}>
@@ -518,14 +657,47 @@ export default function FinanceiroView() {
         </div>
         <div style={{ flex: 1, position: 'relative', zIndex: 1 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
-              <XAxis dataKey="atraso" type="number" name="Dias" unit="d" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--text-tertiary)' }} />
-              <YAxis dataKey="valor" type="number" name="Valor" unit=" R$" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--text-tertiary)' }} />
+            <ScatterChart margin={{ top: 20, right: 30, bottom: 40, left: 60 }}>
+              <XAxis 
+                dataKey="atraso" 
+                type="number" 
+                name="Atraso" 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fontSize: 10, fill: 'var(--text-tertiary)' }}
+                label={{ value: 'DIAS DE ATRASO', position: 'bottom', offset: 15, fontSize: 10, fontWeight: 700, fill: 'var(--text-tertiary)', opacity: 0.5 }}
+              />
+              <YAxis 
+                dataKey="valor" 
+                type="number" 
+                name="Dívida" 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fontSize: 10, fill: 'var(--text-tertiary)' }}
+                label={{ value: 'VALOR (R$)', angle: -90, position: 'insideLeft', offset: -10, fontSize: 10, fontWeight: 700, fill: 'var(--text-tertiary)', opacity: 0.5 }}
+              />
               <ZAxis dataKey="z" type="number" range={[100, 1000]} />
               <RechartsTooltip 
                 cursor={{ strokeDasharray: '3 3' }} 
-                contentStyle={{ background: 'rgba(15, 23, 42, 0.8)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '1rem', color: 'white' }}
-                formatter={(val: any, name: any) => [name === 'Valor' ? `R$ ${val}` : `${val} dias`, name === 'Valor' ? 'Dívida' : 'Atraso']}
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload;
+                    return (
+                      <div style={{ background: 'rgba(15, 23, 42, 0.9)', backdropFilter: 'blur(10px)', padding: '0.75rem 1rem', borderRadius: '1rem', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '0.8rem', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)' }}>
+                        <div style={{ fontWeight: 800, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>{data.nome}</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '0.2rem' }}>
+                          <span style={{ color: 'var(--text-tertiary)' }}>Dívida:</span>
+                          <span style={{ fontWeight: 700 }}>R$ {data.valor?.toLocaleString()}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
+                          <span style={{ color: 'var(--text-tertiary)' }}>Atraso:</span>
+                          <span style={{ fontWeight: 700 }}>{data.atraso} dias</span>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
               />
               <Scatter name="Devedores" data={riskData} fill="#8884d8">
                 {riskData.map((entry, index) => (
@@ -534,10 +706,73 @@ export default function FinanceiroView() {
               </Scatter>
             </ScatterChart>
           </ResponsiveContainer>
+          
+          {/* Quadrantes de Risco */}
+          <div style={{ position: 'absolute', top: '10px', right: '15px', textAlign: 'right', pointerEvents: 'none', opacity: 0.4 }}>
+            <div style={{ fontSize: '0.6rem', fontWeight: 800, color: '#ef4444' }}>ZONA CRÍTICA</div>
+            <div style={{ fontSize: '0.5rem', color: 'var(--text-tertiary)' }}>Alta Dívida + Longo Prazo</div>
+          </div>
+          <div style={{ position: 'absolute', bottom: '65px', left: '85px', pointerEvents: 'none', opacity: 0.4 }}>
+            <div style={{ fontSize: '0.6rem', fontWeight: 800, color: '#10b981' }}>ZONA SEGURA</div>
+            <div style={{ fontSize: '0.5rem', color: 'var(--text-tertiary)' }}>Recentemente Inadimplente</div>
+          </div>
         </div>
       </motion.div>
 
-      {/* Row 4: Ledger (Span 12) */}
+      {/* Row 4: Cascata de Lucro - Waterfall (Span 12) */}
+      <motion.div variants={cardVariants} className={`${styles.chartCard} ${styles.span12}`} style={{ height: '450px', display: 'flex', flexDirection: 'column' }}>
+        <div className={styles.cardHeader}>
+          <div>
+            <h3 className={styles.cardTitle}>Cascata de Lucro (DRE Visual)</h3>
+            <p className={styles.cardSubtitle}>Do Faturamento Bruto ao Lucro Líquido</p>
+          </div>
+          <div style={{ display: 'flex', gap: '1rem', fontSize: '0.7rem', fontWeight: 700 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><span style={{ width: 8, height: 8, borderRadius: 2, background: '#3b82f6', display: 'inline-block' }} />RECEITA BRUTA</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><span style={{ width: 8, height: 8, borderRadius: 2, background: '#ef4444', display: 'inline-block' }} />SAÍDAS (COMISSÃO/TAXAS)</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><span style={{ width: 8, height: 8, borderRadius: 2, background: '#10b981', display: 'inline-block' }} />LUCRO LÍQUIDO</span>
+          </div>
+        </div>
+        <div style={{ flex: 1, padding: '1rem' }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart 
+              data={[
+                { name: 'Bruto', value: data.receita_total, fill: '#3b82f6' },
+                { name: 'Comissões', value: totalComissoes, fill: '#ef4444' },
+                { name: 'Taxas', value: taxasCartao, fill: '#f59e0b' },
+                { name: 'Líquido', value: lucroLiquido, fill: '#10b981' }
+              ]} 
+              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+            >
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 700, fill: 'var(--text-tertiary)' }} />
+              <YAxis hide />
+              <RechartsTooltip 
+                cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                contentStyle={{ background: 'rgba(15, 23, 42, 0.9)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '1rem', color: 'white' }}
+                itemStyle={{ color: 'white' }}
+                formatter={(val: any) => [`R$ ${Math.abs(Number(val)).toLocaleString()}`, 'Valor']}
+              />
+              <Bar dataKey="value" shape={<CustomWaterfallBar />}>
+                <Cell fill="#3b82f6" />
+                <Cell fill="#ef4444" />
+                <Cell fill="#f59e0b" />
+                <Cell fill="#10b981" />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <div style={{ padding: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '2rem' }}>
+          <div style={{ fontSize: '0.8rem' }}>
+            <span style={{ opacity: 0.6 }}>Total Deduções:</span> 
+            <strong style={{ marginLeft: '0.5rem', color: '#ef4444' }}>R$ {(totalComissoes + taxasCartao).toLocaleString()}</strong>
+          </div>
+          <div style={{ fontSize: '0.8rem' }}>
+            <span style={{ opacity: 0.6 }}>Eficiência Financeira:</span> 
+            <strong style={{ marginLeft: '0.5rem', color: '#10b981' }}>{((lucroLiquido / data.receita_total) * 100).toFixed(1)}%</strong>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Row 5: Ledger (Span 12) */}
       <motion.div variants={cardVariants} className={`${styles.chartCard} ${styles.span12} ${styles.h3}`} style={{ height: 'auto', minHeight: '520px' }}>
          <div className={styles.cardHeader} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
@@ -561,7 +796,7 @@ export default function FinanceiroView() {
                   <th>Cliente</th>
                   <th>Saldo Devedor</th>
                   <th>Cobranças</th>
-                  <th style={{ textAlign: 'right' }}>Ações</th>
+                  <th style={{ width: '1%', whiteSpace: 'nowrap' }}>Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -625,8 +860,8 @@ export default function FinanceiroView() {
                         </button>
                       </div>
                     </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                    <td style={{ width: '1%', whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <Button 
                           variant="ghost" 
                           icon={<MessageCircle size={16} />} 
@@ -699,9 +934,6 @@ export default function FinanceiroView() {
             </div>
           )}
       </motion.div>
-
-
-
 
       <BarberDrawer 
         isOpen={isBarberDrawerOpen}
