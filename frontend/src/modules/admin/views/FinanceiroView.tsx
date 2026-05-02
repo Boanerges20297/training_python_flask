@@ -538,9 +538,9 @@ export default function FinanceiroView() {
             </p>
          </div>
 
-         <div className={themeStyles.profitChartContainer} style={{ flex: 1, width: '100%', marginTop: 'auto', overflow: 'hidden' }}>
+            <div className={themeStyles.profitChartContainer} style={{ flex: 1, width: '100%', marginTop: 'auto', overflow: 'hidden' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={liquidezData.slice(-10)} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+              <AreaChart data={liquidezData.slice(-10)} margin={{ top: 20, right: 0, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="splitColor" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="20%" stopColor="#34d399" stopOpacity={0.6}/>
@@ -566,15 +566,23 @@ export default function FinanceiroView() {
                   animationDuration={2000}
                   dot={({ cx, cy, payload, index }) => {
                     if (cx === undefined || cy === undefined) return null;
-                    const meta = data.receita_total / 30;
-                    const isMetaBatida = payload.realizado > meta && index === 9; // Mostrar no último ponto se bateu a meta
-                    if (isMetaBatida) {
+                    const slice = liquidezData.slice(-10);
+                    const meta = (data?.receita_total || 0) / 30;
+                    const maxProfit = Math.max(...slice.map(d => d.realizado));
+                    const isPeak = payload.realizado === maxProfit;
+                    const beatsMeta = payload.realizado > meta;
+
+                    if (beatsMeta && isPeak) {
                       return (
-                        <g key={`meta-${index}`}>
-                          <circle cx={cx} cy={cy} r={6} fill="#34d399" stroke="white" strokeWidth={2} />
-                          <text x={cx} y={cy - 12} textAnchor="middle" fill="#34d399" fontSize={10} fontWeight={900}>META BATIDA</text>
+                        <g key={`meta-peak-${index}`}>
+                          <circle cx={cx} cy={cy} r={8} fill="#10b981" fillOpacity={0.4} />
+                          <circle cx={cx} cy={cy} r={4} fill="#10b981" stroke="white" strokeWidth={2} />
+                          <text x={cx} y={cy - 18} textAnchor="middle" fill="#6ee7b7" fontSize={10} fontWeight={900} style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }}>META BATIDA</text>
                         </g>
                       );
+                    } else if (beatsMeta) {
+                       // Indicador sutil para outros dias que bateram a meta
+                       return <circle key={`meta-win-${index}`} cx={cx} cy={cy} r={3} fill="#fbbf24" stroke="white" strokeWidth={1} />;
                     }
                     return null;
                   }}
