@@ -60,6 +60,8 @@ def listar_clientes():
                             "nome": cliente.nome,
                             "telefone": cliente.telefone,
                             "email": cliente.email,
+                            "imagem_url": cliente.imagem_url,
+                            "observacoes": cliente.observacoes,
                             # Ian - 19/04/2026
                             # Adiciona status e dívida do cliente
                             "status": cliente.status,
@@ -88,6 +90,8 @@ def listar_clientes():
                 "nome": c.nome,
                 "telefone": c.telefone,
                 "email": c.email,
+                "imagem_url": c.imagem_url,
+                "observacoes": c.observacoes,
                 # Ian - 19/04/2026
                 # Adiciona status e dívida do cliente na listagem
                 "status": c.status,
@@ -155,6 +159,8 @@ def criar_cliente():
                             "nome": cliente.nome,
                             "telefone": cliente.telefone,
                             "email": cliente.email,
+                            "imagem_url": cliente.imagem_url,
+                            "observacoes": cliente.observacoes,
                         }
                     },
                 }
@@ -322,6 +328,8 @@ def buscar_cliente(id):
             "nome": cliente.nome,
             "telefone": cliente.telefone,
             "email": cliente.email,
+            "imagem_url": cliente.imagem_url,
+            "observacoes": cliente.observacoes,
             # Ian - 19/04/2026
             # Adiciona status e dívida do cliente na resposta
             "status": cliente.status,

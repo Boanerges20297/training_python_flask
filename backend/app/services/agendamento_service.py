@@ -100,6 +100,12 @@ class AgendamentoService:
                 )
 
         # 0. Validação de Regra de Negócio: Serviço
+        if not dados.servico_id and dados.servicos_ids:
+            dados.servico_id = dados.servicos_ids[0]
+
+        if not dados.servico_id:
+            raise ValueError("Ao menos um serviço deve ser selecionado.")
+
         servico = Servico.query.get(dados.servico_id)
         if not servico:
             raise ValueError("Serviço não encontrado.")
@@ -145,17 +151,9 @@ class AgendamentoService:
         )
 
         # 3. Persistência
-        # ModelDump é um método do Pydantic que converte o objeto para um dicionário
-        # O ** antes do model_dump desempacota o dicionário em argumentos nomeados
-        # Isso é equivalente a fazer:
-        # Agendamento(
-        #    cliente_id=dados.cliente_id,
-        #    barbeiro_id=dados.barbeiro_id,
-        #    servico_id=dados.servico_id,
-        #    data_agendamento=dados.data_agendamento,
-        #    observacoes=dados.observacoes
-        # )
-        novo_agendamento = Agendamento(**dados.model_dump())
+        # Removemos servicos_ids pois o modelo ainda não suporta múltiplos serviços nativamente
+        agendamento_data = dados.model_dump(exclude={"servicos_ids"})
+        novo_agendamento = Agendamento(**agendamento_data)
 
         db.session.add(novo_agendamento)
 
@@ -276,6 +274,14 @@ class AgendamentoService:
         dados_para_atualizar = dados.model_dump(exclude_unset=True)
         if not dados_para_atualizar:
             raise ValueError("Nenhum dado para atualizar.")
+
+        # Derivar servico_id se apenas servicos_ids for enviado
+        if "servicos_ids" in dados_para_atualizar and "servico_id" not in dados_para_atualizar:
+            if dados_para_atualizar["servicos_ids"]:
+                dados_para_atualizar["servico_id"] = dados_para_atualizar["servicos_ids"][0]
+        
+        # Limpar servicos_ids para não dar erro no setattr do modelo
+        servicos_ids_temp = dados_para_atualizar.pop("servicos_ids", None)
 
         # 5. Validação de Alteração de Cliente (Apenas admin permitidos)
         if "cliente_id" in dados_para_atualizar:

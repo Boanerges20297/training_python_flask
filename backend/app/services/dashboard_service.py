@@ -32,10 +32,18 @@ class DashboardService:
         ).count()
 
         receita_total = sum(
-            agendamento.servico.preco
+            agendamento.preco
             for agendamento in agendamentos_concluidos
-            if agendamento.servico
         )
+        receita_liquidada = sum(
+            agendamento.preco
+            for agendamento in agendamentos_concluidos
+            if agendamento.pago
+        )
+        receita_pendente = receita_total - receita_liquidada
+        
+        total_dividas = db.session.query(func.coalesce(func.sum(Cliente.divida_total), 0.0)).scalar()
+
         ticket_medio = (
             receita_total / len(agendamentos_concluidos)
             if agendamentos_concluidos
@@ -46,6 +54,9 @@ class DashboardService:
             "periodo_inicio": data_inicio.isoformat(),
             "periodo_fim": data_fim.isoformat(),
             "receita_total": round(float(receita_total), 2),
+            "receita_liquidada": round(float(receita_liquidada), 2),
+            "receita_pendente": round(float(receita_pendente), 2),
+            "total_dividas": round(float(total_dividas), 2),
             "agendamentos_total": agendamentos_total,
             "agendamentos_concluidos": len(agendamentos_concluidos),
             "agendamentos_cancelados": agendamentos_cancelados,
@@ -56,6 +67,7 @@ class DashboardService:
             "receita_diaria": DashboardService._get_receita_diaria(
                 data_inicio, data_fim
             ),
+            "barbeiros_desempenho": BarbeiroService.obter_ranking_desempenho(dias),
             "ticket_medio": round(float(ticket_medio), 2),
         }
 

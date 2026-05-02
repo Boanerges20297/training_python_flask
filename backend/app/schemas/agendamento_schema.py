@@ -17,8 +17,9 @@ class AgendamentoBase(BaseModel):
         ..., description="Data e hora do serviço (ISO 8601)"
     )
     barbeiro_id: int = Field(..., gt=0, description="ID único do barbeiro")
-    servico_id: int = Field(..., gt=0, description="ID único do serviço")
+    servico_id: Optional[int] = Field(None, gt=0, description="ID único do serviço principal")
     cliente_id: int = Field(..., gt=0)
+    servicos_ids: List[int] = Field(default=[], description="Lista de IDs de serviços")
 
 
 # --- Contratos de Entrada (Inputs) ---
@@ -29,6 +30,8 @@ class AgendamentoCreate(AgendamentoBase):
     """
 
     observacoes: Optional[str] = Field(None, max_length=500, description="Notas extras")
+    pago: Optional[bool] = Field(default=False)
+    preco: Optional[float] = Field(default=0.0)
 
     model_config = ConfigDict(extra="forbid")
 
@@ -49,6 +52,8 @@ class AgendamentoResponse(AgendamentoBase):
     data_criacao: datetime = Field(..., description="Data de registro no sistema")
 
     observacoes: str | None = Field(..., max_length=500, description="Notas extras")
+    pago: bool | None = Field(default=False)
+    preco: float | None = Field(default=0.0)
 
     # Vinicius - 14/04/2026
     # Adicionado a response uma mensagem e status para padronização da resposta e feedback de retorno de email
@@ -90,7 +95,10 @@ class AgendamentoUpdateSchema(BaseModel):
     barbeiro_id: Optional[int] = Field(None, gt=0)
     servico_id: Optional[int] = Field(None, gt=0)
     cliente_id: Optional[int] = Field(None, gt=0)
+    servicos_ids: Optional[List[int]] = None
     observacoes: Optional[str] = Field(None, max_length=500)
+    pago: Optional[bool] = Field(None)
+    preco: Optional[float] = Field(None)
 
     model_config = ConfigDict(extra="forbid", from_attributes=True)
 

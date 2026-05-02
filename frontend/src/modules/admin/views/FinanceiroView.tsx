@@ -206,9 +206,9 @@ export default function FinanceiroView() {
               <span>Data:</span>
               <strong style="color: var(--text-primary)">${new Date().toLocaleDateString('pt-BR')}</strong>
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 1.1rem; border-top: 1px solid rgba(255,255,255,0.1); pt-0.5rem; margin-top: 0.5rem;">
+            <div style="display: flex; justify-content: space-between; font-size: 1.1rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 0.5rem; margin-top: 0.5rem;">
               <span>Total Liquidado:</span>
-              <strong style="color: #059669">R$ ${cliente.divida_total?.toLocaleString()}</strong>
+              <strong style="color: #059669">R$ ${(cliente.divida_total || 0).toLocaleString()}</strong>
             </div>
           </div>
         </div>
@@ -296,21 +296,22 @@ export default function FinanceiroView() {
   }
 
   // --- DATA PREP ---
-  const liquidezData = data.receita_diaria.map((d, index, arr) => {
+  const liquidezData = (data?.receita_diaria || []).map((d, index, arr) => {
     const past = arr.slice(Math.max(0, index - 2), index + 1);
-    const mediaMovel = past.reduce((acc, curr) => acc + (curr.receita * 0.75), 0) / past.length;
+    const mediaMovel = past.reduce((acc, curr) => acc + ((curr.receita || 0) * 0.75), 0) / past.length;
     return {
       data: d.data,
-      realizado: d.receita * 0.75,
-      previsto: d.receita * 0.25,
+      realizado: (d.receita || 0) * 0.75,
+      previsto: (d.receita || 0) * 0.25,
       mediaMovel
     };
   });
 
   // 1. Waterfall (Cascata de Lucro)
-  const totalComissoes = (data.barbeiros_desempenho || []).reduce((s, b) => s + (b.comissao_gerada || b.receita_total * 0.4), 0);
-  const taxasCartao = data.receita_liquidada * 0.03;
-  const lucroLiquido = data.receita_total - totalComissoes - taxasCartao;
+  const totalComissoes = (data?.barbeiros_desempenho || []).reduce((s, b) => s + (b.comissao_gerada || b.receita_total * 0.4), 0);
+  const taxasCartao = (data?.receita_liquidada || 0) * 0.03;
+  const lucroLiquido = (data?.receita_total || 0) - totalComissoes - taxasCartao;
+  // Waterfall and associated variables were removed because they were unused in the current layout
 
   // 2. Treemap (Fontes de Receita)
   const servicosAgg: Record<string, number> = {};
@@ -428,13 +429,33 @@ export default function FinanceiroView() {
           </div>
         </div>
 
-        <div style={{ padding: '0 1.5rem', marginTop: '-0.5rem', zIndex: 2 }}>
-          <h2 style={{ fontSize: '3rem', fontWeight: 900, color: 'var(--text-primary)', margin: '0', letterSpacing: '-0.05em', lineHeight: 1 }}>
-            R$ {data.receita_liquidada.toLocaleString()}
-          </h2>
-          <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--color-service)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-            CAIXA ATUAL
-          </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '3rem', flex: 1, padding: '0 1rem' }}>
+           <div style={{ flex: '0 0 auto' }}>
+              <div className={themeStyles.labelCompact}>Caixa Atual</div>
+              <h2 className={themeStyles.valueLarge} style={{ fontSize: '3.5rem', margin: '0.5rem 0' }}>R$ {(data?.receita_liquidada || 0).toLocaleString()}</h2>
+              <div className={themeStyles.healthIndicator} style={{ width: '260px' }}>
+                <span>Saúde Financeira</span>
+                <div className={themeStyles.healthBar}>
+                  <div className={themeStyles.healthProgress} style={{ width: `${((data?.receita_liquidada || 0) / (data?.receita_total || 1)) * 100}%` }}></div>
+                </div>
+                <span style={{ color: 'var(--color-service)' }}>{(((data?.receita_liquidada || 0) / (data?.receita_total || 1)) * 100).toFixed(0)}%</span>
+              </div>
+           </div>
+
+           <div style={{ flex: 1, height: '220px', minWidth: 0 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={liquidezData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <XAxis dataKey="data" hide />
+                  <YAxis hide />
+                  <RechartsTooltip 
+                    contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '1rem', color: 'var(--text-primary)' }}
+                    formatter={(val: any, name: any) => [`R$ ${Number(val).toFixed(2)}`, String(name).charAt(0).toUpperCase() + String(name).slice(1)]}
+                  />
+                  <Area type="monotone" dataKey="realizado" stackId="1" stroke="var(--color-service)" strokeWidth={3} fill="var(--color-service-light)" fillOpacity={0.8} />
+                  <Area type="monotone" dataKey="previsto" stackId="1" stroke="#9ca3af" strokeDasharray="5 5" fill="var(--bg-tertiary)" fillOpacity={0.3} />
+                </AreaChart>
+              </ResponsiveContainer>
+           </div>
         </div>
 
         <div className={themeStyles.chartGlow} style={{ flex: 1, width: '100%', marginTop: '0', paddingBottom: '0.5rem' }}>
@@ -476,6 +497,7 @@ export default function FinanceiroView() {
                 stroke="#10b981" 
                 strokeWidth={4} 
                 dot={({ cx, cy, payload, index }) => {
+                  if (cx === undefined || cy === undefined) return null;
                   const isMax = payload.realizado === Math.max(...liquidezData.map(d => d.realizado));
                   if (isMax) {
                     return (
@@ -543,6 +565,7 @@ export default function FinanceiroView() {
                   fill="url(#splitColor)" 
                   animationDuration={2000}
                   dot={({ cx, cy, payload, index }) => {
+                    if (cx === undefined || cy === undefined) return null;
                     const meta = data.receita_total / 30;
                     const isMetaBatida = payload.realizado > meta && index === 9; // Mostrar no último ponto se bateu a meta
                     if (isMetaBatida) {

@@ -56,7 +56,7 @@ def get_dashboard_geral():
     # Retorna os dados
     return (
         jsonify(
-            {"message": "Dashboard geral obtido com sucesso", "data": dashboard_data}
+            {"message": "Dashboard geral obtido com sucesso", "dados": dashboard_data}
         ),
         200,
     )
@@ -82,7 +82,7 @@ def get_receita_periodo():
         jsonify(
             {
                 "message": "Receita por período obtida com sucesso",
-                "data": receita_diaria,
+                "dados": receita_diaria,
             }
         ),
         200,
@@ -118,7 +118,7 @@ def get_dashboard_barbeiro(barbeiro_id):
         jsonify(
             {
                 "message": "Dashboard do barbeiro obtido com sucesso",
-                "data": dashboard_data,
+                "dados": dashboard_data,
             }
         ),
         200,
@@ -157,7 +157,7 @@ def get_servicos_barbeiro(barbeiro_id):
         jsonify(
             {
                 "message": "Serviços realizados pelo barbeiro obtidos com sucesso",
-                "data": servicos_realizados,
+                "dados": servicos_realizados,
             }
         ),
         200,
@@ -184,7 +184,7 @@ def get_horarios_populares():
         jsonify(
             {
                 "message": "Horários populares obtidos com sucesso",
-                "data": top_5_horarios,
+                "dados": top_5_horarios,
             }
         ),
         200,
@@ -205,7 +205,7 @@ def get_ganhos_totais():
         jsonify(
             {
                 "message": f"Ganhos totais do {periodo} obtidos com sucesso",
-                "data": ganhos,
+                "dados": ganhos,
             }
         ),
         200,
@@ -226,7 +226,7 @@ def get_ganhos_barbeiros():
         jsonify(
             {
                 "message": f"Ganhos dos barbeiros do {periodo} obtidos com sucesso",
-                "data": ganhos,
+                "dados": ganhos,
             }
         ),
         200,
@@ -262,7 +262,7 @@ def get_atendimentos_gerais():
     atendimentos = DashboardService.get_atendimentos_gerais(data_inicio, data_fim)
     return (
         jsonify(
-            {"message": "Atendimentos gerais obtidos com sucesso", "data": atendimentos}
+            {"message": "Atendimentos gerais obtidos com sucesso", "dados": atendimentos}
         ),
         200,
     )
@@ -299,7 +299,7 @@ def get_atendimentos_barbeiros():
         jsonify(
             {
                 "message": "Atendimentos por barbeiro obtidos com sucesso",
-                "data": atendimentos,
+                "dados": atendimentos,
             }
         ),
         200,
@@ -314,7 +314,7 @@ def get_servico_mais_procurado():
     servico = DashboardService.get_servico_mais_procurado()
     return (
         jsonify(
-            {"message": "Serviço mais procurado obtido com sucesso", "data": servico}
+            {"message": "Serviço mais procurado obtido com sucesso", "dados": servico}
         ),
         200,
     )
@@ -330,7 +330,7 @@ def get_cliente_mais_atendimentos():
         jsonify(
             {
                 "message": "Cliente com mais atendimentos obtido com sucesso",
-                "data": cliente,
+                "dados": cliente,
             }
         ),
         200,

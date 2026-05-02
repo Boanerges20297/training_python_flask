@@ -16,7 +16,7 @@ from typing import List
 
 from pydantic import BaseModel, Field
 
-from app.schemas.barbeiro_schema import ServicoRealizadoSchema
+from app.schemas.barbeiro_schema import ServicoRealizadoSchema, BarbeiroDesempenhoSchema
 
 
 class HorarioPopularSchema(BaseModel):
@@ -42,6 +42,10 @@ class DashboardResumoSchema(BaseModel):
 
     top_5_horarios: List[HorarioPopularSchema] = Field(default_factory=list)
     receita_diaria: List[ReceitaPeriodicaSchema] = Field(default_factory=list)
+    receita_liquidada: float
+    receita_pendente: float
+    total_dividas: float
+    barbeiros_desempenho: List[BarbeiroDesempenhoSchema] = Field(default_factory=list)
     ticket_medio: float
 
 

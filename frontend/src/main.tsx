@@ -9,23 +9,16 @@ import { ToastProvider } from './components/ui/Toast.tsx'
 import { AuthProvider } from './auth/AuthContext.tsx'
 import { ThemeProvider } from './components/providers/ThemeProvider.tsx'
 
-async function enableMocking() {
-  const { worker } = await import('./mocks/browser')
-  return worker.start({ onUnhandledRequest: 'warn' })
-}
-
-enableMocking().then(() => {
-  createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-      <BrowserRouter>
-        <ThemeProvider>
-          <AuthProvider>
-            <ToastProvider>
-              <App />
-            </ToastProvider>
-          </AuthProvider>
-        </ThemeProvider>
-      </BrowserRouter>
-    </StrictMode>,
-  )
-})
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <BrowserRouter>
+      <ThemeProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <App />
+          </ToastProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </BrowserRouter>
+  </StrictMode>,
+)

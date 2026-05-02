@@ -36,6 +36,9 @@ class Agendamento(db.Model):
     # Ian - 19/04/2026
     # Indica se o agendamento já foi pago
     pago = db.Column(db.Boolean, default=False)
+    
+    # Preco fixado no momento do agendamento
+    preco = db.Column(db.Float, nullable=False, default=0.0)
 
     def __repr__(self):
         return f"<Agendamento {self.id} - {self.status}>"

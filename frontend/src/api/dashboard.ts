@@ -6,7 +6,7 @@ export const getDashboardInfo = async (dias: number = 30): Promise<DashboardData
     const response = await api.get('/dashboard/geral', {
       params: { dias }
     });
-    return response.data.data;
+    return response.data.dados;
   } catch (error: any) {
     throw error.response?.data?.erro || 'Erro ao carregar dados do dashboard';
   }

@@ -12,11 +12,18 @@ class Barbeiro(HashSenhaMixin, db.Model):
     # Colunas
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False)
-    especialidade = db.Column(db.String(100))  # Ex: "Corte clássico", "Barba"
+    especialidades = db.Column(db.JSON, nullable=True)  # Ex: ["Corte clássico", "Barba"]
     email = db.Column(db.String(100), unique=True, nullable=False)
     telefone = db.Column(db.String(20), nullable=False)
     data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
     ativo = db.Column(db.Boolean, default=True)  # Se está trabalhando
+    
+    # Novos campos de integracao
+    imagem_url = db.Column(db.Text, nullable=True)
+    comissao_percentual = db.Column(db.Float, default=40.0)
+    justificativa = db.Column(db.Text, nullable=True)
+    data_atualizacao = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
     # Vinicius
     # Senha hash removida para ser gerenciada pelo Mixin
     # Relacionamentos

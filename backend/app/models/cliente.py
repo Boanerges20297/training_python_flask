@@ -34,6 +34,11 @@ class Cliente(HashSenhaMixin, db.Model):
     # Data da última visita (agendamento concluído)
     ultima_visita = db.Column(db.DateTime, nullable=True)
     
+    # Novos campos de integracao
+    imagem_url = db.Column(db.Text, nullable=True)
+    observacoes = db.Column(db.Text, nullable=True)
+    data_atualizacao = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
     # Relacionamentos (vamos usar depois)
     agendamentos = db.relationship('Agendamento', backref='cliente', lazy=True)
 

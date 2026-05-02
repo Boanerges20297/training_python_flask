@@ -22,6 +22,8 @@ class ClienteSchema(BaseModel):
         max_length=256,
         description="Senha do cliente (mínimo 6 caracteres)",
     )
+    imagem_url: str | None = Field(default=None, description="URL da imagem de perfil")
+    observacoes: str | None = Field(default=None, description="Observações sobre o cliente")
 
     model_config = {"extra": "forbid"}
 
@@ -79,6 +81,8 @@ class ClienteUpdateSchema(BaseModel):
         ge=0.0,
         description="Total em dívida do cliente"
     )
+    imagem_url: str | None = Field(default=None, description="URL da imagem de perfil")
+    observacoes: str | None = Field(default=None, description="Observações sobre o cliente")
 
     # Adicionado 'extra': 'forbid' para que o campo não aceite campos extras
     # Vinicius - 09/04/2026

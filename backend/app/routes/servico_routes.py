@@ -83,6 +83,9 @@ def listar_servicos():
                 "nome": s.nome,
                 "preco": s.preco,
                 "duracao_minutos": s.duracao_minutos,
+                "imagem_url": s.imagem_url,
+                "data_criacao": s.data_criacao.isoformat() if s.data_criacao else None,
+                "data_atualizacao": s.data_atualizacao.isoformat() if s.data_atualizacao else None,
                 # Vinicius - 19/04/2026
                 # Removido o campo barbeiro_id, agora essa informação é enviada por outra rota
             }
@@ -336,6 +339,9 @@ def buscar_servico(id):
             "nome": servico.nome,
             "preco": servico.preco,
             "duracao_minutos": servico.duracao_minutos,
+            "imagem_url": servico.imagem_url,
+            "data_criacao": servico.data_criacao.isoformat() if servico.data_criacao else None,
+            "data_atualizacao": servico.data_atualizacao.isoformat() if servico.data_atualizacao else None,
         }
         return jsonify({"sucesso": True, "dados": {"servico": servico_dict}}), 200
     except Exception as e:

@@ -16,6 +16,7 @@ class ServicoSchema(BaseModel):
     duracao_minutos: int = Field(
         ..., gt=0, description="Duração do serviço em minutos (maior que zero)"
     )
+    imagem_url: str | None = Field(default=None, description="URL da imagem")
 
     # Vinicius 19/04/2026
     # barbeiro_id agora não é mais obrigatório para criar um serviço
@@ -48,6 +49,7 @@ class ServicoUpdateSchema(BaseModel):
     duracao_minutos: int | None = Field(
         default=None, gt=0, description="Duração do serviço em minutos (maior que zero)"
     )
+    imagem_url: str | None = Field(default=None)
 
     # Adicionado 'extra': 'forbid' para que o campo não aceite campos extras
     # Adicionado 'str_lowercase': True para que o campo string seja convertido para minúsculo

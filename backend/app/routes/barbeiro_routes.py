@@ -55,6 +55,12 @@ def listar_barbeiros():
                             "nome": barbeiro.nome,
                             "telefone": barbeiro.telefone,
                             "email": barbeiro.email,
+                            "especialidades": barbeiro.especialidades,
+                            "ativo": barbeiro.ativo,
+                            "imagem_url": barbeiro.imagem_url,
+                            "comissao_percentual": barbeiro.comissao_percentual,
+                            "justificativa": barbeiro.justificativa,
+                            "servicos_ids": [s.id for s in barbeiro.servicos],
                         }
                     }
                 ),
@@ -81,8 +87,13 @@ def listar_barbeiros():
                 "nome": b.nome,
                 "telefone": b.telefone,
                 "email": b.email,
-                "especialidade": b.especialidade,
+                "email": b.email,
+                "especialidades": b.especialidades,
                 "ativo": b.ativo,
+                "imagem_url": b.imagem_url,
+                "comissao_percentual": b.comissao_percentual,
+                "justificativa": b.justificativa,
+                "servicos_ids": [s.id for s in b.servicos],
             }
             # Vinicius - 04/04/2026
             # Adicionado o .items para que o list comprehension receba os itens da paginação
@@ -124,10 +135,17 @@ def criar_barbeiro():
         # Removido validações feitas pelo Josue, que agora serão validadas pelo schema
 
         # Criar barbeiro e salvar no banco
-        barbeiro = Barbeiro(**data.model_dump())
+        barbeiro_data = data.model_dump(exclude={"servicos_ids"})
+        barbeiro = Barbeiro(**barbeiro_data)
         # Vinicius - 04/04/2026
         # Utilizando o metodo do mixin para hashear a senha em texto simples antes de efetuar o commit no banco
         barbeiro.senha = data.senha
+        
+        # Associar serviços se fornecidos
+        if data.servicos_ids:
+            servicos = Servico.query.filter(Servico.id.in_(data.servicos_ids)).all()
+            barbeiro.servicos = servicos
+
         db.session.add(barbeiro)
         db.session.commit()
         # Vinicius - 16/04/2026
@@ -152,7 +170,12 @@ def criar_barbeiro():
                             "nome": barbeiro.nome,
                             "telefone": barbeiro.telefone,
                             "email": barbeiro.email,
-                            "especialidade": barbeiro.especialidade,
+                            "especialidades": barbeiro.especialidades,
+                            "ativo": barbeiro.ativo,
+                            "imagem_url": barbeiro.imagem_url,
+                            "comissao_percentual": barbeiro.comissao_percentual,
+                            "justificativa": barbeiro.justificativa,
+                            "servicos_ids": [s.id for s in barbeiro.servicos],
                         }
                     },
                 }
@@ -237,6 +260,9 @@ def editar_barbeiro(id):
             # Adicionado tratamento para senha, pois ela precisa ser hasheada
             if key == "senha":
                 barbeiro.senha = value
+            elif key == "servicos_ids":
+                servicos = Servico.query.filter(Servico.id.in_(value)).all()
+                barbeiro.servicos = servicos
             else:
                 setattr(barbeiro, key, value)  # Atualiza o atributo dinamicamente
 
@@ -336,8 +362,13 @@ def buscar_barbeiro(id):
             "nome": barbeiro.nome,
             "telefone": barbeiro.telefone,
             "email": barbeiro.email,
-            "especialidade": barbeiro.especialidade,
+            "email": barbeiro.email,
+            "especialidades": barbeiro.especialidades,
             "ativo": barbeiro.ativo,
+            "imagem_url": barbeiro.imagem_url,
+            "comissao_percentual": barbeiro.comissao_percentual,
+            "justificativa": barbeiro.justificativa,
+            "servicos_ids": [s.id for s in barbeiro.servicos],
         }
         return jsonify({"dados": {"barbeiro": barbeiro_dict}, "sucesso": True}), 200
     except Exception as e:

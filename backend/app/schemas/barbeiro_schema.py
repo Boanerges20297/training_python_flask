@@ -8,10 +8,9 @@ from typing import List
 
 class BarbeiroSchema(BaseModel):
     nome: str = Field(..., max_length=100, description="Nome completo do barbeiro")
-    especialidade: str = Field(
-        default="",
-        max_length=100,
-        description="Especialidade do barbeiro (ex: degrade, reflexo)",
+    especialidades: list[str] = Field(
+        default=[],
+        description="Especialidades do barbeiro",
     )
     email: EmailStr = Field(..., max_length=100, description="E-mail do barbeiro")
     telefone: str = Field(
@@ -19,10 +18,13 @@ class BarbeiroSchema(BaseModel):
     )
     senha: str = Field(..., min_length=6, description="Senha de acesso do barbeiro")
     ativo: bool = Field(default=True, description="Se o barbeiro está ativo no sistema")
-
+    imagem_url: str | None = Field(default=None, description="URL da imagem")
+    comissao_percentual: float | None = Field(default=40.0, description="Comissão")
+    justificativa: str | None = Field(default=None, description="Justificativa")
+    servicos_ids: List[int] = Field(default=[], description="IDs dos serviços associados")
     model_config = {"extra": "forbid"}
 
-    @field_validator("nome", "especialidade", mode="before")
+    @field_validator("nome", mode="before")
     @classmethod
     def str_validator(cls, value):
         if isinstance(value, str):
@@ -51,11 +53,9 @@ class BarbeiroUpdateSchema(BaseModel):
         max_length=100,
         description="Nome completo do barbeiro",
     )
-    especialidade: str | None = Field(
+    especialidades: list[str] | None = Field(
         default=None,
-        min_length=3,
-        max_length=100,
-        description="Especialidade do barbeiro (ex: degrade, reflexo)",
+        description="Especialidades do barbeiro",
     )
     email: EmailStr | None = Field(
         default=None, min_length=10, max_length=100, description="E-mail do barbeiro"
@@ -73,12 +73,16 @@ class BarbeiroUpdateSchema(BaseModel):
     ativo: bool | None = Field(
         default=None, description="Se o barbeiro está ativo no sistema"
     )
+    imagem_url: str | None = Field(default=None)
+    comissao_percentual: float | None = Field(default=None)
+    justificativa: str | None = Field(default=None)
+    servicos_ids: List[int] | None = Field(default=None)
 
     # Vinicius - 09/04/2026
     # Removido o str_lowercase devido que poderia dar problemas (ex: deixar caracteres da senha em minúsculo)
     model_config = {"extra": "forbid"}
 
-    @field_validator("nome", "especialidade", mode="before")
+    @field_validator("nome", mode="before")
     @classmethod
     def str_validator(cls, value):
         if isinstance(value, str):
