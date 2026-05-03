@@ -1,7 +1,5 @@
 from flask import jsonify
-from app.services.auth_service import (
-    MOCK_BLOCKLIST,
-)  # Importando a blocklist do nosso teste
+from app.services.auth_service import AuthService
 
 
 def register_jwt_handlers(jwt):
@@ -17,7 +15,7 @@ def register_jwt_handlers(jwt):
         Acionado em toda requisição que exige token. Checa se o 'jti' está na blocklist.
         """
         jti = jwt_payload["jti"]
-        return jti in MOCK_BLOCKLIST
+        return AuthService.is_token_revoked(jti)
 
     @jwt.expired_token_loader
     def expired_token_callback(jwt_header, jwt_payload):

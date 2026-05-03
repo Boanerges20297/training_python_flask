@@ -114,11 +114,13 @@ def refresh():
         current_user_id = get_jwt_identity()
         role = get_jwt().get("role")
 
-        # Delega a criação para o Serviço
-        new_access_token = AuthService.renew_access_token(current_user_id, role)
+        # Delega a criação para o Serviço (com rotação)
+        jti_refresh = get_jwt()["jti"]
+        tokens = AuthService.renew_access_token(current_user_id, role, jti_refresh)
 
-        response = jsonify({"msg": "Sessão renovada silenciosamente"})
-        set_access_cookies(response, new_access_token)
+        response = jsonify({"msg": "Sessão renovada com sucesso"})
+        set_access_cookies(response, tokens["access_token"])
+        set_refresh_cookies(response, tokens["refresh_token"])
 
         app_logger.info(
             "Sessão renovada silenciosamente",
@@ -145,8 +147,12 @@ def refresh():
 def logout():
     try:
         # Extrai o ID do token e manda o Serviço revogar
-        jti = get_jwt()["jti"]
-        AuthService.revoke_token(jti)
+        jwt_payload = get_jwt()
+        jti = jwt_payload["jti"]
+        token_type = jwt_payload["type"]
+        user_id = get_jwt_identity()
+        
+        AuthService.revoke_token(jti, type=token_type, user_id=user_id)
 
         # Limpa os cookies (Regra de HTTP)
         response = jsonify({"msg": "Logout efetuado. Cookies limpos."})

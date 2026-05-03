@@ -25,3 +25,12 @@ def test_put():
 @limiter.limit(limit_for_method)
 def test_delete():
     return jsonify({'msg': 'Testado com sucesso'}), 200
+
+@tests_bp.route('/seed', methods=['GET'])
+def seed():
+    from app.utils.seeder import seed_database
+    try:
+        result = seed_database()
+        return jsonify({'msg': 'Banco de dados populado com sucesso!', 'detalhes': result}), 200
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500

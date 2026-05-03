@@ -1,5 +1,5 @@
 /* ===================================================================
-   Auth.module.css — Layout "Floating Card" Premium
+   Auth.module.css — Architectural Glassmorphism (High-End)
    =================================================================== */
 
 .authContainer {
@@ -8,532 +8,190 @@
   justify-content: center;
   width: 100vw;
   min-height: 100vh;
-  background: var(--bg-primary); 
+  background-color: #020617; /* Deepest Slate */
+  background-image: 
+    radial-gradient(circle at 0% 0%, rgba(var(--color-client-rgb), 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 100% 100%, rgba(var(--color-client-rgb), 0.1) 0%, transparent 50%),
+    url('https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=2070'); /* Professional Barbershop Background */
+  background-size: cover;
+  background-position: center;
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   overflow: hidden;
-  z-index: 0;
+  padding: 1.5rem;
 }
 
-.authContainer::before {
+.authContainer::after {
   content: '';
   position: absolute;
-  width: 160%;
-  height: 160%;
-  top: -30%;
-  left: -30%;
-  z-index: -1;
-  opacity: 0.7;
-  background-image:
-    radial-gradient(at 10% 20%, var(--auth-color-1) 0px, transparent 45%),
-    radial-gradient(at 90% 10%, var(--auth-color-2) 0px, transparent 40%),
-    radial-gradient(at 50% 50%, var(--auth-color-3) 0px, transparent 50%),
-    radial-gradient(at 80% 90%, var(--auth-color-1) 0px, transparent 45%),
-    radial-gradient(at 20% 80%, var(--auth-color-4) 0px, transparent 35%),
-    radial-gradient(at 0% 50%, var(--auth-color-2) 0px, transparent 40%);
-  
-  filter: blur(70px); 
-  animation: liquidMesh 20s ease-in-out infinite alternate;
-  will-change: transform;
-}
-
-@keyframes liquidMesh {
-  0% { transform: rotate(0deg) scale(1) translate(0, 0); }
-  50% { transform: rotate(3deg) scale(1.1) translate(2%, 3%); }
-  100% { transform: rotate(-3deg) scale(1) translate(-1%, -2%); }
-}
-
-.loginTheme {
-  --auth-bg-base: #0f172a;
-  --auth-color-1: #1e40af; /* Azul Forte */
-  --auth-color-2: #3b82f6; /* Azul Médio */
-  --auth-color-3: #93c5fd; /* Azul Brilhante/Céu */
-  --auth-color-4: #1d4ed8; /* Azul Royal */
-}
-
-.registerTheme {
-  --auth-bg-base: #064e3b;
-  --auth-color-1: #059669; /* Esmeralda */
-  --auth-color-2: #10b981; /* Verde Médio */
-  --auth-color-3: #a7f3d0; /* Verde Água Brilhante */
-  --auth-color-4: #047857; /* Verde Floresta */
-}
-
-.forgotPasswordTheme {
-  --auth-bg-base: #451a03; /* Marrom Âmbar profundo */
-  --auth-color-1: #d97706; /* Âmbar Forte */
-  --auth-color-2: #f59e0b; /* Âmbar Médio */
-  --auth-color-3: #fef3c7; /* Âmbar Brilhante */
-  --auth-color-4: #b45309; /* Bronze/Laranja queimado */
-}
-
-/* No Dark Mode, o fundo de trás fica mais integrado */
-:global([data-theme="dark"]) .authContainer {
-  background: var(--bg-primary);
-}
-
-/* ── Container para o seletor de tema ── */
-.themeToggleWrapper {
-  position: absolute;
-  top: var(--space-lg);
-  right: var(--space-lg);
-  z-index: 100;
-  animation: fadeIn var(--transition-slow) ease-out;
-}
-
-/* ── O "Card" Principal que flutua no meio da tela ── */
-.contentBox {
-  display: flex;
-  width: 96%;
-  max-width: 1550px; 
-  height: 92vh; 
-  max-height: 900px;
-  background: rgba(255, 255, 255, 0.755);
-  backdrop-filter: blur(25px) saturate(120%);
-  -webkit-backdrop-filter: blur(25px) saturate(120%);
-  border-radius: 3.5rem;
-  box-shadow: 0 50px 150px -30px rgba(0, 0, 0, 0.7);
-  overflow: hidden;
-  position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 1rem;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.7); /* Dark Overlay for better contrast */
+  backdrop-filter: saturate(120%);
   z-index: 1;
 }
 
-.reversed {
-  flex-direction: row-reverse;
+.contentBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 480px;
+  background: rgba(15, 23, 42, 0.6); /* Glass effect */
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-radius: var(--radius-2xl);
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 2;
+  padding: 3rem 2.5rem;
+  animation: cardAppear 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-:global([data-theme="dark"]) .contentBox {
-  background: rgba(15, 23, 42, 0.755);
+@keyframes cardAppear {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.authCard {
+  width: 100%;
+}
+
+.authHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 2.5rem;
+  text-align: center;
+}
+
+.logoContainer {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, var(--color-client) 0%, #3b82f6 100%);
+  border-radius: var(--radius-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 8px 16px rgba(var(--color-client-rgb), 0.3);
+  position: relative;
+}
+
+.logoContainer::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 100%);
+  z-index: 1;
+}
+
+.authTitle {
+  font-size: 2.25rem;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: -0.05em;
+  margin-bottom: 0.5rem;
+  line-height: 1;
+}
+
+.authSubtitle {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 500;
+}
+
+.authForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Override input styling for glass theme */
+.authForm :global(.input-wrapper) {
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* ── Painel de Hero (Imagem) ── */
-.heroPanel {
-  position: relative;
-  flex: 0 0 60%; /* 60% para a imagem */
-  border-radius: 2.5rem;
-  overflow: hidden;
-  z-index: 1;
-  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.15);
-}
-
-.formPanel {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.75rem; /* Reduzido para eliminar scroll */
-  z-index: 2;
-  overflow: hidden; 
-  position: relative;
-}
-
-.heroImage {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-/* Overlay sutil para a marca */
-.heroOverlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(15, 23, 42, 0.1) 0%,
-    transparent 40%,
-    rgba(15, 23, 42, 0.7) 100%
-  );
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: var(--space-2xl);
-  z-index: 3;
-}
-
-.heroBrand {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  margin-bottom: var(--space-lg);
-}
-
-.heroBrandIcon {
-  width: 44px;
-  height: 44px;
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.heroBrandText {
-  font-size: var(--font-size-xl);
-  font-weight: 700;
+.authForm :global(input) {
   color: #ffffff;
-  letter-spacing: -0.02em;
 }
 
-.heroTagline {
-  font-size: var(--font-size-base);
-  color: rgba(255, 255, 255, 0.8);
-  max-width: 380px;
-  line-height: 1.6;
-  margin: 0;
-  font-weight: 400;
+.authForm :global(label) {
+  color: rgba(255, 255, 255, 0.6);
 }
 
-/* ── Painel de Formulário ── */
-
-/* ── Grid para inputs lado a lado ── */
-.inputGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-md);
-  width: 100%;
+.authLink {
+  color: var(--color-client);
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
 }
 
-/* ── Card Estilizado ── */
-.authCard {
-  width: 100%;
-  max-width: 440px;
-  margin: 0 auto;
-  min-height: 520px; /* Reduzi um pouco para o formato quadrado */
+.authLink:hover {
+  color: #60a5fa;
+  text-decoration: underline;
+}
+
+.divider {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  align-items: center;
+  gap: 1.25rem;
+  margin: 2rem 0;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
 
 .socialButton {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  height: 3.5rem;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-light);
-  border-radius: 2rem;
-  font-size: 0.9rem;
+  width: 100%;
+  padding: 0.875rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  font-size: 0.875rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: #ffffff;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s;
 }
 
 .socialButton:hover {
-  background: var(--bg-tertiary);
-  border-color: var(--text-tertiary);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
   transform: translateY(-2px);
 }
 
-/* .authCardLarge não é mais necessário pois o painel já é grande, mas manteremos por segurança */
-.authCardLarge {
-  max-width: 420px;
-}
-
-.authHeader {
-  text-align: center;
-  margin-bottom: 1rem;
-}
-
-.logoIcon {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto var(--space-md);
-  border: 1px solid;
-}
-
-.logoBlue { background: var(--color-client-light); border-color: var(--color-client-border); }
-.logoGreen { background: var(--color-service-light); border-color: var(--color-service-border); }
-.logoAmber { background: var(--color-barber-light); border-color: var(--color-barber-border); }
-
-.authTitle {
-  font-size: 1.8rem;
-  font-weight: 800;
-  margin: 0 0 0.25rem;
-  color: var(--text-primary);
-}
-
-.authSubtitle {
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-  margin: 0;
-}
-
-.authForm {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.formDescription {
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-  text-align: center;
-  margin: 0 0 var(--space-lg);
-  line-height: 1.5;
-}
-
-.formButtons {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: var(--space-sm);
-}
-
-.divider {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  margin: 1rem 0;
-  width: 100%;
-}
-
-.divider::before,
-.divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--text-tertiary); /* Cor mais forte para ser visível */
-  opacity: 0.3;
-}
-
-.divider span {
+.footerNote {
+  margin-top: 2rem;
   font-size: 0.75rem;
-  color: var(--text-tertiary);
-  font-weight: 700;
-  text-transform: lowercase;
-  padding: 0 0.75rem;
-}
-
-.checkboxContainer {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  cursor: pointer;
-  user-select: none;
-  margin-top: 1.5rem;
-}
-
-.checkboxContainer input {
-  display: none;
-}
-
-.customCheckbox {
-  width: 1.25rem;
-  height: 1.25rem;
-  border: 2px solid var(--border-light);
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  background: var(--bg-primary);
-}
-
-.checkboxContainer:hover .customCheckbox {
-  border-color: var(--auth-color-1);
-}
-
-.checkboxContainer input:checked + .customCheckbox {
-  background: var(--auth-color-1);
-  border-color: var(--auth-color-1);
-}
-
-.customCheckbox::after {
-  content: '✓';
-  color: white;
-  font-size: 0.8rem;
-  display: none;
-}
-
-.checkboxContainer input:checked + .customCheckbox::after {
-  display: block;
-}
-
-.checkboxLabel {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-}
-
-.checkboxLabel strong {
-  color: var(--text-primary);
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-.authLink {
-  color: var(--color-client);
-  text-decoration: none;
-  font-weight: 600;
-  cursor: pointer;
-  transition: color var(--transition-fast);
-}
-
-.authLink:hover {
-  color: var(--color-client-hover);
-  text-decoration: underline;
-}
-
-.clickableText {
-  cursor: pointer;
-  color: var(--text-secondary);
-  font-weight: 500;
-  transition: color var(--transition-fast);
-}
-
-.clickableText:hover {
-  color: var(--text-primary);
-}
-
-.devHint {
-  margin-top: var(--space-lg);
-  opacity: 0.6;
-  font-size: var(--font-size-xs);
-  line-height: 1.6;
-  padding: var(--space-sm);
-  background: var(--bg-tertiary);
-  border-radius: var(--radius-md);
-}
-
-.strengthContainer {
-  margin-top: calc(-1 * var(--space-sm));
-  margin-bottom: var(--space-xs);
-}
-
-.strengthBars {
-  display: flex;
-  gap: 4px;
-  height: 4px;
-  margin-bottom: var(--space-xs);
-}
-
-.strengthBar {
-  flex: 1;
-  background: var(--bg-tertiary);
-  border-radius: 2px;
-  transition: all var(--transition-slow);
-}
-
-.strength1 { background: var(--color-danger); }
-.strength2 { background: var(--color-warning); }
-.strength3 { background: var(--color-client); }
-.strength4 { background: var(--color-success); }
-
-.strengthLabel {
-  font-size: var(--font-size-xs);
-  color: var(--text-tertiary);
-  text-align: right;
-  display: block;
-}
-
-/* ── Mensagens (Fallback se não usar toast) ── */
-.errorMessage {
-  background: var(--color-danger-light);
-  color: var(--color-danger);
-  padding: 0.75rem;
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-sm);
-  border: 1px solid var(--color-danger-border);
+  color: rgba(255, 255, 255, 0.4);
   text-align: center;
-}
-
-.successMessage {
-  background: var(--color-service-light);
-  color: var(--color-service);
-  padding: 0.75rem;
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-sm);
-  border: 1px solid var(--color-service-border);
-  text-align: center;
-}
-
-/* Estado de Sucesso */
-.successState {
-  text-align: center;
-  animation: fadeIn 0.4s ease-out;
-}
-
-.successIcon {
-  display: flex;
-  justify-content: center;
-  margin-bottom: var(--space-md);
-}
-
-.successTitle {
-  color: var(--text-primary);
-  margin: 0 0 var(--space-sm);
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-}
-
-.successDescription {
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-  margin: 0 0 var(--space-xl);
-  line-height: 1.5;
-}
-
-/* ── Animações ── */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-/* ── Responsividade ── */
-@media (max-width: 1100px) {
-  .contentBox {
-    width: 95%;
-    height: auto;
-    max-height: none;
-    flex-direction: column !important;
-    padding: 1rem;
-    border-radius: 2rem;
-  }
-
-  .heroPanel {
-    flex: 0 0 350px;
-    width: 100%;
-  }
-
-  .formPanel {
-    padding: 2.5rem 1.5rem;
-    flex: 1 !important; /* Ocupa o restante do espaço vertical */
-    width: 100%;
-  }
 }
 
 @media (max-width: 640px) {
-  .authContainer {
-    padding: 0;
-    background: var(--bg-secondary);
-  }
-  
-  .heroPanel {
-    display: none;
-  }
-  
   .contentBox {
-    width: 100%;
-    height: 100vh;
-    max-height: none;
-    border-radius: 0;
-    padding: 2rem 1rem;
-    box-shadow: none;
-    border: none;
+    padding: 2.5rem 1.5rem;
+    border-radius: var(--radius-xl);
+  }
+  .authTitle {
+    font-size: 1.75rem;
   }
 }

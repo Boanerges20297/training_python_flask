@@ -64,7 +64,7 @@ const FluxoTooltip = ({ active, payload, label }: any) => {
     else if (value > 700) { insight = "Alta Demanda: Foco total em Upsell (Produtos/Combo)"; }
 
     return (
-      <div style={{ background: 'var(--bg-secondary)', padding: '1rem', border: '1px solid var(--border-color)', borderRadius: '1rem', boxShadow: 'var(--shadow-lg)', zIndex: 100 }}>
+      <div style={{ background: 'var(--bg-secondary)', padding: '1rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-lg)', zIndex: 100 }}>
         <p style={{ fontWeight: 800, marginBottom: '0.25rem', color: 'var(--text-tertiary)', fontSize: '0.8rem' }}>DIA {label}</p>
         <p style={{ color: 'var(--color-client)', fontSize: '1.5rem', fontWeight: 900 }}>R$ {value.toFixed(2)}</p>
         <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>{agendamentos} atendimentos concluídos</p>
@@ -360,12 +360,6 @@ const DashboardView = () => {
                   <stop offset="5%" stopColor="var(--color-client)" stopOpacity={0.5} />
                   <stop offset="95%" stopColor="var(--color-client)" stopOpacity={0} />
                 </linearGradient>
-                <filter id="shadowArea" height="200%">
-                  <feGaussianBlur in="SourceAlpha" stdDeviation="4" />
-                  <feOffset dx="0" dy="6" result="offsetblur" />
-                  <feComponentTransfer><feFuncA type="linear" slope="0.4" /></feComponentTransfer>
-                  <feMerge><feMergeNode /><feMergeNode in="SourceGraphic" /></feMerge>
-                </filter>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" opacity={0.5} />
               <XAxis 
@@ -376,7 +370,7 @@ const DashboardView = () => {
               />
               <YAxis tickFormatter={(val) => `R$${val}`} tick={{ fontSize: 12, fill: 'var(--text-tertiary)' }} axisLine={false} tickLine={false} />
               <RechartsTooltip content={<FluxoTooltip />} cursor={{ stroke: 'var(--color-client)', strokeWidth: 1, strokeDasharray: '5 5' }} />
-              <Area type="monotone" dataKey="receita" stroke="var(--color-client)" strokeWidth={4} fillOpacity={1} fill="url(#colorReceitaBento)" filter="url(#shadowArea)" />
+              <Area type="monotone" dataKey="receita" stroke="var(--color-client)" strokeWidth={4} fillOpacity={1} fill="url(#colorReceitaBento)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -387,24 +381,24 @@ const DashboardView = () => {
         <div className={`${styles.flipCardInner} ${isGoalFlipped ? styles.flipped : ''}`}>
           {/* ═══ FRENTE ═══ */}
           <div className={styles.flipFront}>
-            <div className={styles.kpiCard} style={{ background: 'var(--color-client)', color: 'white', position: 'relative', overflow: 'hidden', padding: '1.75rem', height: '100%', borderRadius: '1.75rem' }}>
+            <div className={styles.kpiCard} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', position: 'relative', overflow: 'hidden', padding: '1.75rem', height: '100%', borderRadius: 'var(--radius-xl)' }}>
               <div style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', width: '85px', height: '85px', zIndex: 3 }}>
                 <svg viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)', overflow: 'visible' }}>
-                  <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="10" strokeLinecap="round" />
-                  <circle cx="50" cy="50" r="42" fill="none" stroke="white" strokeWidth="10" strokeDasharray="263.8" strokeDashoffset={263.8 * (1 - (goalValues.metaFaturamento ? Math.min(data.receita_total / parseFloat(goalValues.metaFaturamento), 1) : 0.85))} strokeLinecap="round" style={{ transition: 'stroke-dashoffset 1.5s ease-out', filter: 'drop-shadow(0 0 5px rgba(255,255,255,0.5))' }} />
+                  <circle cx="50" cy="50" r="42" fill="none" stroke="var(--border-color)" strokeWidth="10" strokeLinecap="round" />
+                  <circle cx="50" cy="50" r="42" fill="none" stroke="var(--color-client)" strokeWidth="10" strokeDasharray="263.8" strokeDashoffset={263.8 * (1 - (goalValues.metaFaturamento ? Math.min(data.receita_total / parseFloat(goalValues.metaFaturamento), 1) : 0.85))} strokeLinecap="round" style={{ transition: 'stroke-dashoffset 1.5s ease-out' }} />
                 </svg>
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ fontSize: '1rem', fontWeight: 900 }}>
+                  <span style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--text-primary)' }}>
                     {goalValues.metaFaturamento ? `${Math.min(Math.round((data.receita_total / parseFloat(goalValues.metaFaturamento)) * 100), 100)}%` : '85%'}
                   </span>
-                  <span style={{ fontSize: '0.5rem', fontWeight: 700, textTransform: 'uppercase', opacity: 0.8 }}>Meta</span>
+                  <span style={{ fontSize: '0.5rem', fontWeight: 700, textTransform: 'uppercase', opacity: 0.8, color: 'var(--text-tertiary)' }}>Meta</span>
                 </div>
               </div>
               <div className={styles.kpiContent} style={{ height: '100%', display: 'flex', flexDirection: 'column', zIndex: 2, position: 'relative' }}>
                 <div style={{ maxWidth: '65%' }}>
-                  <p className={styles.kpiLabel} style={{ color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>Faturamento Bruto</p>
-                  <h2 className={styles.kpiValue} style={{ fontSize: 'clamp(2rem, 4vw, 3.2rem)', color: 'white', marginTop: '0.5rem', lineHeight: 1.1 }}>R$ {data.receita_total.toLocaleString('pt-BR')}</h2>
-                  <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)', marginTop: '0.75rem' }}>
+                  <p className={styles.kpiLabel} style={{ color: 'var(--text-tertiary)', fontWeight: 600 }}>Faturamento Bruto</p>
+                  <h2 className={styles.kpiValue} style={{ fontSize: 'clamp(2rem, 4vw, 3.2rem)', color: 'var(--text-primary)', marginTop: '0.5rem', lineHeight: 1.1 }}>R$ {data.receita_total.toLocaleString('pt-BR')}</h2>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '0.75rem' }}>
                     {goalValues.metaFaturamento 
                       ? `Meta: R$ ${parseFloat(goalValues.metaFaturamento).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`
                       : `Próximo à meta semanal de R$ ${(data.receita_total * 1.15).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`
@@ -416,21 +410,15 @@ const DashboardView = () => {
                     <AreaChart data={data.receita_diaria}>
                       <defs>
                         <linearGradient id="colorFaturamento" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="white" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="white" stopOpacity={0} />
+                          <stop offset="5%" stopColor="var(--color-client)" stopOpacity={0.2} />
+                          <stop offset="95%" stopColor="var(--color-client)" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <RechartsTooltip 
-                        contentStyle={{ background: 'var(--bg-secondary)', border: 'none', borderRadius: '1rem', color: 'var(--text-primary)', fontSize: '0.75rem' }}
-                        formatter={(value: any) => [`R$ ${value}`, 'Faturamento']}
-                        labelFormatter={(label) => `Dia: ${label}`}
-                      />
-                      <Area type="monotone" dataKey="receita" stroke="white" strokeWidth={2.5} fillOpacity={1} fill="url(#colorFaturamento)" />
+                      <Area type="monotone" dataKey="receita" stroke="var(--color-client)" strokeWidth={2.5} fillOpacity={1} fill="url(#colorFaturamento)" />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
               </div>
-              <div style={{ position: 'absolute', bottom: '-40px', right: '-40px', width: '220px', height: '220px', background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%)', borderRadius: '50%', zIndex: 1 }} />
             </div>
           </div>
 
@@ -513,7 +501,7 @@ const DashboardView = () => {
                       gap: '1.5rem', 
                       background: 'var(--bg-primary)', 
                       padding: '1.25rem', 
-                      borderRadius: '1.75rem', 
+                      borderRadius: 'var(--radius-xl)', 
                       boxShadow: 'var(--shadow-sm)', 
                       border: '1px solid var(--border-color)', 
                       flex: 1,
@@ -579,12 +567,6 @@ const DashboardView = () => {
                   <stop offset="5%" stopColor="var(--color-service)" stopOpacity={0.9} />
                   <stop offset="95%" stopColor="var(--color-service)" stopOpacity={0.3} />
                 </linearGradient>
-                <filter id="barShadow" height="130%">
-                  <feGaussianBlur in="SourceAlpha" stdDeviation="3" />
-                  <feOffset dx="0" dy="2" result="offsetblur" />
-                  <feComponentTransfer><feFuncA type="linear" slope="0.3" /></feComponentTransfer>
-                  <feMerge><feMergeNode /><feMergeNode in="SourceGraphic" /></feMerge>
-                </filter>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" opacity={0.2} />
               <XAxis 
@@ -605,7 +587,7 @@ const DashboardView = () => {
                 contentStyle={{ 
                   background: 'var(--bg-secondary)', 
                   border: '1px solid var(--border-color)', 
-                  borderRadius: '1rem',
+                  borderRadius: 'var(--radius-xl)',
                   boxShadow: 'var(--shadow-lg)'
                 }}
                 formatter={(value: any, name?: any) => {
@@ -618,7 +600,6 @@ const DashboardView = () => {
                 dataKey="ticket" 
                 fill="url(#colorTicketBar)" 
                 radius={[6, 6, 0, 0]} 
-                filter="url(#barShadow)"
                 barSize={Math.max(4, 300 / ticketChartData.length)}
               />
               <Line 
@@ -667,80 +648,25 @@ const DashboardView = () => {
           </div>
           <ComparisonBadge value={24} trend="up" />
         </div>
-        <div style={{ 
-          flex: 1, 
-          position: 'relative', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center', 
-          minHeight: '260px',
-          borderRadius: '2rem'
-        }}>
-          {/* Guias de Horário (00h, 06h, 12h, 18h) */}
-          <div style={{ position: 'absolute', inset: '10%', pointerEvents: 'none', border: '1px dashed var(--border-color)', borderRadius: '50%', opacity: 0.15 }} />
-          <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', fontSize: '0.65rem', color: 'var(--text-tertiary)', fontWeight: 800, opacity: 0.6 }}>
-            <span style={{ position: 'absolute', top: '2%', left: '50%', transform: 'translateX(-50%)' }}>00h</span>
-            <span style={{ position: 'absolute', top: '50%', right: '2%', transform: 'translateY(-50%)' }}>06h</span>
-            <span style={{ position: 'absolute', bottom: '2%', left: '50%', transform: 'translateX(-50%)' }}>12h</span>
-            <span style={{ position: 'absolute', top: '50%', left: '2%', transform: 'translateY(-50%)' }}>18h</span>
-          </div>
-
-          <div style={{ width: '220px', height: '220px', position: 'relative' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                <Pie
-                  data={clockData}
-                  cx="50%" cy="50%"
-                  innerRadius="78%"
-                  outerRadius="100%"
-                  cornerRadius={6}
-                  paddingAngle={2}
-                  dataKey="value"
-                  stroke="none"
-                  startAngle={90}
-                  endAngle={-270}
-                >
-                  {clockData.map((entry, index) => {
-                    let fillColor = 'rgba(148, 163, 184, 0.08)'; // Fechado (Muted)
-                    if (entry.isWorkHour) {
-                      if (entry.volume === 0) fillColor = 'rgba(59, 130, 246, 0.15)'; // Aberto s/ agendamento (Soft Blue)
-                      else if (entry.heat > 0.8) fillColor = '#ef4444'; // Pico (Red)
-                      else if (entry.heat > 0.4) fillColor = '#f97316'; // Médio (Orange)
-                      else fillColor = '#fbbf24'; // Baixo (Amber)
-                    }
-                    
-                    return (
-                      <Cell 
-                        key={`cell-${index}`} 
-                        fill={fillColor}
-                        style={{ filter: entry.heat > 0.7 ? 'drop-shadow(0 0 8px ' + fillColor + ')' : 'none' }}
-                      />
-                    );
-                  })}
-                </Pie>
-                <RechartsTooltip 
-                  contentStyle={{ 
-                    background: 'var(--bg-secondary)', 
-                    border: '1px solid var(--border-color)', 
-                    borderRadius: '1rem', 
-                    fontSize: '0.8rem', 
-                    boxShadow: 'var(--shadow-lg)',
-                    color: 'var(--text-primary)'
-                  }}
-                  itemStyle={{ color: 'var(--text-primary)' }}
-                  labelStyle={{ color: 'var(--text-tertiary)', fontWeight: 700, marginBottom: '4px' }}
-                  formatter={(_value: any, _: any, props: any) => [
-                    `${props.payload.volume} Agendamentos`, 
-                    `Horário: ${props.payload.name}`
-                  ]}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-              <div style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Pico</div>
-              <span style={{ fontSize: '2.4rem', fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1 }}>{peakHourObj ? `${Math.floor(peakHourObj.hora)}h` : '--'}</span>
-            </div>
-          </div>
+        <div style={{ flex: 1, padding: '0.5rem' }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={clockData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorOccupation" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--color-client)" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="var(--color-client)" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" opacity={0.1} />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--text-tertiary)' }} interval={3} />
+              <YAxis hide />
+              <RechartsTooltip 
+                contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xl)', fontSize: '0.8rem', boxShadow: 'var(--shadow-lg)' }}
+                formatter={(value: any, _: any, props: any) => [`${props.payload.volume} Agendamentos`, 'Volume']}
+              />
+              <Area type="monotone" dataKey="volume" stroke="var(--color-client)" strokeWidth={3} fill="url(#colorOccupation)" />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
       </motion.div>
 
@@ -763,16 +689,12 @@ const DashboardView = () => {
                   <stop offset="0%" stopColor="var(--color-appointment)" stopOpacity={0.8}/>
                   <stop offset="100%" stopColor="var(--color-appointment)" stopOpacity={0.0}/>
                 </linearGradient>
-                <filter id="glowRidge" x="-20%" y="-20%" width="140%" height="140%">
-                  <feGaussianBlur stdDeviation="6" result="blur" />
-                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                </filter>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" opacity={0.3} />
               <XAxis dataKey="hora" tickFormatter={(val) => `${val}h`} axisLine={{ stroke: 'var(--border-color)' }} tickLine={false} tick={{ fontSize: 13, fill: 'var(--text-tertiary)' }} dy={10} />
               <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-tertiary)' }} />
-              <RechartsTooltip cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 40, strokeLinecap: 'round' }} contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '1rem', boxShadow: 'var(--shadow-lg)', color: 'var(--text-primary)' }} formatter={(value: any) => [`${value} Agendamentos`, 'Volume']} labelFormatter={(label) => `Fluxo às ${label}h`} />
-              <Area type="monotone" dataKey="total_agendamentos" stroke="var(--color-appointment)" strokeWidth={3} fill="url(#ridgeGradBase)" filter="url(#glowRidge)" activeDot={{ r: 8, fill: "var(--color-appointment)", stroke: "var(--bg-secondary)", strokeWidth: 3 }} />
+              <RechartsTooltip cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 40, strokeLinecap: 'round' }} contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-lg)', color: 'var(--text-primary)' }} formatter={(value: any) => [`${value} Agendamentos`, 'Volume']} labelFormatter={(label) => `Fluxo às ${label}h`} />
+              <Area type="monotone" dataKey="total_agendamentos" stroke="var(--color-appointment)" strokeWidth={3} fill="url(#ridgeGradBase)" activeDot={{ r: 8, fill: "var(--color-appointment)", stroke: "var(--bg-secondary)", strokeWidth: 3 }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>

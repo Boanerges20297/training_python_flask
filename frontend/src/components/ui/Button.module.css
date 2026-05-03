@@ -116,13 +116,13 @@
 /* Primária — Gradiente com glow */
 .btnPrimary {
   color: white;
-  background: linear-gradient(135deg, var(--btn-color-base) 0%, var(--btn-color-strong) 100%);
-  box-shadow: 0 4px 12px var(--btn-shadow);
+  background: var(--btn-color-base);
+  box-shadow: var(--shadow-sm);
 }
 
 .btnPrimary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px var(--btn-shadow-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
   filter: brightness(1.1);
 }
 
@@ -143,7 +143,7 @@
 /* Normal — Gradiente sem glow */
 .btnNormal {
   color: white;
-  background: linear-gradient(135deg, var(--btn-color-base) 0%, var(--btn-color-strong) 100%);
+  background: var(--btn-color-base);
   box-shadow: none;
   border: 1px solid var(--border-color);
 }

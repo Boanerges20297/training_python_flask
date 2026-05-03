@@ -4,11 +4,18 @@
    Consumidas por CSS Modules em todo o projeto.
    =================================================================== */
 
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
 :root {
+  /* ── RGB Vars for Glassmorphism ── */
+  --color-client-rgb: 37, 99, 235;
+  --color-slate-900-rgb: 15, 23, 42;
+  --color-zinc-950-rgb: 9, 9, 11;
+
   /* ── Fundos ── */
-  --bg-primary: #f1f3f6; /* Tom cinza-gelo para mais contraste */
+  --bg-primary: #f4f4f5; /* Zinc 100 */
   --bg-secondary: #ffffff;
-  --bg-tertiary: #e5e7eb;
+  --bg-tertiary: #e4e4e7; /* Zinc 200 */
 
   /* ── Texto ── */
   --text-primary: #1e293b;
@@ -21,8 +28,8 @@
   --border-color-hover: #cbd5e1;
 
   /* ── Cores de Marca (Light) ── */
-  --color-client: #3b82f6;
-  --color-client-hover: #2563eb;
+  --color-client: #2563eb; /* Royal Blue */
+  --color-client-hover: #1d4ed8;
   --color-client-light: #eff6ff;
   --color-client-border: rgba(59, 130, 246, 0.25);
 
@@ -50,12 +57,12 @@
   --color-warning: #f59e0b;
   --color-info: #3b82f6;
 
-  /* ── Sombras (Sutilmente mais suaves e profundas) ── */
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.02);
-  --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.04), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
-  --shadow-lg: 0 20px 40px -12px rgba(0, 0, 0, 0.08);
-  --shadow-xl: 0 30px 60px -15px rgba(0, 0, 0, 0.12);
-  --card-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.05), 0 10px 20px -10px rgba(0, 0, 0, 0.03);
+  /* ── Sombras (Sóbrias e modernas) ── */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 
 
   /* ── Glassmorphism ── */
@@ -89,6 +96,7 @@
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
   --radius-full: 9999px;
 
   /* ── Espaçamento ── */
@@ -100,7 +108,7 @@
   --space-2xl: 3rem;
 
   /* ── Tipografia ── */
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
@@ -119,9 +127,9 @@
    =================================================================== */
 [data-theme="dark"] {
   /* ── Fundos ── */
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-tertiary: #334155;
+  --bg-primary: #09090b; /* Zinc 950 */
+  --bg-secondary: #18181b; /* Zinc 900 */
+  --bg-tertiary: #27272a; /* Zinc 800 */
 
   /* ── Texto ── */
   --text-primary: rgba(255, 255, 255, 0.87);

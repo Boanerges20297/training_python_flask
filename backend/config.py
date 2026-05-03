@@ -96,8 +96,8 @@ class DevelopmentConfig(Config):
     JWT_COOKIE_SECURE = False
 
     JWT_COOKIE_CSRF_PROTECT = True
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=999)
-    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=999)
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=60)
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
 
     SECRET_KEY = "chave-secreta"
     JWT_ALGORITHM = "HS256"
@@ -122,7 +122,7 @@ class ProductionConfig(Config):
     JWT_COOKIE_SECURE = True
     JWT_COOKIE_SAMESITE = "Strict"
     JWT_COOKIE_CSRF_PROTECT = True
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=15)
-    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=7)
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=60)
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
 
     SECRET_KEY = os.environ.get("SECRET_KEY")

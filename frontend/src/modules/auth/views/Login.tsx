@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, Mail, Eye, EyeOff } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, Scissors } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import { useAuth } from '../../../auth/useAuth';
@@ -35,23 +35,20 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
   return (
     <div className={styles.authCard}>
       <div className={styles.authHeader}>
-        <h1 className={styles.authTitle}>Entrar</h1>
+        <div className={styles.logoContainer}>
+          <Scissors size={32} color="white" />
+        </div>
+        <h1 className={styles.authTitle}>Barba & Byte</h1>
         <p className={styles.authSubtitle}>
-          Não tem uma conta?{' '}
-          <span 
-            className={styles.authLink} 
-            onClick={() => onNavigate?.('register')}
-          >
-            Criar conta
-          </span>
+          Gerenciamento de elite para barbearias modernas
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className={styles.authForm}>
         <Input 
-          label="Endereço de E-mail"
+          label="Acesso à Plataforma"
           type="email" 
-          icon={<Mail size={18} />}
+          icon={<Mail size={18} color="rgba(255,255,255,0.6)" />}
           placeholder="seu@email.com" 
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -61,9 +58,9 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
 
         <div style={{ position: 'relative' }}>
           <Input 
-            label="Senha"
+            label="Senha de Segurança"
             type={showPassword ? "text" : "password"} 
-            icon={<Lock size={18} />}
+            icon={<Lock size={18} color="rgba(255,255,255,0.6)" />}
             rightElement={
               <button
                 type="button"
@@ -74,24 +71,24 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
                   cursor: 'pointer',
                   padding: '0.5rem',
                   display: 'flex',
-                  color: 'var(--text-tertiary)'
+                  color: 'rgba(255,255,255,0.4)'
                 }}
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             }
-            placeholder="Sua senha" 
+            placeholder="••••••••" 
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
             required
           />
           <div style={{ textAlign: 'right', marginTop: '0.5rem' }}>
             <span 
-              className={styles.clickableText}
+              className={styles.authLink}
               onClick={() => onNavigate?.('forgot-password')}
-              style={{ fontSize: '0.8rem', fontWeight: 600, textDecoration: 'underline' }}
+              style={{ fontSize: '0.75rem', opacity: 0.8 }}
             >
-              Esqueceu a senha?
+              Recuperar senha
             </span>
           </div>
         </div>
@@ -103,37 +100,30 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
           fullWidth 
           isLoading={loading}
           style={{ 
-            background: 'var(--color-client)', 
-            color: '#fff', 
-            borderRadius: '2rem',
             height: '3.5rem',
-            fontSize: '1rem',
-            fontWeight: 600,
-            marginTop: '1rem'
+            background: 'var(--color-client)',
+            boxShadow: '0 10px 20px -5px rgba(var(--color-client-rgb), 0.4)',
+            fontSize: '1.1rem',
+            letterSpacing: '-0.01em'
           }}
         >
-          Entrar
+          Entrar na Conta
         </Button>
 
         <div className={styles.divider}>
-          <span>ou</span>
+          <span>Acesso rápido</span>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-          <button type="button" className={styles.socialButton}>
-            <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" alt="Google" width="18" />
-            Google
-          </button>
-          <button type="button" className={styles.socialButton}>
-            <img src="https://www.vectorlogo.zone/logos/facebook/facebook-icon.svg" alt="Facebook" width="18" />
-            Facebook
-          </button>
-        </div>
+        <p className={styles.footerNote}>
+          Não tem uma conta?{' '}
+          <span 
+            className={styles.authLink} 
+            onClick={() => onNavigate?.('register')}
+          >
+            Cadastre-se agora
+          </span>
+        </p>
       </form>
-
-      {/* <div className={styles.devHint} style={{ marginTop: '2rem' }}>
-        <p><strong>admin@barba.com</strong> / <strong>cliente@barba.com</strong></p>
-      </div> */}
     </div>
   );
 };

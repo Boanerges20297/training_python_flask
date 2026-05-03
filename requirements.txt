@@ -10,3 +10,4 @@ Flask-Limiter
 flask-mailman>=1.0.0
 python-json-logger==4.1.0
 cryptography>=41.0.0
+Faker>=19.0.0

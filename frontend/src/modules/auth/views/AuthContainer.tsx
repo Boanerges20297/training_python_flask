@@ -68,93 +68,12 @@ const AuthContainer: React.FC<AuthContainerProps> = () => {
       ref={constraintsRef}
     >
       {/* ── Seletor de Tema Arrastável (UX Fun factor) ── */}
-      <motion.div 
-        drag
-        dragConstraints={constraintsRef}
-        dragElastic={0.1}
-        // Lógica para atrair para os cantos ao soltar
-        dragTransition={{
-          power: 0.3,
-          modifyTarget: (target) => {
-            // Define o "imã" para os cantos (aproximadamente 0 ou limites da tela)
-            // Se o alvo final for maior que a metade da tela, joga para o canto direito/inferior
-            const snapX = target > window.innerWidth / 2 ? window.innerWidth - 80 : 20;
-            return snapX; // Você pode aplicar lógica similar para o 'y' se desejar
-          }
-        }}
-        whileHover={{ scale: 1 }}
-        whileTap={{ scale: 0.9, cursor: 'grabbing' }}
-        className={styles.themeToggleWrapper}
-        style={{ cursor: 'grab', position: 'absolute', zIndex: 1000 }}
-      >
+      <div className={styles.themeToggleWrapper}>
         <ThemeToggle />
-      </motion.div>
+      </div>
 
-      <div 
-        className={`${styles.contentBox} ${isReversed ? styles.reversed : ''}`}
-      >
-        {/* ── Painel de Hero (60%) ── */}
-        <motion.div 
-          layout
-          className={styles.heroPanel}
-          initial={false}
-          animate={{ 
-            zIndex: 10, // Sempre acima para cobrir o rastro do formulário durante o swap
-            scale: 1
-          }}
-          transition={{ 
-            type: "spring", 
-            stiffness: 120, 
-            damping: 22
-          }}
-        >
-          <motion.img 
-            key={currentImage}
-            src={currentImage} 
-            alt="Barba & Byte Concept" 
-            className={styles.heroImage}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3, ease: "linear" }}
-          />
-          <div className={styles.heroOverlay}>
-            <div className={styles.heroBrand}>
-              <div className={styles.heroBrandIcon}>
-                <Scissors size={24} color="var(--color-client)" />
-              </div>
-              <span className={styles.heroBrandText}>Barba & Byte</span>
-            </div>
-            <motion.p 
-              key={currentView}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={styles.heroTagline}
-            >
-              {currentView === 'register' 
-                ? "Crie sua conta e agende seu estilo em segundos. A tecnologia que sua barba merece."
-                : currentView === 'login' ? "Seu estilo, nossa tecnologia. Acesse a plataforma e gerencie seus agendamentos."
-                : "Recupere sua senha com segurança e agilidade, volte a cuidar do seu visual em instantes."
-              }
-            </motion.p>
-          </div>
-        </motion.div>
-
-        {/* ── Painel de Formulário (40%) ── */}
-        <motion.div 
-          layout
-          className={styles.formPanel}
-          initial={false}
-          animate={{ 
-            zIndex: 1, // Sempre abaixo para ser coberto pela imagem durante o swap
-          }}
-          transition={{ 
-            type: "spring", 
-            stiffness: 120, 
-            damping: 22
-          }}
-        >
-          {renderView()}
-        </motion.div>
+      <div className={styles.contentBox}>
+        {renderView()}
       </div>
     </div>
   );

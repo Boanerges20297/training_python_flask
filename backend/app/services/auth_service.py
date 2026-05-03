@@ -15,7 +15,7 @@ from app.utils.audit import log_evento_auditoria
 from app.extensions import app_logger, db
 from app.models.passwordResetToken import PasswordResetToken
 
-MOCK_BLOCKLIST = set()
+from app.models.token_blocklist import TokenBlocklist
 
 
 class AuthServiceException(Exception):
@@ -136,29 +136,43 @@ class AuthService:
     # Vinicius 11/04/2026
     # Adicionado tipagem para o método renew_access_token
     @staticmethod
-    def renew_access_token(current_user_id: str, role: str) -> str:
-        """Gera um novo access token baseado nos dados do refresh token."""
-        return create_access_token(
-            identity=current_user_id,
-            additional_claims={
-                "role": role,
-                "iss": current_app.config["JWT_DECODE_ISSUER"],
-                "aud": current_app.config["JWT_DECODE_AUDIENCE"],
-            },
-        )
+    def renew_access_token(current_user_id: str, role: str, jti_refresh: str) -> dict:
+        """
+        Gera um novo access token baseado nos dados do refresh token.
+        Implementa Refresh Token Rotation: revoga o refresh token atual e gera um novo.
+        """
+        # 1. Revoga o Refresh Token atual
+        AuthService.revoke_token(jti_refresh, type='refresh', user_id=current_user_id)
+
+        # 2. Gera novos tokens
+        claims = {
+            "role": role,
+            "iss": current_app.config["JWT_DECODE_ISSUER"],
+            "aud": current_app.config["JWT_DECODE_AUDIENCE"],
+        }
+        
+        access_token = create_access_token(identity=current_user_id, additional_claims=claims)
+        refresh_token = create_refresh_token(identity=current_user_id, additional_claims=claims)
+
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token
+        }
 
     # Vinicius 11/04/2026
     # Adicionado tipagem para o método revoke_token
     @staticmethod
-    def revoke_token(jti: str) -> None:
-        """Adiciona o ID do token na Blocklist (futuro Redis)."""
+    def revoke_token(jti: str, type: str = 'access', user_id: str = None) -> None:
+        """Adiciona o ID do token na Blocklist persistente."""
         # felipe - Log de Auditoria
-        log_evento_auditoria("Token JWT revogado (Logout)", extra_data={"jti": jti})
-        MOCK_BLOCKLIST.add(jti)
+        log_evento_auditoria(f"Token JWT {type} revogado", extra_data={"jti": jti, "user_id": user_id})
+        
+        blocklist_entry = TokenBlocklist(jti=jti, type=type, user_id=user_id)
+        db.session.add(blocklist_entry)
+        db.session.commit()
 
-    # Vinicius 11/04/2026
-    # Adicionado tipagem para o método is_token_revoked
     @staticmethod
     def is_token_revoked(jti: str) -> bool:
-        """Verifica se o token está na blocklist."""
-        return jti in MOCK_BLOCKLIST
+        """Verifica se o token está na blocklist persistente."""
+        token = TokenBlocklist.query.filter_by(jti=jti).first()
+        return token is not None

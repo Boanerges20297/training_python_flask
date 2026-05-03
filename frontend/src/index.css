@@ -124,7 +124,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -149,8 +149,8 @@ body {
 
 .btn-primary {
   color: white;
-  background: linear-gradient(135deg, var(--btn-color-base, #8b5cf6) 0%, var(--btn-color-strong, #6d28d9) 100%);
-  box-shadow: 0 4px 12px rgba(109, 40, 217, 0.3);
+  background: var(--btn-color-base, #8b5cf6);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-primary.theme-purple {
@@ -161,7 +161,7 @@ body {
 .btn-primary.theme-green {
   --btn-color-base: #10b981;
   --btn-color-strong: #059669;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-danger {
@@ -202,12 +202,11 @@ body {
 
 /* ── SWEETALERT GLASSMORPHISM ── */
 body .swal2-container.swal2-center > .swal2-popup.swal-glass-popup {
-  background: var(--glass-bg-deep);
-  backdrop-filter: var(--glass-blur-deep);
-  border: 1px solid var(--glass-border-deep);
-  border-radius: 2.5rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
   box-shadow: var(--shadow-xl);
-  padding: 2.5rem;
+  padding: 2rem;
 }
 
 body .swal2-title.swal-glass-title {
@@ -288,7 +287,7 @@ body .swal2-actions button {
   background: var(--bg-tertiary);
   border: 1px solid var(--border-color);
   color: var(--text-primary);
-  border-radius: 1rem;
+  border-radius: var(--radius-md);
   height: 3.2rem;
   padding: 0 1.25rem;
   font-size: 0.95rem;

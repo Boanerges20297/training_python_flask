@@ -13,7 +13,7 @@
   align-items: center;
   background: var(--bg-secondary);
   padding: 1.25rem 2rem;
-  border-radius: 1.75rem;
+  border-radius: var(--radius-xl);
   border: 1px solid var(--border-color);
   box-shadow: var(--card-shadow);
   margin-bottom: 0.5rem;
@@ -33,14 +33,13 @@
   padding: 2rem;
   color: var(--color-primary);
   gap: 1.5rem;
-  background: radial-gradient(circle at center, rgba(0, 4, 255, 0.08) 0%, transparent 50%);
+  background: var(--bg-primary);
   position: relative;
 }
 
 .spinner {
   animation: pulseBeat 2s infinite ease-in-out;
   color: var(--color-primary);
-  filter: drop-shadow(0 0 5px rgba(0, 4, 255, 0.3));
   z-index: 1;
 }
 
@@ -70,7 +69,7 @@
 .chartCard, .kpiCard, .statMiniCard {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  border-radius: 1.75rem;
+  border-radius: var(--radius-xl);
   padding: 2rem;
   box-shadow: var(--card-shadow);
   transition: transform 0.4s var(--transition-spring), 
@@ -84,11 +83,9 @@
 [data-theme="dark"] .chartCard, 
 [data-theme="dark"] .kpiCard, 
 [data-theme="dark"] .statMiniCard {
-  background: rgba(15, 23, 42, 0.4);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.03);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
 }
 
 .chartCardHoverBlue:hover { border-color: rgba(59, 130, 246, 0.5); box-shadow: 0 8px 30px rgba(59, 130, 246, 0.2); }
@@ -96,13 +93,15 @@
 .chartCardHoverRed:hover { border-color: rgba(239, 68, 68, 0.5); box-shadow: 0 8px 30px rgba(239, 68, 68, 0.2); }
 
 .chartCard:hover, .statMiniCard:hover {
-  transform: translateY(-6px) scale(1.01);
-  box-shadow: var(--shadow-xl);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-primary);
 }
 
 .kpiCard:hover {
-  transform: translateY(-6px);  
-  box-shadow: var(--shadow-xl);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-primary);
 }
 
 /* Remover efeito de hover no Flip Card para não bugar o 3D */
@@ -182,8 +181,7 @@
   height: 14px;
   border-radius: 50%;
   background: var(--color-client);
-  border: 3px solid var(--bg-secondary);
-  box-shadow: 0 0 10px rgba(0, 4, 255, 0.3);
+  border: 2px solid var(--bg-secondary);
   z-index: 2;
 }
 
@@ -441,7 +439,7 @@
   inset: 0;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  border-radius: 1.75rem;
+  border-radius: var(--radius-xl);
   overflow: hidden;
 }
 
