@@ -140,7 +140,7 @@ export interface DashboardData {
   barbeiros_desempenho: BarbeiroDesempenho[];
 }
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   sucesso?: boolean;
   mensagem?: string;
   dados?: T;

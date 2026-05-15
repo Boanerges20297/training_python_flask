@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, useCallback, type ReactNode } from 'react';
 import { getServicos, deleteServico } from '../../../api/services';
 import type { Servico } from '../../../types';
 import { Briefcase, DollarSign, Clock, Filter } from 'lucide-react';
@@ -31,22 +31,23 @@ export default function ServicesView() {
   } | null>(null);
   const { showToast } = useToast();
 
-  const fetchServicos = async (currentPage = page) => {
+  const fetchServicos = useCallback(async (currentPage = page) => {
     setLoading(true);
     try {
       const serviceResponse = await getServicos(currentPage, 10);
       setServicos(serviceResponse.items || []);
       setTotalPages(serviceResponse.total_paginas || 1);
     } catch (e) {
+      console.error(e);
       showToast('Erro ao carregar serviços.', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, showToast]);
 
   useEffect(() => {
     fetchServicos(page);
-  }, [page]);
+  }, [page, fetchServicos]);
 
   const filteredServicos = servicos.filter(s => {
     if (filters.servicoId && String(s.id) !== filters.servicoId) return false;
@@ -89,6 +90,7 @@ export default function ServicesView() {
       showToast(`${items.length} serviços removidos.`, 'success');
       fetchServicos();
     } catch (e) {
+      console.error(e);
       showToast('Erro ao remover alguns serviços.', 'error');
     }
   };
@@ -241,12 +243,12 @@ export default function ServicesView() {
             icon={<Filter size={16} />}
             onClick={handleFilterClick}
             style={{ 
-              background: Object.keys(filters).some(k => (filters as any)[k]) ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
-              border: Object.keys(filters).some(k => (filters as any)[k]) ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid transparent'
+              background: Object.values(filters).some(v => !!v) ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
+              border: Object.values(filters).some(v => !!v) ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid transparent'
             }}
           >
             Filtros
-            {Object.keys(filters).filter(k => (filters as any)[k]).length > 0 && (
+            {Object.values(filters).filter(v => !!v).length > 0 && (
               <span style={{ 
                 marginLeft: '0.5rem', 
                 background: 'var(--color-service)', 
@@ -260,7 +262,7 @@ export default function ServicesView() {
                 justifyContent: 'center',
                 fontWeight: 800
               }}>
-                {Object.keys(filters).filter(k => (filters as any)[k]).length}
+                {Object.values(filters).filter(v => !!v).length}
               </span>
             )}
           </Button>

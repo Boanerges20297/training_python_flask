@@ -73,7 +73,7 @@ function DataTable<T>({
   onSelectionChange,
   itemKey = 'id' as keyof T,
   onBulkDelete,
-  renderItemName = (item: any) => item.nome || item.id || 'Item'
+  renderItemName = (item: T) => ((item as Record<string, unknown>).nome as string) || ((item as Record<string, unknown>).id as string) || 'Item'
 }: DataTableProps<T>) {
   const [internalQuery, setInternalQuery] = React.useState('');
   const [isBulkDeleting, setIsBulkDeleting] = React.useState(false);

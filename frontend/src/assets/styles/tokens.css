@@ -126,59 +126,59 @@
    Dark Mode — tom escuro vibrante, nunca preto puro
    =================================================================== */
 [data-theme="dark"] {
-  /* ── Fundos ── */
-  --bg-primary: #09090b; /* Zinc 950 */
-  --bg-secondary: #18181b; /* Zinc 900 */
-  --bg-tertiary: #27272a; /* Zinc 800 */
+  /* ── Fundos ) ── */
+  --bg-primary: #121214;   /* Cinza Escuro Industrial */
+  --bg-secondary: #09090b; /* Zinc 950 (Preto Absoluto) */
+  --bg-tertiary: #1c1c21;  /* Cinza para inputs e sub-elementos */
 
   /* ── Texto ── */
-  --text-primary: rgba(255, 255, 255, 0.87);
-  --text-secondary: #94a3b8;
-  --text-tertiary: #64748b;
-  --text-inverse: #0f172a;
+  --text-primary: rgba(255, 255, 255, 0.9);
+  --text-secondary: #a1a1aa; /* Zinc 400 */
+  --text-tertiary: #71717a;  /* Zinc 500 */
+  --text-inverse: #09090b;
 
   /* ── Bordas ── */
-  --border-color: rgba(255, 255, 255, 0.06);
-  --border-color-hover: rgba(255, 255, 255, 0.12);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-color-hover: rgba(255, 255, 255, 0.15);
 
-  /* ── Cores de Marca (Dark) — mesma cor principal, fundo sutil diferente ── */
-  --color-client-light: rgba(59, 130, 246, 0.1);
-  --color-client-border: rgba(59, 130, 246, 0.2);
+  /* ── Cores de Marca (Dark) ── */
+  --color-client-light: rgba(59, 130, 246, 0.08);
+  --color-client-border: rgba(59, 130, 246, 0.15);
 
-  --color-barber-light: rgba(245, 158, 11, 0.1);
-  --color-barber-border: rgba(245, 158, 11, 0.2);
+  --color-barber-light: rgba(245, 158, 11, 0.08);
+  --color-barber-border: rgba(245, 158, 11, 0.15);
 
-  --color-service-light: rgba(16, 185, 129, 0.1);
-  --color-service-border: rgba(16, 185, 129, 0.2);
+  --color-service-light: rgba(16, 185, 129, 0.08);
+  --color-service-border: rgba(16, 185, 129, 0.15);
 
-  --color-appointment-light: rgba(139, 92, 246, 0.1);
-  --color-appointment-border: rgba(139, 92, 246, 0.2);
+  --color-appointment-light: rgba(139, 92, 246, 0.08);
+  --color-appointment-border: rgba(139, 92, 246, 0.15);
 
-  --color-danger-light: rgba(239, 68, 68, 0.12);
-  --color-danger-border: rgba(239, 68, 68, 0.2);
+  --color-danger-light: rgba(239, 68, 68, 0.1);
+  --color-danger-border: rgba(239, 68, 68, 0.15);
 
   /* ── Sombras ── */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.7);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.8);
 
   /* ── Glassmorphism ── */
-  --glass-bg: rgba(30, 41, 59, 0.6);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-blur: blur(16px);
-  --glass-bg-deep: rgba(15, 23, 42, 0.8);
+  --glass-bg: rgba(9, 9, 11, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.05);
+  --glass-blur: blur(12px);
+  --glass-bg-deep: rgba(9, 9, 11, 0.95); 
   --glass-blur-deep: blur(24px) saturate(180%);
-  --glass-border-deep: rgba(255, 255, 255, 0.12);
+  --glass-border-deep: rgba(255, 255, 255, 0.1);
 
   /* ── Tabelas ── */
-  --table-cell-bg: #0b0f1a;
-  --table-header-bg: #050810;
+  --table-header-bg: #050505;   /* Cinza para destacar do fundo #121214 */
+  --table-cell-bg: #09090b; /* Preto Zinc Slate */
 
   /* ── Bento (Drawer) ── */
-  --bento-card-bg: rgba(255, 255, 255, 0.03);
-  --bento-card-border: rgba(255, 255, 255, 0.06);
-  --bento-card-hover: rgba(255, 255, 255, 0.08);
+  --bento-card-bg: rgba(255, 255, 255, 0.02);
+  --bento-card-border: rgba(255, 255, 255, 0.05);
+  --bento-card-hover: rgba(255, 255, 255, 0.04);
 
   /* ── Focus Ring ── */
   --focus-ring: 0 0 0 3px rgba(59, 130, 246, 0.4);

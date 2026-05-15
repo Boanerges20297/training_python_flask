@@ -10,10 +10,14 @@ const logger = createLogger('AuthContext');
 // Gabriel - Normaliza o ID do usuário para number
 // O backend às vezes retorna o id como string (ex: "1"), o frontend espera number
 function normalizeUser(user: any): AuthUser {
+  if (!user) return {} as AuthUser;
+  
+  const id = typeof user.id === 'string' ? parseInt(user.id, 10) : (user.id || 0);
+  
   return {
     ...user,
-    id: typeof user.id === 'string' ? parseInt(user.id, 10) : user.id
-  };
+    id: isNaN(id) ? 0 : id
+  } as AuthUser;
 }
 
 // felipe

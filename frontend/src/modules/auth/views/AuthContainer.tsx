@@ -2,16 +2,15 @@
 import React, { useState, useRef } from 'react';
 import { useAuth } from '../../../auth/useAuth';
 import { Navigate } from 'react-router-dom';
-import { Scissors } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import Login from './Login';
 import Register from './Register';
 import ForgotPassword from './ForgotPassword';
-import ThemeToggle from '../../../components/ui/ThemeToggle';
 import authBgLogin from '../../../assets/images/auth-bg.png';
 import authBgRegister from '../../../assets/images/auth-register-bg.png'; 
 import styles from './Auth.module.css';
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface AuthContainerProps {}
 
 type AuthView = 'login' | 'register' | 'forgot-password';
@@ -29,25 +28,16 @@ const AuthContainer: React.FC<AuthContainerProps> = () => {
   // Login e ForgotPassword na direita (padrão), Register na esquerda (swap)
   // Define o tema de cores baseado na view
   const theme = currentView === 'register' ? 'registerTheme' : currentView === 'login' ? 'loginTheme' : 'forgotPasswordTheme';
-  const isReversed = currentView === 'register';
-
-  // Lógica para trocar a imagem dependendo da view
-  const currentImage = currentView === 'register' ? authBgRegister : authBgLogin;
+  // isReversed and currentImage reserved for future layout swap animation
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _isReversed = currentView === 'register';
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _currentImage = currentView === 'register' ? authBgRegister : authBgLogin;
 
   const renderView = () => {
     return (
       <AnimatePresence mode="wait">
-        <motion.div
-          key={currentView}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ 
-            duration: 0.15, // Mais rápido para evitar rastro
-            ease: "easeOut" 
-          }}
-          style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
-        >
+    
           {currentView === 'login' && (
             <Login onNavigate={(view: AuthView) => setCurrentView(view)} />
           )}
@@ -57,7 +47,6 @@ const AuthContainer: React.FC<AuthContainerProps> = () => {
           {currentView === 'forgot-password' && (
             <ForgotPassword onNavigate={(view: AuthView) => setCurrentView(view)} />
           )}
-        </motion.div>
       </AnimatePresence>
     );
   };
@@ -67,10 +56,6 @@ const AuthContainer: React.FC<AuthContainerProps> = () => {
       className={`${styles.authContainer} ${styles[theme]}`} 
       ref={constraintsRef}
     >
-      {/* ── Seletor de Tema Arrastável (UX Fun factor) ── */}
-      <div className={styles.themeToggleWrapper}>
-        <ThemeToggle />
-      </div>
 
       <div className={styles.contentBox}>
         {renderView()}

@@ -72,7 +72,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, onSuccess,
       if (servicoParaEditar) {
         // Remove barbeiro_id se não foi alterado para manter o original do back ou se o back não exigir no PATCH
         const updatePayload = { ...payload };
-        if (isNaN(payload.barbeiro_id)) delete (updatePayload as any).barbeiro_id;
+        if (isNaN(payload.barbeiro_id)) delete (updatePayload as Record<string, unknown>).barbeiro_id;
         
         const successEdit = await updateServico(servicoParaEditar.id, updatePayload);
         if (!successEdit) throw new Error("Erro ao atualizar serviço.");
@@ -87,8 +87,9 @@ const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, onSuccess,
         setSuccess(false);
         setFormData({ nome: '', preco: '', duracao_minutos: '', barbeiro_id: '' });
       }, 1500);
-    } catch (err: any) {
-      const msg = err.response?.data?.message || err || 'Erro ao cadastrar serviço.';
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      const msg = error.response?.data?.message || String(err) || 'Erro ao cadastrar serviço.';
       setError(msg);
     } finally {
       setIsSubmitting(false);

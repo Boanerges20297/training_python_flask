@@ -105,4 +105,13 @@ def seed_database():
         db.session.add(agendamento)
     
     db.session.commit()
+
+    # 7. Gerar Dívidas (para a Matriz de Risco)
+    # Selecionamos 15% dos clientes para terem dívidas pendentes
+    clientes_devedores = random.sample(clientes, k=int(len(clientes) * 0.15))
+    for c in clientes_devedores:
+        c.divida_total = random.uniform(50.0, 450.0)
+        c.status = "devedor"
+    db.session.commit()
+
     return {"total_agendamentos": Agendamento.query.count(), "total_clientes": len(clientes)}

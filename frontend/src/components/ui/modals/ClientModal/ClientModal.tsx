@@ -89,8 +89,9 @@ const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, onSuccess, c
         onSuccess();
         onClose();
       }, 1500);
-    } catch (err: any) {
-      const msg = err.message || err.response?.data?.erro || 'Erro ao processar solicitação. Tente novamente.';
+    } catch (err: unknown) {
+      const error = err as { message?: string; response?: { data?: { erro?: string } } };
+      const msg = error.message || error.response?.data?.erro || 'Erro ao processar solicitação. Tente novamente.';
       setError(msg);
       // Hierarquia de Notificações: Erros no modal NÃO dispara Toast (já está no error-message)
     } finally {

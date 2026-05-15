@@ -10,7 +10,7 @@ interface HeaderProps {
   activeTab: SidebarTab;
 }
 
-const tabIcons: Record<string, any> = {
+const tabIcons: Record<string, React.ElementType> = {
   dashboard: LayoutDashboard,
   clientes: Users,
   barbeiros: Scissors,
@@ -51,8 +51,9 @@ export default function Header({ activeTabName, activeTab }: HeaderProps) {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   useEffect(() => {
-    const handleNewNotification = (event: any) => {
-      const detail = event.detail;
+    const handleNewNotification = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const detail = customEvent.detail;
       const newNotif: Notification = {
         id: Math.random().toString(36).substring(2, 9),
         title: detail.title || 'Notificação',

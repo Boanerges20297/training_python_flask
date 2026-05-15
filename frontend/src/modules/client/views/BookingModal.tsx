@@ -84,7 +84,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
         status: 'pendente',
       };
 
-      await createAgendamento(payload as any);
+      await createAgendamento(payload as Omit<Agendamento, 'id'>);
 
       setSuccess(true);
       setTimeout(() => {
@@ -92,8 +92,9 @@ const BookingModal: React.FC<BookingModalProps> = ({
         onClose();
         setSuccess(false);
       }, 1500);
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || err || 'Erro ao criar agendamento.';
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      const msg = error.response?.data?.message || String(err) || 'Erro ao criar agendamento.';
       setError(String(msg));
     } finally {
       setIsSubmitting(false);

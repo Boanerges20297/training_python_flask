@@ -53,15 +53,15 @@ export default function AppRoutes() {
 
            {/* Client Domain */}
            <Route element={<ProtectedRoute allowedRoles={['cliente']} />}>
-              <Route path="cliente/inicio" element={<Suspense fallback={<SuspenseFallback />}><ClientDashboard user={user as any} activeTab="inicio" /></Suspense>} />
-              <Route path="cliente/agendamentos" element={<Suspense fallback={<SuspenseFallback />}><ClientDashboard user={user as any} activeTab="agendamentos" /></Suspense>} />
+              <Route path="cliente/inicio" element={<Suspense fallback={<SuspenseFallback />}><ClientDashboard user={user!} activeTab="inicio" /></Suspense>} />
+              <Route path="cliente/agendamentos" element={<Suspense fallback={<SuspenseFallback />}><ClientDashboard user={user!} activeTab="agendamentos" /></Suspense>} />
               <Route path="cliente" element={<Navigate to="inicio" replace />} />
            </Route>
 
            {/* Barber Domain */}
            <Route element={<ProtectedRoute allowedRoles={['barbeiro']} />}>
-              <Route path="barbeiro/agenda" element={<Suspense fallback={<SuspenseFallback />}><BarberDashboard user={user as any} activeTab="agenda" /></Suspense>} />
-              <Route path="barbeiro/historico" element={<Suspense fallback={<SuspenseFallback />}><BarberDashboard user={user as any} activeTab="historico" /></Suspense>} />
+              <Route path="barbeiro/agenda" element={<Suspense fallback={<SuspenseFallback />}><BarberDashboard user={user!} activeTab="agenda" /></Suspense>} />
+              <Route path="barbeiro/historico" element={<Suspense fallback={<SuspenseFallback />}><BarberDashboard user={user!} activeTab="historico" /></Suspense>} />
               <Route path="barbeiro" element={<Navigate to="agenda" replace />} />
            </Route>
         </Route>

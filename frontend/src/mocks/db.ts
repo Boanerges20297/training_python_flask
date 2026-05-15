@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Cliente, Barbeiro, Servico, Agendamento } from '../types';
 
 const STORAGE_KEY = 'barbabyte_mock_db_v13';

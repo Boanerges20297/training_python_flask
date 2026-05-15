@@ -99,7 +99,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
         const ok = await updateAgendamento(agendamentoParaEditar.id, payload);
         if (!ok) throw "Erro ao atualizar agendamento.";
       } else {
-        await createAgendamento(payload as any);
+        await createAgendamento(payload as Omit<Agendamento, 'id'>);
       }
 
       setSuccess(true);
@@ -109,8 +109,9 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
         setSuccess(false);
         setFormData({ cliente_id: '', servico_id: '', barbeiro_id: '', data_agendamento: '', observacoes: '' });
       }, 1500);
-    } catch (err: any) {
-      const msg = err.response?.data?.message || err || 'Erro ao processar agendamento.';
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      const msg = error.response?.data?.message || String(err) || 'Erro ao processar agendamento.';
       setError(msg);
     } finally {
       setIsSubmitting(false);

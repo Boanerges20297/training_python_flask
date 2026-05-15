@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { http, HttpResponse, delay } from 'msw';
 import { db } from './db';
 

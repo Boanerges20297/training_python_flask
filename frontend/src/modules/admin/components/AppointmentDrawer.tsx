@@ -225,15 +225,16 @@ const AppointmentDrawer: React.FC<AppointmentDrawerProps> = ({
           if (!ok) throw "Erro ao atualizar agendamento.";
           showToast('Agendamento atualizado com sucesso!', 'success');
         } else {
-          await createAgendamento(payload as any);
+          await createAgendamento(payload as Omit<Agendamento, 'id'>);
           showToast('Horário reservado com sucesso!', 'success');
           notifyNewAppointment(selectedClient?.nome || 'Novo Cliente', timeToUse);
         }
 
       onSuccess();
       onClose();
-    } catch (err: any) {
-      const msg = err.response?.data?.message || err || 'Erro ao processar agendamento.';
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      const msg = error.response?.data?.message || String(err) || 'Erro ao processar agendamento.';
       showToast(String(msg), 'error');
     } finally {
       setIsSubmitting(false);

@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
-import { Lock, Mail, Eye, EyeOff, Scissors } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff } from 'lucide-react';
+import logoImg from '../../../assets/images/soalogo-removebg-preview.png';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import { useAuth } from '../../../auth/useAuth';
 import { useToast } from '../../../components/ui/Toast';
 import styles from './Auth.module.css';
 
+type AuthView = 'login' | 'register' | 'forgot-password';
+
 interface LoginProps {
-  onNavigate?: (view: any) => void;
+  onNavigate?: (view: AuthView) => void;
 }
 
 const Login: React.FC<LoginProps> = ({ onNavigate }) => {
@@ -25,8 +28,8 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
     try {
       await login(email, senha);
       // O AuthContext dispara redirect automaticamente
-    } catch (err: any) {
-      showToast(err.toString(), 'error');
+    } catch (err: unknown) {
+      showToast(String(err), 'error');
     } finally {
       setLoading(false);
     }
@@ -36,7 +39,7 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
     <div className={styles.authCard}>
       <div className={styles.authHeader}>
         <div className={styles.logoContainer}>
-          <Scissors size={32} color="white" />
+          <img src={logoImg} alt="Logo" className={styles.logoImage} />
         </div>
         <h1 className={styles.authTitle}>Barba & Byte</h1>
         <p className={styles.authSubtitle}>
@@ -102,7 +105,6 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
           style={{ 
             height: '3.5rem',
             background: 'var(--color-client)',
-            boxShadow: '0 10px 20px -5px rgba(var(--color-client-rgb), 0.4)',
             fontSize: '1.1rem',
             letterSpacing: '-0.01em'
           }}
@@ -110,11 +112,11 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
           Entrar na Conta
         </Button>
 
-        <div className={styles.divider}>
+        {/* <div className={styles.divider}>
           <span>Acesso rápido</span>
         </div>
 
-        <p className={styles.footerNote}>
+         <p className={styles.footerNote}>
           Não tem uma conta?{' '}
           <span 
             className={styles.authLink} 
@@ -122,7 +124,7 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
           >
             Cadastre-se agora
           </span>
-        </p>
+        </p> */}
       </form>
     </div>
   );

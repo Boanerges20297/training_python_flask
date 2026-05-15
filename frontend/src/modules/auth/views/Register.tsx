@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
 import { User, Lock, Mail, Phone, Eye, EyeOff } from 'lucide-react';
+import logoImg from '../../../assets/images/soalogo-removebg-preview.png';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import { useAuth } from '../../../auth/useAuth';
 import { useToast } from '../../../components/ui/Toast';
 import styles from './Auth.module.css';
 
+import type { AuthUser } from '../../../types';
+
+type AuthView = 'login' | 'register' | 'forgot-password';
+
 interface RegisterProps {
-  onRegisterSuccess?: (user: any) => void;
-  onNavigate: (view: any) => void;
+  onRegisterSuccess?: (user: AuthUser) => void;
+  onNavigate: (view: AuthView) => void;
 }
 
 const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
@@ -54,8 +59,8 @@ const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
     try {
       await register(nome, email, senha, telefone);
       showToast('Conta criada com sucesso!', 'success');
-    } catch (err: any) {
-      showToast(err.toString(), 'error');
+    } catch (err: unknown) {
+      showToast(String(err), 'error');
     } finally {
       setLoading(false);
     }
@@ -64,6 +69,9 @@ const Register: React.FC<RegisterProps> = ({ onNavigate }) => {
   return (
     <div className={styles.authCard}>
       <div className={styles.authHeader}>
+        <div className={styles.logoContainer}>
+          <img src={logoImg} alt="Logo" className={styles.logoImage} />
+        </div>
         <h1 className={styles.authTitle}>Criar Conta</h1>
         <p className={styles.authSubtitle}>
           Junte-se à elite da Barba & Byte

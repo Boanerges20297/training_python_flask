@@ -54,6 +54,7 @@ const ClientDrawer: React.FC<ClientDrawerProps> = ({ isOpen, onClose, onSuccess,
         setActiveTab('dados');
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, clienteParaEditar]);
 
   const fetchFinancialHistory = async () => {
@@ -69,7 +70,6 @@ const ClientDrawer: React.FC<ClientDrawerProps> = ({ isOpen, onClose, onSuccess,
       setServicos(servs.items);
     } catch (e) {
       console.error("Erro ao carregar histórico financeiro", e);
-    } finally {
     }
   };
 
@@ -193,7 +193,8 @@ const ClientDrawer: React.FC<ClientDrawerProps> = ({ isOpen, onClose, onSuccess,
     setIsSubmitting(true);
     try {
       if (clienteParaEditar) {
-        const { senha, ...updateData } = formData;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { senha: _senha, ...updateData } = formData;
         const payload = { ...updateData, telefone: cleanPhone(formData.telefone) };
         const success = await updateCliente(clienteParaEditar.id!, payload);
         if (!success) throw new Error("Erro ao atualizar cliente.");
@@ -205,8 +206,9 @@ const ClientDrawer: React.FC<ClientDrawerProps> = ({ isOpen, onClose, onSuccess,
       }
       onSuccess();
       onClose();
-    } catch (err: any) {
-      const msg = err.message || err.response?.data?.erro || 'Erro ao processar solicitação.';
+    } catch (err: unknown) {
+      const error = err as { message?: string; response?: { data?: { erro?: string } } };
+      const msg = error.message || error.response?.data?.erro || 'Erro ao processar solicitação.';
       showToast(msg, 'error');
     } finally {
       setIsSubmitting(false);

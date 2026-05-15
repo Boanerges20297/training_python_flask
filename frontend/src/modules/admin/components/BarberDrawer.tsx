@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { createBarbeiro, updateBarbeiro } from '../../../api/barbers';
 import { getServicos } from '../../../api/services';
-import type { Barbeiro, Servico } from '../../../types';
+import type { Barbeiro, Servico, Agendamento, Cliente } from '../../../types';
 import { User, Phone, Mail, Plus, Edit2, Lock, ToggleLeft, ToggleRight, Scissors, History, TrendingUp, DollarSign, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getAgendamentos } from '../../../api/appointments';
@@ -40,8 +40,8 @@ const BarberDrawer: React.FC<BarberDrawerProps> = ({ isOpen, onClose, onSuccess,
   const [mode, setMode] = useState<'view' | 'edit'>('view');
   const [activeTab, setActiveTab] = useState<'dados' | 'financeiro'>('dados');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [history, setHistory] = useState<any[]>([]);
-  const [clientes, setClientes] = useState<any[]>([]);
+  const [history, setHistory] = useState<Agendamento[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [searchTermHistory, setSearchTermHistory] = useState('');
 
@@ -79,6 +79,7 @@ const BarberDrawer: React.FC<BarberDrawerProps> = ({ isOpen, onClose, onSuccess,
         fetchFinancialHistory();
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, barbeiroParaEditar]);
 
   const fetchFinancialHistory = async () => {
@@ -91,7 +92,7 @@ const BarberDrawer: React.FC<BarberDrawerProps> = ({ isOpen, onClose, onSuccess,
       ]);
       
       // Filtrar agendamentos deste barbeiro que estão concluídos
-      const filtered = (agends.items || []).filter((a: any) => 
+      const filtered = (agends.items || []).filter((a: Agendamento) => 
         a.barbeiro_id === barbeiroParaEditar.id && a.status === 'concluido'
       );
       
@@ -125,7 +126,8 @@ const BarberDrawer: React.FC<BarberDrawerProps> = ({ isOpen, onClose, onSuccess,
     setIsSubmitting(true);
     try {
       if (barbeiroParaEditar) {
-        const { senha, ...updateData } = formData;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { senha: _senha, ...updateData } = formData;
         const payload = { ...updateData, telefone: cleanPhone(formData.telefone) };
         const success = await updateBarbeiro(barbeiroParaEditar.id!, payload);
         if (!success) throw new Error("Erro ao atualizar barbeiro.");
@@ -146,8 +148,9 @@ const BarberDrawer: React.FC<BarberDrawerProps> = ({ isOpen, onClose, onSuccess,
       }
       onSuccess();
       onClose();
-    } catch (err: any) {
-      const msg = err.message || err.response?.data?.erro || 'Erro ao processar solicitação.';
+    } catch (err: unknown) {
+      const error = err as { message?: string; response?: { data?: { erro?: string } } };
+      const msg = error.message || error.response?.data?.erro || 'Erro ao processar solicitação.';
       showToast(msg, 'error');
     } finally {
       setIsSubmitting(false);
@@ -400,14 +403,14 @@ const BarberDrawer: React.FC<BarberDrawerProps> = ({ isOpen, onClose, onSuccess,
                   history
                     .filter(a => {
                       const cli = clientes.find(c => c.id === a.cliente_id);
-                      const servs = servicos.filter(s => (a.servicos_ids || [a.servico_id]).includes(s.id));
+                      const servs = servicos.filter(s => (a.servicos_ids || []).includes(s.id));
                       const term = searchTermHistory.toLowerCase();
                       return cli?.nome.toLowerCase().includes(term) || 
                              servs.some(s => s.nome.toLowerCase().includes(term));
                     })
                     .sort((a, b) => new Date(b.data_agendamento).getTime() - new Date(a.data_agendamento).getTime())
                     .map(a => {
-                      const servs = servicos.filter(s => (a.servicos_ids || [a.servico_id]).includes(s.id));
+                      const servs = servicos.filter(s => (a.servicos_ids || []).includes(s.id));
                       const cli = clientes.find(c => c.id === a.cliente_id);
                       const comissaoPercent = barbeiroParaEditar.comissao_percentual || 40;
                       
@@ -425,11 +428,11 @@ const BarberDrawer: React.FC<BarberDrawerProps> = ({ isOpen, onClose, onSuccess,
                               <span style={{ fontWeight: 700, fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                 {servs.length > 0 ? servs.map(s => s.nome).join(' + ') : 'Serviço'}
                               </span>
-                              <span style={{ fontWeight: 800, color: 'var(--text-primary)', marginLeft: '0.5rem' }}>R$ {a.preco?.toLocaleString()}</span>
+                              <span style={{ fontWeight: 800, color: 'var(--text-primary)', marginLeft: '0.5rem' }}>R$ {(a.preco || 0).toLocaleString()}</span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
                               <span>{cli?.nome || 'Cliente'} • {new Date(a.data_agendamento).toLocaleDateString('pt-BR')}</span>
-                              <span style={{ color: 'var(--color-barber)', fontWeight: 600 }}>+ R$ {(a.preco * comissaoPercent / 100).toLocaleString()}</span>
+                              <span style={{ color: 'var(--color-barber)', fontWeight: 600 }}>+ R$ {((a.preco || 0) * comissaoPercent / 100).toLocaleString()}</span>
                             </div>
                           </div>
                         </div>

@@ -1,6 +1,7 @@
-// Sidebar — Migrado para CSS Modules com Design Tokens
-import { Database, LogOut, User, Users, Scissors, Briefcase, Calendar, ChevronLeft, Home, History, LayoutDashboard, TrendingUp } from 'lucide-react';
+import { LogOut, Users, Scissors, Briefcase, Calendar, ChevronLeft, Home, History, LayoutDashboard, TrendingUp } from 'lucide-react';
 import styles from './Sidebar.module.css';
+import brandLogo from '../../assets/images/superadminlogo-Photoroom.png';
+import userLogo from '../../assets/images/alt_logo-Photoroom.png';
 
 type AdminTab = 'dashboard' | 'clientes' | 'servicos' | 'agendamentos' | 'barbeiros' | 'financeiro';
 type ClientTab = 'inicio' | 'agendamentos_cliente';
@@ -10,10 +11,10 @@ export type SidebarTab = AdminTab | ClientTab | BarberTab;
 
 interface SidebarProps {
   activeTab: SidebarTab;
-  onTabChange: (tab: any) => void;
+  onTabChange: (tab: SidebarTab) => void;
   isCollapsed: boolean;
   onToggle: () => void;
-  user: any;
+  user: import('../../types').AuthUser | null | undefined;
   onLogout: () => void;
 }
 
@@ -34,7 +35,7 @@ export default function Sidebar({ activeTab, onTabChange, isCollapsed, onToggle,
           title={isCollapsed ? "Expandir Menu" : "Recolher Menu"}
         >
           <div className={styles.brandAvatar}>
-            <Database size={20} color="#fff" />
+            <img src={brandLogo} alt="Logo" className={styles.brandLogoImg} />
           </div>
           {!isCollapsed && (
             <>
@@ -113,7 +114,9 @@ export default function Sidebar({ activeTab, onTabChange, isCollapsed, onToggle,
 
       <div className={styles.footer}>
         <div className={styles.userInfo}>
-          <div className={styles.userAvatar}><User size={16} /></div>
+          <div className={styles.userAvatar}>
+            <img src={userLogo} alt="User" className={styles.userAvatarImg} />
+          </div>
           {!isCollapsed && (
             <div className={styles.userText}>
               <p className={styles.userName}>{user?.nome || 'Usuário'}</p>

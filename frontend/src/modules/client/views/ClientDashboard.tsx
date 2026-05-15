@@ -64,6 +64,7 @@ export default function ClientDashboard({ user, activeTab = 'inicio' }: ClientDa
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

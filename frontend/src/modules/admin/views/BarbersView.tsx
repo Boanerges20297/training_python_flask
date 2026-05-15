@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { getBarbeiros, deleteBarbeiro } from '../../../api/barbers';
 import type { Barbeiro } from '../../../types';
 import { Scissors, Phone, Mail, Award, Circle, Filter } from 'lucide-react';
@@ -27,22 +27,23 @@ export default function BarbersView() {
   const [filters, setFilters] = useState<FilterData>({});
   const { showToast } = useToast();
 
-  const fetchBarbeiros = async (currentPage = page) => {
+  const fetchBarbeiros = useCallback(async (currentPage = page) => {
     setLoading(true);
     try {
       const response = await getBarbeiros(currentPage, 10);
       setBarbeiros(response.items || []);
       setTotalPages(response.total_paginas || 1);
     } catch (e) {
+      console.error(e);
       showToast('Erro ao carregar barbeiros do servidor.', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, showToast]);
 
   useEffect(() => {
     fetchBarbeiros(page);
-  }, [page]);
+  }, [page, fetchBarbeiros]);
 
   const filteredBarbeiros = barbeiros.filter(b => {
     if (filters.profissionalId && String(b.id) !== filters.profissionalId) return false;
@@ -87,6 +88,7 @@ export default function BarbersView() {
       showToast(`${items.length} barbeiros removidos.`, 'success');
       fetchBarbeiros();
     } catch (e) {
+      console.error(e);
       showToast('Erro ao remover alguns barbeiros.', 'error');
     }
   };
@@ -269,12 +271,12 @@ export default function BarbersView() {
             icon={<Filter size={16} />}
             onClick={handleFilterClick}
             style={{ 
-              background: Object.keys(filters).some(k => (filters as any)[k]) ? 'rgba(245, 158, 11, 0.1)' : 'transparent',
-              border: Object.keys(filters).some(k => (filters as any)[k]) ? '1px solid rgba(245, 158, 11, 0.2)' : '1px solid transparent'
+              background: Object.values(filters).some(v => !!v) ? 'rgba(245, 158, 11, 0.1)' : 'transparent',
+              border: Object.values(filters).some(v => !!v) ? '1px solid rgba(245, 158, 11, 0.2)' : '1px solid transparent'
             }}
           >
             Filtros
-            {Object.keys(filters).filter(k => (filters as any)[k]).length > 0 && (
+            {Object.values(filters).filter(v => !!v).length > 0 && (
               <span style={{ 
                 marginLeft: '0.5rem', 
                 background: 'var(--color-barber)', 
@@ -288,7 +290,7 @@ export default function BarbersView() {
                 justifyContent: 'center',
                 fontWeight: 800
               }}>
-                {Object.keys(filters).filter(k => (filters as any)[k]).length}
+                {Object.values(filters).filter(v => !!v).length}
               </span>
             )}
           </Button>

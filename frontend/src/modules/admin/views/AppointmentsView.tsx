@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { getAgendamentos, deleteAgendamento } from '../../../api/appointments';
 import { getClientes } from '../../../api/clients';
 import { getServicos } from '../../../api/services';
@@ -35,7 +35,7 @@ export default function AppointmentsView() {
 
   const { showToast } = useToast();
 
-  const fetchData = async (currentPage = page) => {
+  const fetchData = useCallback(async (currentPage = page) => {
     setLoading(true);
     try {
       const [agendResponse, clientData, serviceData, barberData] = await Promise.all([
@@ -50,11 +50,12 @@ export default function AppointmentsView() {
       setServicos(serviceData.items || []);
       setBarbeiros(barberData.items || []);
     } catch (e) {
+      console.error(e);
       showToast('Erro ao carregar dados da agenda.', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, showToast]);
 
   // # Gabriel (Arquitetura) - Otimização de Performance O(1)
   // BUG: Busca linear (find) dentro do render da tabela causa peso Big O excessivo.
@@ -81,7 +82,7 @@ export default function AppointmentsView() {
 
   useEffect(() => {
     fetchData(page);
-  }, [page]);
+  }, [page, fetchData]);
 
   const filteredAgendamentos = useMemo(() => {
     return agendamentos.filter(agend => {
@@ -144,6 +145,7 @@ export default function AppointmentsView() {
       showToast(`${items.length} agendamentos removidos.`, 'success');
       fetchData();
     } catch (e) {
+      console.error(e);
       showToast('Erro ao remover alguns agendamentos.', 'error');
     }
   };
@@ -412,12 +414,12 @@ export default function AppointmentsView() {
             icon={<Filter size={16} />}
             onClick={handleFilterClick}
             style={{ 
-              background: Object.keys(filters).some(k => (filters as any)[k]) ? 'rgba(167, 139, 250, 0.1)' : 'transparent',
-              border: Object.keys(filters).some(k => (filters as any)[k]) ? '1px solid rgba(167, 139, 250, 0.2)' : '1px solid transparent'
+              background: Object.values(filters).some(v => !!v) ? 'rgba(167, 139, 250, 0.1)' : 'transparent',
+              border: Object.values(filters).some(v => !!v) ? '1px solid rgba(167, 139, 250, 0.2)' : '1px solid transparent'
             }}
           >
             Filtros
-            {Object.keys(filters).filter(k => (filters as any)[k]).length > 0 && (
+            {Object.values(filters).filter(v => !!v).length > 0 && (
               <span style={{ 
                 marginLeft: '0.5rem', 
                 background: 'var(--color-purple)', 
@@ -431,7 +433,7 @@ export default function AppointmentsView() {
                 justifyContent: 'center',
                 fontWeight: 800
               }}>
-                {Object.keys(filters).filter(k => (filters as any)[k]).length}
+                {Object.values(filters).filter(v => !!v).length}
               </span>
             )}
           </Button>

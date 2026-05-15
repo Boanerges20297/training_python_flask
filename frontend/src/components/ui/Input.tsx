@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 // Gabriel (Dev 1) — Componente Input inteligente e polimórfico
 // Migrado para CSS Modules. Todas as funções de máscara e limpeza foram PRESERVADAS.
 import React, { forwardRef } from 'react';
@@ -21,7 +22,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement | HTMLSe
 
 export const formatPhone = (value: string) => {
   if (!value) return "";
-  let digits = value.replace(/\D/g, "").slice(0, 11);
+  const digits = value.replace(/\D/g, "").slice(0, 11);
   if (digits.length <= 10) {
     return digits.replace(/^(\d{2})(\d)/g, "($1) $2").replace(/(\d{4})(\d)/, "$1-$2");
   } else {
@@ -58,11 +59,13 @@ export const cleanPhone = (value: string): string => {
   return value.replace(/\D/g, "");
 };
 
-const Input = forwardRef<any, InputProps>(
+type InputElementTypes = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+
+const Input = forwardRef<InputElementTypes, InputProps>(
   ({ as = 'input', mask = 'none', icon, rightElement, label, error, onChange, className, type, value, children, ...props }, ref) => {
     
     // Lógica de máscara de telefone e moeda no onChange
-    const handleChange = (e: React.ChangeEvent<any>) => {
+    const handleChange = (e: React.ChangeEvent<InputElementTypes>) => {
       if (!onChange) return;
 
       if (as === 'input' && mask === 'phone') {
@@ -75,7 +78,7 @@ const Input = forwardRef<any, InputProps>(
     };
 
     // Bloqueia caracteres inválidos em inputs numéricos
-    const handleKeyDown = (e: React.KeyboardEvent<any>) => {
+    const handleKeyDown = (e: React.KeyboardEvent<InputElementTypes>) => {
       if (as === 'input' && type === 'number') {
         if (['e', 'E', '+', '-'].includes(e.key)) {
           e.preventDefault();
@@ -103,7 +106,7 @@ const Input = forwardRef<any, InputProps>(
 
       if (as === 'select') {
         return (
-          <select {...(commonProps as any)} className={className}>
+          <select {...(commonProps as React.SelectHTMLAttributes<HTMLSelectElement>)} className={className}>
             {children}
           </select>
         );
@@ -111,13 +114,13 @@ const Input = forwardRef<any, InputProps>(
 
       if (as === 'textarea') {
         return (
-          <textarea {...(commonProps as any)} className={className} />
+          <textarea {...(commonProps as React.TextareaHTMLAttributes<HTMLTextAreaElement>)} className={className} />
         );
       }
 
       return (
         <input
-          {...(commonProps as any)}
+          {...(commonProps as React.InputHTMLAttributes<HTMLInputElement>)}
           className={className}
           type={type === 'number' && mask === 'currency' ? 'text' : type}
         />

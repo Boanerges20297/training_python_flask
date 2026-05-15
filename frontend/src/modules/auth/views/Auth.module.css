@@ -35,10 +35,10 @@
   align-items: center;
   width: 100%;
   max-width: 480px;
-  background: rgba(15, 23, 42, 0.6); /* Glass effect */
+  background: rgb(7, 11, 20); /* Glass effect */
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border-radius: var(--radius-2xl);
+  border-radius: var(--radius-sm);
   box-shadow: 
     0 25px 50px -12px rgba(0, 0, 0, 0.5),
     inset 0 1px 1px rgba(255, 255, 255, 0.1);
@@ -67,16 +67,24 @@
 }
 
 .logoContainer {
-  width: 64px;
-  height: 64px;
-  background: linear-gradient(135deg, var(--color-client) 0%, #3b82f6 100%);
-  border-radius: var(--radius-xl);
+  width: 110px;
+  height: 110px;
+  background: linear-gradient(175deg, #3b83f68b 0%, #6365f13f 100%);
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 1.5rem;
-  box-shadow: 0 8px 16px rgba(var(--color-client-rgb), 0.3);
+  box-shadow: 0 8px 16px rgba(var(--color-client-rgb), 0.2);
   position: relative;
+  overflow: hidden;
+}
+
+.logoImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; 
+  z-index: 2;
 }
 
 .logoContainer::after {
@@ -186,10 +194,79 @@
   text-align: center;
 }
 
+.formDescription {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.formButtons {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.formButtons > button {
+  flex: 1;
+}
+
+.logoIcon {
+  width: 64px;
+  height: 64px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logoAmber {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+.successState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1.5rem;
+  padding: 1rem 0;
+}
+
+.successIcon {
+  width: 80px;
+  height: 80px;
+  background: rgba(74, 222, 128, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.successTitle {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0;
+}
+
+.successDescription {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.6;
+}
+
 @media (max-width: 640px) {
   .contentBox {
     padding: 2.5rem 1.5rem;
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-sm);
   }
   .authTitle {
     font-size: 1.75rem;

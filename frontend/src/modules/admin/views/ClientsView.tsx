@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { getClientes, deleteCliente } from '../../../api/clients';
 import type { Cliente } from '../../../types';
 import { Users, Phone, Mail, Filter } from 'lucide-react';
@@ -26,7 +26,7 @@ export default function ClientsView() {
   const [filters, setFilters] = useState<FilterData>({});
   const { showToast } = useToast();
 
-  const fetchClientes = async (currentPage = page) => {
+  const fetchClientes = useCallback(async (currentPage = page) => {
     setLoading(true);
     try {
       // Gabriel (Arquitetura) - Agora o fetch respeita a paginação do Mock
@@ -34,19 +34,20 @@ export default function ClientsView() {
       setClientes(response.items || []);
       setTotalPages(response.total_paginas || 1);
     } catch (e) {
+      console.error(e);
       showToast('Erro ao carregar clientes do servidor.', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, showToast]);
 
 
   useEffect(() => {
     fetchClientes(page);
-  }, [page]);
+  }, [page, fetchClientes]);
 
   const filteredClientes = clientes.filter(c => {
-    const f = filters as any;
+    const f = filters as Record<string, string>;
     if (f.clientId && String(c.id) !== f.clientId) return false;
     if (f.status) {
       const s = f.status.toLowerCase();
@@ -94,6 +95,7 @@ export default function ClientsView() {
       showToast(`${items.length} clientes removidos.`, 'success');
       fetchClientes();
     } catch (e) {
+      console.error(e);
       showToast('Erro ao remover alguns clientes.', 'error');
     }
   };
@@ -105,7 +107,7 @@ export default function ClientsView() {
         <div class="swal-grid">
           <div class="swal-form-group swal-col-4">
             <label class="swal-input-label">ID</label>
-            <input type="number" id="filter-id" class="swal-input-premium" placeholder="Ex: 100" value="${(filters as any).clientId || ''}">
+            <input type="number" id="filter-id" class="swal-input-premium" placeholder="Ex: 100" value="${(filters as Record<string, string>).clientId || ''}">
           </div>
           <div class="swal-form-group swal-col-8">
             <label class="swal-input-label">Status Financeiro</label>
@@ -248,12 +250,12 @@ export default function ClientsView() {
             icon={<Filter size={16} />}
             onClick={handleFilterClick}
             style={{ 
-              background: Object.keys(filters).some(k => (filters as any)[k]) ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
-              border: Object.keys(filters).some(k => (filters as any)[k]) ? '1px solid rgba(59, 130, 246, 0.2)' : '1px solid transparent'
+              background: Object.values(filters).some(v => !!v) ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+              border: Object.values(filters).some(v => !!v) ? '1px solid rgba(59, 130, 246, 0.2)' : '1px solid transparent'
             }}
           >
             Filtros
-            {Object.keys(filters).filter(k => (filters as any)[k]).length > 0 && (
+            {Object.values(filters).filter(v => !!v).length > 0 && (
               <span style={{ 
                 marginLeft: '0.5rem', 
                 background: 'var(--color-client)', 
@@ -267,7 +269,7 @@ export default function ClientsView() {
                 justifyContent: 'center',
                 fontWeight: 800
               }}>
-                {Object.keys(filters).filter(k => (filters as any)[k]).length}
+                {Object.values(filters).filter(v => !!v).length}
               </span>
             )}
           </Button>

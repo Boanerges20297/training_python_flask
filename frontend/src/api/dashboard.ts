@@ -7,7 +7,8 @@ export const getDashboardInfo = async (dias: number = 30): Promise<DashboardData
       params: { dias }
     });
     return response.data.dados;
-  } catch (error: any) {
+  } catch (err: unknown) {
+    const error = err as { response?: { data?: { erro?: string } } };
     throw error.response?.data?.erro || 'Erro ao carregar dados do dashboard';
   }
 };

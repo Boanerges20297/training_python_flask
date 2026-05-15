@@ -19,7 +19,8 @@ export async function createServico(servico: Omit<Servico, 'id'>): Promise<Servi
   try {
     const response = await api.post('/servicos/', servico);
     return response.data.dados.servico;
-  } catch (error: any) {
+  } catch (err: unknown) {
+    const error = err as { response?: { data?: { erro?: string; erros_validacao?: unknown } } };
     throw error.response?.data?.erro || error.response?.data?.erros_validacao || 'Erro ao criar serviço';
   }
 }

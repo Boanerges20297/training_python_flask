@@ -7,8 +7,10 @@ import { useAuth } from '../../../auth/useAuth';
 import { useToast } from '../../../components/ui/Toast';
 import styles from './Auth.module.css';
 
+type AuthView = 'login' | 'register' | 'forgot-password';
+
 interface ForgotPasswordProps {
-  onNavigate: (view: any) => void;
+  onNavigate: (view: AuthView) => void;
 }
 
 const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onNavigate }) => {
@@ -26,8 +28,8 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onNavigate }) => {
       await forgotPassword(email);
       setSuccess(true);
       showToast('Link de recuperação enviado!', 'success');
-    } catch (err: any) {
-      showToast(err.toString(), 'error');
+    } catch (err: unknown) {
+      showToast(String(err), 'error');
     } finally {
       setLoading(false);
     }

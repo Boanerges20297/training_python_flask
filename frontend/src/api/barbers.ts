@@ -19,7 +19,8 @@ export async function createBarbeiro(barbeiro: Omit<Barbeiro, 'id'>): Promise<Ba
   try {
     const response = await api.post('/barbeiros', barbeiro);
     return response.data.dados.barbeiro;
-  } catch (error: any) {
+  } catch (err: unknown) {
+    const error = err as { response?: { data?: { erro?: string; erros_validacao?: unknown } } };
     throw error.response?.data?.erro || error.response?.data?.erros_validacao || 'Erro ao criar barbeiro';
   }
 }

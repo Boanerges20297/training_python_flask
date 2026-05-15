@@ -1,7 +1,7 @@
 import React, { type HTMLAttributes } from 'react';
 import styles from './Card.module.css';
 
-interface CardProps extends HTMLAttributes<HTMLDivElement> {}
+type CardProps = HTMLAttributes<HTMLDivElement>;
 
 export const Card = ({ className, children, ...props }: CardProps) => (
   <div className={`${styles.card} ${className || ''}`} {...props}>

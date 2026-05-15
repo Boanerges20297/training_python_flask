@@ -71,7 +71,8 @@ const BarbersModal: React.FC<BarbersModalProps> = ({ isOpen, onClose, onSuccess,
     try {
       if (barbeiroParaEditar) {
         // Gabriel (Arquitetura) - Removemos senha (não editável aqui)
-        const { senha, ...updateData } = formData; 
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { senha: _senha, ...updateData } = formData; 
         const payload = {
           ...updateData,
           telefone: cleanPhone(formData.telefone)
@@ -92,8 +93,9 @@ const BarbersModal: React.FC<BarbersModalProps> = ({ isOpen, onClose, onSuccess,
         onSuccess();
         onClose();
       }, 1500);
-    } catch (err: any) {
-      const msg = err.message || err.response?.data?.erro || 'Erro ao processar solicitação. Tente Novamente.';
+    } catch (err: unknown) {
+      const error = err as { message?: string; response?: { data?: { erro?: string } } };
+      const msg = error.message || error.response?.data?.erro || 'Erro ao processar solicitação. Tente Novamente.';
       setError(msg);
     } finally {
       setIsSubmitting(false);

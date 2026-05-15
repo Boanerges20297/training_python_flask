@@ -19,7 +19,8 @@ export async function createAgendamento(agendamento: Omit<Agendamento, 'id'>): P
   try {
     const response = await api.post('/agendamento', agendamento);
     return response.data.dados.agendamento;
-  } catch (error: any) {
+  } catch (err: unknown) {
+    const error = err as { response?: { data?: { erro?: string; erros_validacao?: unknown } } };
     throw error.response?.data?.erro || error.response?.data?.erros_validacao || 'Erro ao criar agendamento';
   }
 }

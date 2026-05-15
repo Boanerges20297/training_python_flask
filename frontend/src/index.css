@@ -204,9 +204,9 @@ body {
 body .swal2-container.swal2-center > .swal2-popup.swal-glass-popup {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-xl);
-  padding: 2rem;
+  padding: 2.5rem;
 }
 
 body .swal2-title.swal-glass-title {

@@ -19,7 +19,8 @@ export async function createCliente(cliente: Omit<Cliente, 'id'>): Promise<Clien
   try {
     const response = await api.post('/clientes', cliente);
     return response.data.dados.cliente;
-  } catch (error: any) {
+  } catch (err: unknown) {
+    const error = err as { response?: { data?: { erro?: string; erros_validacao?: unknown } } };
     throw error.response?.data?.erro || error.response?.data?.erros_validacao || 'Erro ao criar cliente';
   }
 }

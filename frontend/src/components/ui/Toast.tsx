@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 /* # Gabriel (Dev 1) - Componente de Toast */
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
@@ -54,17 +55,19 @@ const ToastItem: React.FC<{ toast: ToastMessage; onRemove: (id: string) => void 
 export const ToastProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-  const showToast = (message: string, type: ToastType = 'info') => {
+  const showToast = useCallback((message: string, type: ToastType = 'info') => {
     const id = Math.random().toString(36).substring(2, 9);
     setToasts(prev => [...prev, { id, type, message }]);
-  };
+  }, []);
 
   const removeToast = useCallback((id: string) => {
     setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
 
+  const contextValue = React.useMemo(() => ({ showToast }), [showToast]);
+
   return (
-    <ToastContext.Provider value={{ showToast }}>
+    <ToastContext.Provider value={contextValue}>
       {children}
       <div className="toast-container">
         {toasts.map(toast => (

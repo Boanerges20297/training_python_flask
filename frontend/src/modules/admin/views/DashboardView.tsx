@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { getDashboardInfo } from '../../../api/dashboard';
 import type { DashboardData } from '../../../types';
@@ -8,8 +8,8 @@ import {
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, CartesianGrid,
-  ComposedChart, Bar, Line, ReferenceLine
+  CartesianGrid,
+  ComposedChart, Bar, Line
 } from 'recharts';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
@@ -24,6 +24,7 @@ import { getServicos } from '../../../api/services';
 import type { Agendamento, Cliente, Barbeiro, Servico } from '../../../types';
 
 import Swal from 'sweetalert2';
+import { useGoals } from '../../../hooks/useGoals';
 
 // --- ANIMAÇÕES ---
 const containerVariants = {
@@ -54,10 +55,15 @@ const ComparisonBadge = ({ value, trend }: { value: number; trend: 'up' | 'down'
 };
 
 // 2. Tooltip Interativo Customizado para Evolução do Fluxo
-const FluxoTooltip = ({ active, payload, label }: any) => {
+interface FluxoTooltipProps {
+  active?: boolean;
+  payload?: Array<{ value?: number; payload?: Record<string, number> }>;
+  label?: string;
+}
+const FluxoTooltip = ({ active, payload, label }: FluxoTooltipProps) => {
   if (active && payload && payload.length) {
-    const value = payload[0].value;
-    const agendamentos = payload[0].payload.agendamentos_concluidos;
+    const value = payload[0].value as number;
+    const agendamentos = payload[0].payload?.agendamentos_concluidos ?? 0;
     
     let insight = "Fluxo Neutro: Manter Operação";
     if (value < 400) { insight = "Baixa Demanda: Sugerir Promoção Flash"; }
@@ -98,11 +104,8 @@ const DashboardView = () => {
 
   // Estado do Flip Card de Metas
   const [isGoalFlipped, setIsGoalFlipped] = useState(false);
-  const [goalValues, setGoalValues] = useState({
-    metaFaturamento: '',
-    metaClientes: '',
-    metaPeriodo: '30'
-  });
+  const { goals, updateGoal } = useGoals();
+  const [metaPeriodo, setMetaPeriodo] = useState('30');
 
   const handleSaveGoals = () => {
     showToast('Metas definidas com sucesso!', 'success');
@@ -111,7 +114,7 @@ const DashboardView = () => {
 
   const { showToast } = useToast();
 
-  const fetchDashboard = async (dias: number) => {
+  const fetchDashboard = useCallback(async (dias: number) => {
     setLoading(true);
     try {
       const [res, agendRes, clientsRes, barbsRes, servsRes, fullAgendRes] = await Promise.all([
@@ -129,15 +132,16 @@ const DashboardView = () => {
       setAllServicos(servsRes.items || []);
       setFullAgendamentos(fullAgendRes.items || []);
     } catch (e) {
+      console.error(e);
       showToast('Erro ao obter métricas do dashboard', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
   useEffect(() => {
     fetchDashboard(diasFiltro);
-  }, [diasFiltro]);
+  }, [diasFiltro, fetchDashboard]);
 
   const filteredAgenda = useMemo(() => {
     return agendaReal.filter(item => {
@@ -160,7 +164,11 @@ const DashboardView = () => {
   const clockData = useMemo(() => {
     if (!data) return [];
     return Array.from({ length: 24 }).map((_, i) => {
-      const entry = data.top_5_horarios.find(h => Math.floor(h.hora) === i);
+      const entry = data.top_5_horarios.find(h => {
+        const hStr = String(h.hora);
+        const hInt = parseInt(hStr.split(':')[0]);
+        return hInt === i;
+      });
       const volume = entry ? entry.total_agendamentos : 0;
       const isWorkHour = i >= 8 && i < 20;
       
@@ -179,10 +187,7 @@ const DashboardView = () => {
     });
   }, [data]);
 
-  const peakHourObj = useMemo(() => {
-    if (!data || !data.top_5_horarios || data.top_5_horarios.length === 0) return null;
-    return data.top_5_horarios.reduce((prev, current) => (prev.total_agendamentos > current.total_agendamentos) ? prev : current);
-  }, [data]);
+
 
   const handleFilterClick = () => {
     Swal.fire({
@@ -237,8 +242,6 @@ const DashboardView = () => {
       icon: 'info',
       timer: 2000,
       showConfirmButton: false,
-      background: 'transparent',
-      color: 'var(--text-primary)',
       timerProgressBar: true,
       customClass: { popup: 'swal-glass-popup', title: 'swal-glass-title', htmlContainer: 'swal-glass-html' },
       didOpen: () => { Swal.showLoading(); }
@@ -294,12 +297,12 @@ const DashboardView = () => {
             icon={<Filter size={16} />}
             onClick={handleFilterClick}
             style={{ 
-              background: Object.keys(filters).some(k => (filters as any)[k]) ? 'rgba(167, 139, 250, 0.1)' : 'transparent',
-              border: Object.keys(filters).some(k => (filters as any)[k]) ? '1px solid rgba(167, 139, 250, 0.2)' : '1px solid transparent'
+              background: Object.values(filters).some(v => !!v) ? 'rgba(167, 139, 250, 0.1)' : 'transparent',
+              border: Object.values(filters).some(v => !!v) ? '1px solid rgba(167, 139, 250, 0.2)' : '1px solid transparent'
             }}
           >
             Filtros
-            {Object.keys(filters).filter(k => (filters as any)[k]).length > 0 && (
+            {Object.values(filters).filter(v => !!v).length > 0 && (
               <span style={{ 
                 marginLeft: '0.5rem', 
                 background: 'var(--color-purple)', 
@@ -313,7 +316,7 @@ const DashboardView = () => {
                 justifyContent: 'center',
                 fontWeight: 800
               }}>
-                {Object.keys(filters).filter(k => (filters as any)[k]).length}
+                {Object.values(filters).filter(v => !!v).length}
               </span>
             )}
           </Button>
@@ -381,15 +384,15 @@ const DashboardView = () => {
         <div className={`${styles.flipCardInner} ${isGoalFlipped ? styles.flipped : ''}`}>
           {/* ═══ FRENTE ═══ */}
           <div className={styles.flipFront}>
-            <div className={styles.kpiCard} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', position: 'relative', overflow: 'hidden', padding: '1.75rem', height: '100%', borderRadius: 'var(--radius-xl)' }}>
+            <div className={styles.kpiCard} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', position: 'relative', overflow: 'hidden', padding: '1.75rem', height: '100%', borderRadius: 'var(--radius-md)' }}>
               <div style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', width: '85px', height: '85px', zIndex: 3 }}>
                 <svg viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)', overflow: 'visible' }}>
                   <circle cx="50" cy="50" r="42" fill="none" stroke="var(--border-color)" strokeWidth="10" strokeLinecap="round" />
-                  <circle cx="50" cy="50" r="42" fill="none" stroke="var(--color-client)" strokeWidth="10" strokeDasharray="263.8" strokeDashoffset={263.8 * (1 - (goalValues.metaFaturamento ? Math.min(data.receita_total / parseFloat(goalValues.metaFaturamento), 1) : 0.85))} strokeLinecap="round" style={{ transition: 'stroke-dashoffset 1.5s ease-out' }} />
+                  <circle cx="50" cy="50" r="42" fill="none" stroke="var(--color-client)" strokeWidth="10" strokeDasharray="263.8" strokeDashoffset={263.8 * (1 - (goals.metaFaturamento && goals.metaFaturamento !== '0' ? Math.min(data.receita_total / parseFloat(goals.metaFaturamento), 1) : 0.85))} strokeLinecap="round" style={{ transition: 'stroke-dashoffset 1.5s ease-out' }} />
                 </svg>
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                   <span style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--text-primary)' }}>
-                    {goalValues.metaFaturamento ? `${Math.min(Math.round((data.receita_total / parseFloat(goalValues.metaFaturamento)) * 100), 100)}%` : '85%'}
+                    {goals.metaFaturamento && goals.metaFaturamento !== '0' ? `${Math.min(Math.round((data.receita_total / parseFloat(goals.metaFaturamento)) * 100), 100)}%` : '85%'}
                   </span>
                   <span style={{ fontSize: '0.5rem', fontWeight: 700, textTransform: 'uppercase', opacity: 0.8, color: 'var(--text-tertiary)' }}>Meta</span>
                 </div>
@@ -397,10 +400,10 @@ const DashboardView = () => {
               <div className={styles.kpiContent} style={{ height: '100%', display: 'flex', flexDirection: 'column', zIndex: 2, position: 'relative' }}>
                 <div style={{ maxWidth: '65%' }}>
                   <p className={styles.kpiLabel} style={{ color: 'var(--text-tertiary)', fontWeight: 600 }}>Faturamento Bruto</p>
-                  <h2 className={styles.kpiValue} style={{ fontSize: 'clamp(2rem, 4vw, 3.2rem)', color: 'var(--text-primary)', marginTop: '0.5rem', lineHeight: 1.1 }}>R$ {data.receita_total.toLocaleString('pt-BR')}</h2>
+                  <h2 className={styles.kpiValue} style={{ fontSize: 'clamp(2rem, 4vw, 3.2rem)', color: 'var(--text-primary)', marginTop: '0.5rem', lineHeight: 1.1 }}>R$ {data.receita_total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
                   <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '0.75rem' }}>
-                    {goalValues.metaFaturamento 
-                      ? `Meta: R$ ${parseFloat(goalValues.metaFaturamento).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`
+                    {goals.metaFaturamento && goals.metaFaturamento !== '0'
+                      ? `Meta: R$ ${parseFloat(goals.metaFaturamento).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`
                       : `Próximo à meta semanal de R$ ${(data.receita_total * 1.15).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`
                     }
                   </p>
@@ -414,6 +417,17 @@ const DashboardView = () => {
                           <stop offset="95%" stopColor="var(--color-client)" stopOpacity={0} />
                         </linearGradient>
                       </defs>
+                      <RechartsTooltip 
+                        contentStyle={{ 
+                          background: 'var(--bg-secondary)', 
+                          border: '1px solid var(--border-color)', 
+                          borderRadius: 'var(--radius-xl)', 
+                          fontSize: '0.8rem',
+                          boxShadow: 'var(--shadow-lg)' 
+                        }}
+                formatter={(value: any) => [`R$ ${Number(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 'Faturamento']}
+                        labelFormatter={(label) => `Data: ${label}`}
+                      />
                       <Area type="monotone" dataKey="receita" stroke="var(--color-client)" strokeWidth={2.5} fillOpacity={1} fill="url(#colorFaturamento)" />
                     </AreaChart>
                   </ResponsiveContainer>
@@ -441,11 +455,11 @@ const DashboardView = () => {
                   type="text"
                   className={`${styles.flipInput} ${styles.flipInputLg}`}
                   placeholder="R$ 0,00"
-                  value={goalValues.metaFaturamento ? `R$ ${parseFloat(goalValues.metaFaturamento).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''}
+                  value={goals.metaFaturamento && goals.metaFaturamento !== '0' ? `R$ ${parseFloat(goals.metaFaturamento).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''}
                   onChange={(e) => {
                     const val = e.target.value.replace(/\D/g, '');
                     const numericValue = (Number(val) / 100).toString();
-                    setGoalValues(prev => ({ ...prev, metaFaturamento: numericValue }));
+                    updateGoal('metaFaturamento', numericValue);
                   }}
                 />
               </div>
@@ -454,8 +468,8 @@ const DashboardView = () => {
                 <label className={styles.flipInputLabel}>Período de Referência</label>
                 <select 
                   className={`${styles.flipInput} ${styles.flipInputSm}`}
-                  value={goalValues.metaPeriodo}
-                  onChange={(e) => setGoalValues(prev => ({ ...prev, metaPeriodo: e.target.value }))}
+                  value={metaPeriodo}
+                  onChange={(e) => setMetaPeriodo(e.target.value)}
                 >
                   <option value="7" style={{ color: '#1e293b' }}>Semanal</option>
                   <option value="15" style={{ color: '#1e293b' }}>Quinzenal</option>
@@ -550,7 +564,7 @@ const DashboardView = () => {
       </motion.div>
 
       {/* 4. Ticket Médio (Direita - Acima do Mapa) */}
-      <motion.div variants={cardVariants} className={`${styles.kpiCard} ${styles.span4} ${styles.h4} ${styles.ticketCardGlow}`} style={{ background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column' }}>
+      <motion.div variants={cardVariants} className={`${styles.kpiCard} ${styles.span4} ${styles.h4} ${styles.ticketCardGlow}`} style={{ background: 'var(--bg-secondary)', display: 'flex', flexDirection: 'column' }}>
         <div style={{ marginBottom: '1.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <p className={styles.kpiLabel} style={{ color: 'var(--text-tertiary)' }}>Ticket Médio Diário</p>
@@ -591,8 +605,8 @@ const DashboardView = () => {
                   boxShadow: 'var(--shadow-lg)'
                 }}
                 formatter={(value: any, name?: any) => {
-                  if (name === 'trend') return [null, null];
-                  return [`R$ ${value}`, 'Ticket Médio'];
+                  if (name === 'trend') return [null, null]; // Oculta a linha de tendência do tooltip
+                  return [`R$ ${Number(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 'Ticket Médio'];
                 }}
                 labelFormatter={(label) => `Data: ${label}`}
               />
@@ -611,18 +625,20 @@ const DashboardView = () => {
                 dot={{ r: 3, fill: 'var(--color-purple)', strokeWidth: 2, stroke: 'var(--bg-primary)' }}
                 activeDot={{ r: 6, strokeWidth: 0 }}
               />
-              <ReferenceLine 
+              {/* <ReferenceLine 
                 y={data.ticket_medio} 
-                stroke="var(--color-red)" 
-                strokeDasharray="5 5" 
+                stroke="var(--color-danger)" 
+                strokeDasharray="4 4" 
                 label={{ 
-                  position: 'top', 
+                  position: 'right', 
                   value: `Média: R$ ${data.ticket_medio.toFixed(0)}`, 
-                  fill: 'var(--color-red)', 
+                  fill: 'var(--color-danger)', 
                   fontSize: 10,
-                  fontWeight: 700 
+                  fontWeight: 800,
+                  dx: -60,
+                  dy: -10
                 }} 
-              />
+              /> */}
             </ComposedChart>
           </ResponsiveContainer>
         </div>
@@ -636,9 +652,10 @@ const DashboardView = () => {
           padding: '1.5rem', 
           display: 'flex', 
           flexDirection: 'column',
-          background: 'radial-gradient(circle at 50% 50%, rgba(245, 158, 11, 0.08) 0%, transparent 85%)',
+          background: 'linear-gradient(to top, rgba(50, 11, 245, 0.08) 0%, transparent 100%)',
           position: 'relative',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          backgroundColor: 'var(--bg-secondary)'
         }}
       >
         <div className={styles.cardHeader}>
@@ -662,7 +679,7 @@ const DashboardView = () => {
               <YAxis hide />
               <RechartsTooltip 
                 contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xl)', fontSize: '0.8rem', boxShadow: 'var(--shadow-lg)' }}
-                formatter={(value: any, _: any, props: any) => [`${props.payload.volume} Agendamentos`, 'Volume']}
+                formatter={(value: any) => [`${value || 0} agendamentos`, 'Volume']}
               />
               <Area type="monotone" dataKey="volume" stroke="var(--color-client)" strokeWidth={3} fill="url(#colorOccupation)" />
             </AreaChart>
@@ -693,7 +710,7 @@ const DashboardView = () => {
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" opacity={0.3} />
               <XAxis dataKey="hora" tickFormatter={(val) => `${val}h`} axisLine={{ stroke: 'var(--border-color)' }} tickLine={false} tick={{ fontSize: 13, fill: 'var(--text-tertiary)' }} dy={10} />
               <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-tertiary)' }} />
-              <RechartsTooltip cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 40, strokeLinecap: 'round' }} contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-lg)', color: 'var(--text-primary)' }} formatter={(value: any) => [`${value} Agendamentos`, 'Volume']} labelFormatter={(label) => `Fluxo às ${label}h`} />
+              <RechartsTooltip cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 40, strokeLinecap: 'round' }} contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-lg)', color: 'var(--text-primary)' }} formatter={(value: any) => [`${value || 0} Agendamentos`, 'Volume']} labelFormatter={(label) => `Fluxo às ${label}h`} />
               <Area type="monotone" dataKey="total_agendamentos" stroke="var(--color-appointment)" strokeWidth={3} fill="url(#ridgeGradBase)" activeDot={{ r: 8, fill: "var(--color-appointment)", stroke: "var(--bg-secondary)", strokeWidth: 3 }} />
             </AreaChart>
           </ResponsiveContainer>

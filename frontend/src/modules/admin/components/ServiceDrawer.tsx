@@ -68,8 +68,9 @@ const ServiceDrawer: React.FC<ServiceDrawerProps> = ({ isOpen, onClose, onSucces
 
       onSuccess();
       onClose();
-    } catch (err: any) {
-      const msg = err.response?.data?.message || err || 'Erro ao processar serviço.';
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      const msg = error.response?.data?.message || String(err) || 'Erro ao processar serviço.';
       showToast(String(msg), 'error');
     } finally {
       setIsSubmitting(false);

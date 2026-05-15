@@ -10,16 +10,17 @@ const logger = createLogger('auth');
 // Chamada quando o usuário preenche o formulário e clica "Entrar"
 // Envia: { email, senha }
 // Recebe: { msg, usuario: { id, nome, email, role }, token }
-export async function login(email: string, senha: string): Promise<any> {
+export async function login(email: string, senha: string): Promise<Record<string, unknown>> {
   try {
     logger.info('Login iniciado', { email });
 
     const response = await api.post<LoginResponse>('/auth/login', { email, senha });
-    const usuario = response.data.dados?.usuario || (response.data as any).usuario;
+    const usuario = response.data.dados?.usuario || (response.data as Record<string, unknown>).usuario;
 
     logger.info('Login bem-sucedido', { usuario });
-    return { usuario, ...response.data };
-  } catch (error: any) {
+    return { usuario, ...response.data } as Record<string, unknown>;
+  } catch (err: unknown) {
+    const error = err as { response?: { data?: Record<string, string> }, message?: string };
     logger.error('Falha no login', error);
     if (!error.response) {
       throw 'Erro de rede ou CORS: O servidor backend pode estar desligado ou inacessível. Detalhe: ' + error.message;
@@ -32,7 +33,8 @@ export async function register(nome: string, email: string, senha: string, telef
   try {
     const response = await api.post('/auth/register', { nome, email, senha, telefone });
     return response.data;
-  } catch (error: any) {
+  } catch (err: unknown) {
+    const error = err as { response?: { data?: { erro?: string; mensagem?: string } } };
     throw error.response?.data?.erro || error.response?.data?.mensagem || 'Erro ao realizar cadastro';
   }
 }
@@ -41,7 +43,8 @@ export async function forgotPassword(email: string) {
   try {
     const response = await api.post('/auth/forgot-password', { email });
     return response.data;
-  } catch (error: any) {
+  } catch (err: unknown) {
+    const error = err as { response?: { data?: { erro?: string; mensagem?: string } } };
     throw error.response?.data?.erro || error.response?.data?.mensagem || 'Erro ao recuperar senha';
   }
 }
@@ -59,10 +62,10 @@ export async function logout(): Promise<void> {
     await api.post('/auth/logout');
 
     logger.info('Logout realizado com sucesso');
-  } catch (error: any) {
+  } catch (err: unknown) {
     // mesmo se o backend falhar, o frontend vai limpar a sessão local
     // por isso apenas logamos o erro sem relançar
-    logger.warn('Logout falhou no backend — sessão local será limpa mesmo assim', error);
+    logger.warn('Logout falhou no backend — sessão local será limpa mesmo assim', err);
   }
 }
 
@@ -91,8 +94,8 @@ export async function refreshSession(): Promise<void> {
 export async function getMe(): Promise<AuthUser> {
   logger.debug('Verificando sessão ativa...');
 
-  const response = await api.get<any>('/auth/protected');
-  const usuario = response.data.dados?.usuario || response.data.usuario;
+  const response = await api.get<Record<string, unknown>>('/auth/protected');
+  const usuario = (response.data.dados as Record<string, AuthUser>)?.usuario || response.data.usuario as AuthUser;
 
   logger.debug('Sessão válida', { usuario });
   return usuario;
